@@ -1,7 +1,10 @@
 #!/bin/bash
 
+cd "$(dirname "$0")" || exit 2
+export imtl_source_code=${PWD}
+
 build_json-c_from_source() {
-    cd $imtl_source_code/../
+    cd "$imtl_source_code/../"
 
     if [ -d "json-c" ] && [[ $1 == "f" ]]; then
       rm -drf json-c
@@ -16,7 +19,7 @@ build_json-c_from_source() {
 }
 
 build_googletest_from_source() {
-    cd $imtl_source_code/../
+    cd "$imtl_source_code/../"
 
     if [ -d "googletest" ] && [[ $1 == "f" ]]; then
       rm -drf googletest
@@ -32,7 +35,7 @@ build_googletest_from_source() {
 }
 
 build_libpcap_from_source() {
-    cd $imtl_source_code/../
+    cd "$imtl_source_code/../"
 
     if [ -d "libpcap" ] && [[ $1 == "f" ]]; then
       rm -drf libpcap
@@ -48,7 +51,7 @@ build_libpcap_from_source() {
 }
 
 build_initialize_dpdk_from_source() {
-  cd $imtl_source_code/../
+  cd "$imtl_source_code/../"
 
   if [ -d "dpdk" ] && [[ $1 == "f" ]]; then
     rm -drf dpdk
@@ -59,14 +62,14 @@ build_initialize_dpdk_from_source() {
   git checkout v23.11
   git switch -c v23.11
 
-  git am $imtl_source_code/patches/dpdk/23.11/*.patch
+  git am "$imtl_source_code/patches/dpdk/23.11/*.patch"
 
   meson setup build | tee /tmp/dpdk_build.log
   ninja -C build
   sudo ninja install -C build
   cd ..
 
-  if [ -z $(grep "Library numa found: YES" /tmp/dpdk_build.log) ]; then
+  if grep -q "Library numa found: YES" /tmp/dpdk_build.log; then
       echo -e "\033[31m[ERROR] Library numa not found\033[0m"
       exit 2
   fi
@@ -74,7 +77,7 @@ build_initialize_dpdk_from_source() {
 
 
 initialize_driver_e810_nic() {
-  cd $imtl_source_code/../
+  cd "$imtl_source_code/../"
 
   if [ -e "ice-1.13.7.tar.gz" ]; then
     if [[ $1 == "f" ]]; then
@@ -91,7 +94,7 @@ initialize_driver_e810_nic() {
   git init
   git add .
   git commit -m "init version 1.13.7"
-  git am $imtl_source_code/patches/ice_drv/1.13.7/*.patch
+  git am "$imtl_source_code/patches/ice_drv/1.13.7/*.patch"
 
 
   cd src
@@ -105,10 +108,10 @@ initialize_driver_e810_nic() {
 
   sleep 3 # idk if needed
 
-  if [ -z "$(sudo dmesg | grep "Intel(R) Ethernet Connection E800 Series Linux Driver - version Kahawai")" ]; then
+  if sudo dmesg | grep -q "Intel(R) Ethernet Connection E800 Series Linux Driver - version Kahawai"; then
       echo -e "\033[31m[ERROR] Ice driver didn't initialize correctly \033[0m"
       exit 2
-  elif [ -z "$(sudo dmesg | grep "The DDP package was successfully loaded: ICE OS Default Package version 1.3.35.0")" ]; then
+  elif sudo dmesg | grep -q "The DDP package was successfully loaded: ICE OS Default Package version 1.3.35.0"; then
       echo -e "\033[31m[ERROR] Ice driver DDP package version 1.3.35.0 didn't initialize, or initialized wrong version (check dmseg for more details) \033[0m"
       exit 2
   fi
@@ -116,7 +119,7 @@ initialize_driver_e810_nic() {
 }
 
 update_firmware_e810_nic() {
-  cd $imtl_source_code/../
+  cd "$imtl_source_code/../"
 
   wget https://downloadmirror.intel.com/816410/Release_29.0.zip
   unzip Release_29.0.zip
@@ -130,25 +133,26 @@ update_firmware_e810_nic() {
 
 
 DPDK_PMD_setup_e810_nic() {
-  if [ -z "$(groups | grep vfio)"]; then
+  if groups | grep -q vfio; then
     getent group 2110 || sudo groupadd -g 2110 vfio
-    sudo usermod -aG vfio $USER
+    sudo usermod -aG vfio "${USER}"
     sudo newgrp vfio
   fi
 
-  if [ ! -f "/etc/udev/rules.d/10-vfio.rules" ] OR [ -z "$(grep 'SUBSYSTEM=="vfio", GROUP="vfio", MODE="0660"' /etc/udev/rules.d/10-vfio.rules)"]; then
-    sudo echo 'SUBSYSTEM=="vfio", GROUP="vfio", MODE="0660"' >> /etc/udev/rules.d/10-vfio.rules
+  if [ ! -f "/etc/udev/rules.d/10-vfio.rules" ] || grep -q 'SUBSYSTEM=="vfio", GROUP="vfio", MODE="0660"' /etc/udev/rules.d/10-vfio.rules; then
+    sudo echo 'SUBSYSTEM=="vfio", GROUP="vfio", MODE="0660"' | sudo tee -a /etc/udev/rules.d/10-vfio.rules
     sudo udevadm control --reload-rules
     sudo udevadm trigger
   fi
 
-  export NIC_810_PCI="$(lshw -c net -businfo | grep E810 | head -1 | awk '{print $1}' | sed 's/pci@//g')"
+  NIC_810_PCI="$(lshw -c net -businfo | grep E810 | head -1 | awk '{print $1}' | sed 's/pci@//g')"
+  export NIC_810_PCI
 
   if [ -z "$NIC_810_PCI" ]; then
      echo -e "\033[31m[ERROR] DPDK_PMD_setup 810 pci address not found \033[0m"
   fi
 
-  cd $imtl_source_code
+  cd "$imtl_source_code"
   sudo ./script/nicctl.sh create_vf "$NIC_810_PCI"
   if [ -z "$(ls -lg /dev/vfio/*)" ]; then
     echo -e "\033[31m[ERROR] newly created VFIO device is NOT correctly assigned to the vfio group \033[0m"
@@ -169,7 +173,7 @@ check_if_iommu_enabled() {
   fi
 
   # Check if CPU flags has vmx feature
-  if [ -z "$(lscpu | grep vmx)" ]; then
+  if lscpu | grep -q vmx; then
       echo -e "\033[31m[ERROR] CPU flags vmx feature not enabled \033[0m"
       exit 2
   fi
@@ -193,8 +197,7 @@ check_secure_path_for_root_user() {
 build_setup_for_ubuntu() {
   ### https://github.com/OpenVisualCloud/Media-Transport-Library/blob/main/doc/build.md
 
-  cd $(dirname $0) || exit 2
-  export imtl_source_code=${PWD}
+  cd "$imtl_source_code"
 
   if [ -z "$http_proxy" ]; then
       export http_proxy=http://proxy-dmz.intel.com:912
@@ -219,19 +222,18 @@ build_setup_for_ubuntu() {
   check_secure_path_for_root_user
   build_initialize_dpdk_from_source f
 
-  cd $imtl_source_code
+  cd "$imtl_source_code"
   if [ -d "./build" ]; then
     rm -drf build
   fi
 
-  ./build.sh $1
+  ./build.sh "$1"
 }
 
-run_setup_for_ubuntu() {
+run_E810_setup_for_ubuntu() {
   ### https://github.com/OpenVisualCloud/Media-Transport-Library/blob/main/doc/run.md
 
-  cd $(dirname $0) || exit 2
-  export imtl_source_code=${PWD}
+  cd "$imtl_source_code"
 
   check_if_iommu_enabled
 
@@ -248,22 +250,22 @@ show_help() {
     echo "Usage: $0 [options]"
     echo ""
     echo "Options:"
-    echo "  -ubuntu [arg]  Configure IMTL for Ubuntu [arg] == build release for iMTL "
-    echo "  -PMD_E810      Only setup DPDK_PMD for 810 NIC."
+    echo "  -u      [arg]  Configure IMTL for Ubuntu [arg] == build / release for iMTL "
+    echo "  -p             Only setup DPDK_PMD for 810 NIC."
     echo "  -h             Display this help message and exit."
 }
 
-while getopts ":ubuntu:PMD_E810:h" opt; do
+while getopts "u:ph" opt; do
     case ${opt} in
-        ubuntu )
+        u )
             set -x -e
             build_setup_for_ubuntu "$OPTARG"
-            run_setup_for_ubuntu
+            run_E810_setup_for_ubuntu
             set +x +e
             ;;
-        PMD_E810 )
+        p )
             set -x -e
-            setup_dpdk_pmd_e810
+            DPDK_PMD_setup_e810_nic
             set +x +e
             ;;
         h )
