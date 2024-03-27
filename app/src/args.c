@@ -267,7 +267,7 @@ static int app_args_parse_lcores(struct mtl_init_params* p, char* list) {
   if (!list) return -EIO;
 
   dbg("%s, lcore list %s\n", __func__, list);
-  p->lcores = list;
+strcpy(p->lcores, list);
   return 0;
 }
 

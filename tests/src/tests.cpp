@@ -130,7 +130,7 @@ static int test_parse_args(struct st_tests_context* ctx, struct mtl_init_params*
         p->num_ports++;
         break;
       case TEST_ARG_LCORES:
-        p->lcores = optarg;
+strcpy(p->lcores, optarg);
         break;
       case TEST_ARG_SCH_SESSION_QUOTA: /* unit: 1080p tx */
         nb = atoi(optarg);
@@ -397,7 +397,7 @@ static void test_ctx_init(struct st_tests_context* ctx) {
   }
   info("lcores_list: %s, max_cpus %d\n", ctx->lcores_list, max_cpus);
 #endif
-  p->lcores = ctx->lcores_list;
+strcpy(p->lcores, ctx->lcores_list);
 }
 
 static void test_ctx_uinit(struct st_tests_context* ctx) {

@@ -1852,7 +1852,7 @@ int main(int argc, char* argv[]) {
   st_v4l2_tx->param.tx_queues_cnt[0] = session_num;
   st_v4l2_tx->param.rx_queues_cnt[0] = 0;
   // let lib decide to core or user could define it.
-  st_v4l2_tx->param.lcores = tx_lcore;
+strcpy(st_v4l2_tx->param.lcores, tx_lcore);
 
   // create device
   st_v4l2_tx->st = mtl_init(&(st_v4l2_tx->param));

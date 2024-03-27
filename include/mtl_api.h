@@ -518,7 +518,7 @@ struct mtl_init_params {
    * Optional. The logical cores list can be used in the MTL, e.g. "28,29,30,31".
    * If not assigned, the core usage will be determined by MTL itself.
    */
-  char* lcores;
+char lcores[256];
 
   /**
    * Optional. Dma(CBDMA or DSA) device can be used in the MTL.

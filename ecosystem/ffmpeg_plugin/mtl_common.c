@@ -72,6 +72,19 @@ mtl_handle mtl_instance_get(char* port, char* local_addr, int enc_session_cnt,
   p.flags |= MTL_FLAG_BIND_NUMA;
   p.flags |= MTL_FLAG_DEV_AUTO_START_STOP;
   p.log_level = MTL_LOG_LEVEL_INFO;  // log level. ERROR, INFO, WARNING
+  if (getenv("MTL_PARAM_LCORES")) {
+    sprintf(p.lcores, "%s", getenv("MTL_PARAM_LCORES"));
+  } else {
+    sprintf(p.lcores, "");
+  }
+  if (getenv("MTL_PARAM_DATA_QUOTA")) {
+    uint32_t data_quota_mbs_per_sch = (uint32_t)atol(getenv("MTL_PARAM_DATA_QUOTA"));
+    av_log(NULL, AV_LOG_DEBUG, "p.data_quota_mbs_per_sch = %u", data_quota_mbs_per_sch);
+    p.data_quota_mbs_per_sch = data_quota_mbs_per_sch;
+  } else {
+    av_log(NULL, AV_LOG_DEBUG, "p.data_quota_mbs_per_sch set do default: %lu", 4 * st20_1080p59_yuv422_10bit_bandwidth_mps());
+    p.data_quota_mbs_per_sch = (uint32_t)(4 * st20_1080p59_yuv422_10bit_bandwidth_mps());
+  }
 
   if (dma_dev) {
     p.num_dma_dev_port = 1;
