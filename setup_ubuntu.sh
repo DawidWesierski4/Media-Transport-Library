@@ -133,12 +133,11 @@ update_firmware_e810_nic() {
 
 
 DPDK_PMD_setup_e810_nic() {
-  if groups | grep -q vfio; then
+  if groups | grep -q vfio ; then
     getent group 2110 || sudo groupadd -g 2110 vfio
     sudo usermod -aG vfio "${USER}"
-    sudo newgrp vfio
   fi
-
+  echo dupa
   if [ ! -f "/etc/udev/rules.d/10-vfio.rules" ] || grep -q 'SUBSYSTEM=="vfio", GROUP="vfio", MODE="0660"' /etc/udev/rules.d/10-vfio.rules; then
     sudo echo 'SUBSYSTEM=="vfio", GROUP="vfio", MODE="0660"' | sudo tee -a /etc/udev/rules.d/10-vfio.rules
     sudo udevadm control --reload-rules
@@ -146,7 +145,7 @@ DPDK_PMD_setup_e810_nic() {
   fi
 
   NIC_810_PCI="$(lshw -c net -businfo | grep E810 | head -1 | awk '{print $1}' | sed 's/pci@//g')"
-  export NIC_810_PCI
+  export NIC_810_PCI=$NIC_810_PCI
 
   if [ -z "$NIC_810_PCI" ]; then
      echo -e "\033[31m[ERROR] DPDK_PMD_setup 810 pci address not found \033[0m"
@@ -184,7 +183,7 @@ check_if_iommu_enabled() {
 }
 
 check_secure_path_for_root_user() {
-  # Read the secure_path  line
+  # Read the secure_path line
   CMDLINE=$(grep "secure_path=" "/etc/sudoers")
 
   # Check for the presence of "intel_iommu=on" and "iommu=pt"
@@ -264,9 +263,9 @@ while getopts "u:ph" opt; do
             set +x +e
             ;;
         p )
-            set -x -e
+            set -x
             DPDK_PMD_setup_e810_nic
-            set +x +e
+            set +x
             ;;
         h )
             show_help
@@ -284,3 +283,4 @@ while getopts "u:ph" opt; do
     esac
 done
 shift $((OPTIND -1))
+sudo newgrp vfio
