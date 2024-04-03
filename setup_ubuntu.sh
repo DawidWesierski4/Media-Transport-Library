@@ -62,14 +62,16 @@ build_initialize_dpdk_from_source() {
   git checkout v23.11
   git switch -c v23.11
 
-  git am "$imtl_source_code/patches/dpdk/23.11/*.patch"
+  git am "$imtl_source_code"/patches/dpdk/23.11/*.patch
 
   meson setup build | tee /tmp/dpdk_build.log
   ninja -C build
   sudo ninja install -C build
   cd ..
 
-  if grep -q "Library numa found: YES" /tmp/dpdk_build.log; then
+  sleep 3
+
+  if ! grep -q "Library numa found: YES" /tmp/dpdk_build.log; then
       echo -e "\033[31m[ERROR] Library numa not found\033[0m"
       exit 2
   fi
@@ -79,13 +81,15 @@ build_initialize_dpdk_from_source() {
 initialize_driver_e810_nic() {
   cd "$imtl_source_code/../"
 
-  if [ -e "ice-1.13.7.tar.gz" ]; then
+  if [ ! -e "ice-1.13.7.tar.gz" ]; then
     if [[ $1 == "f" ]]; then
       rm -drf ice-1.13.7*
       wget https://downloadmirror.intel.com/812404/ice-1.13.7.tar.gz
     elif [ -d "ice-1.13.7" ]; then
       rm -drf "ice-1.13.7"
     fi
+  else
+    wget https://downloadmirror.intel.com/812404/ice-1.13.7.tar.gz
   fi
 
   tar xvzf ice-1.13.7.tar.gz
@@ -93,8 +97,10 @@ initialize_driver_e810_nic() {
 
   git init
   git add .
+  set +e
   git commit -m "init version 1.13.7"
-  git am "$imtl_source_code/patches/ice_drv/1.13.7/*.patch"
+  set -e
+  git am "$imtl_source_code"/patches/ice_drv/1.13.7/*.patch
 
 
   cd src
@@ -108,10 +114,10 @@ initialize_driver_e810_nic() {
 
   sleep 3 # idk if needed
 
-  if sudo dmesg | grep -q "Intel(R) Ethernet Connection E800 Series Linux Driver - version Kahawai"; then
+  if ! sudo dmesg | grep -q "Intel(R) Ethernet Connection E800 Series Linux Driver - version Kahawai"; then
       echo -e "\033[31m[ERROR] Ice driver didn't initialize correctly \033[0m"
       exit 2
-  elif sudo dmesg | grep -q "The DDP package was successfully loaded: ICE OS Default Package version 1.3.35.0"; then
+  elif ! sudo dmesg | grep -q "The DDP package was successfully loaded: ICE OS Default Package version 1.3.35.0"; then
       echo -e "\033[31m[ERROR] Ice driver DDP package version 1.3.35.0 didn't initialize, or initialized wrong version (check dmseg for more details) \033[0m"
       exit 2
   fi
@@ -133,12 +139,12 @@ update_firmware_e810_nic() {
 
 
 DPDK_PMD_setup_e810_nic() {
-  if groups | grep -q vfio ; then
+  if ! groups | grep -q vfio ; then
     getent group 2110 || sudo groupadd -g 2110 vfio
     sudo usermod -aG vfio "${USER}"
   fi
-  echo dupa
-  if [ ! -f "/etc/udev/rules.d/10-vfio.rules" ] || grep -q 'SUBSYSTEM=="vfio", GROUP="vfio", MODE="0660"' /etc/udev/rules.d/10-vfio.rules; then
+
+  if [ ! -f "/etc/udev/rules.d/10-vfio.rules" ] || ! grep -q 'SUBSYSTEM=="vfio", GROUP="vfio", MODE="0660"' /etc/udev/rules.d/10-vfio.rules; then
     sudo echo 'SUBSYSTEM=="vfio", GROUP="vfio", MODE="0660"' | sudo tee -a /etc/udev/rules.d/10-vfio.rules
     sudo udevadm control --reload-rules
     sudo udevadm trigger
@@ -172,7 +178,7 @@ check_if_iommu_enabled() {
   fi
 
   # Check if CPU flags has vmx feature
-  if lscpu | grep -q vmx; then
+  if ! lscpu | grep -q vmx; then
       echo -e "\033[31m[ERROR] CPU flags vmx feature not enabled \033[0m"
       exit 2
   fi
@@ -204,15 +210,21 @@ build_setup_for_ubuntu() {
   fi
 
   sudo sysctl -w vm.nr_hugepages=2048 # from RUN.md
-  sudo apt-get install -y meson python3 python3-pip pkg-config libsdl2-dev libsdl2-ttf-dev libnuma-dev libssl-dev
+  sudo apt-get install -y python3
+  sudo apt-get install -y python3-pip
+  sudo apt-get install -y pkg-config
+  sudo apt-get install -y libsdl2-dev
+  sudo apt-get install -y libsdl2-ttf-dev
+  sudo apt-get install -y libnuma-dev
+  sudo apt-get install -y libssl-dev
+  sudo apt-get install -y meson
+  sudo apt-get install -y cmake
 
   # These dependencies are needed by the gtest / pcap / json-c
   sudo apt-get install -y gcc-12 flex bison
 
   sudo pip install pyelftools
-  export http_proxy=""
   sudo pip install ninja # This package doesn't want to be downloaded with proxy
-  export http_proxy=http://proxy-dmz.intel.com:912
 
   build_json-c_from_source f
   build_googletest_from_source f
@@ -238,10 +250,10 @@ run_E810_setup_for_ubuntu() {
 
   ### https://github.com/OpenVisualCloud/Media-Transport-Library/blob/main/doc/e810.md
     initialize_driver_e810_nic f
-    update_firmware_e810_nic
+    update_firmware_e810_nic &
   ###
 
-  sudo sysctl -w vm.nr_hugepages=2048
+  sudo sysctl -w vm.nr_hugepages=2048 
   DPDK_PMD_setup_e810_nic
 }
 
@@ -258,7 +270,7 @@ while getopts "u:ph" opt; do
     case ${opt} in
         u )
             set -x -e
-            build_setup_for_ubuntu "$OPTARG"
+            # build_setup_for_ubuntu "$OPTARG"
             run_E810_setup_for_ubuntu
             set +x +e
             ;;
@@ -282,5 +294,5 @@ while getopts "u:ph" opt; do
             ;;
     esac
 done
-shift $((OPTIND -1))
+
 sudo newgrp vfio
