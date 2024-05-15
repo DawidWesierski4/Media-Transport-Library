@@ -48,6 +48,7 @@ static int mtl_st22p_write_close(AVFormatContext* ctx) {
   dbg("%s(%d), start\n", __func__, s->idx);
   // Destroy tx session
   if (s->tx_handle) {
+    st22p_tx_wait_inbound(s->tx_handle);
     st22p_tx_free(s->tx_handle);
     s->tx_handle = NULL;
     dbg(ctx, "%s(%d), st22p_tx_free succ\n", __func__, s->idx);

@@ -6,6 +6,7 @@
 
 #include "../../mt_log.h"
 #include "../../mt_stat.h"
+#include "../st_tx_video_session.h"
 
 static const char* st20p_tx_frame_stat_name[ST20P_TX_FRAME_STATUS_MAX] = {
     "free", "ready", "in_converting", "converted", "in_user", "in_transmitting",
@@ -828,6 +829,12 @@ st20p_tx_handle st20p_tx_create(mtl_handle mt, struct st20p_tx_ops* ops) {
   mt_stat_register(impl, tx_st20p_stat, ctx, ctx->ops_name);
 
   return ctx;
+}
+
+int st20p_tx_wait_inbound(st20p_tx_handle handle) {
+  struct st20p_tx_ctx* ctx = handle;
+  struct mtl_main_impl* impl = ctx->impl;
+  return st_tx_wait_for_inbound(impl);
 }
 
 int st20p_tx_free(st20p_tx_handle handle) {

@@ -3621,6 +3621,53 @@ static int tv_sessions_stat(void* priv) {
   return 0;
 }
 
+static int st_tx_session_wait_for_inbound(struct st_tx_video_sessions_mgr* tx_mgr,
+                                          int sch_idx) {
+  struct st_tx_video_session_impl* s = tx_video_session_get(tx_mgr, sch_idx);
+  int num_port = s->ops.num_port;
+  int retry;
+
+  for (int i = 0; i < num_port; i++) {
+    for (retry = 0; retry < ST_TX_VIDEO_WAIT_FOR_INBOUND_RETRY; retry++) {
+      if (s->trs_inflight_num[i] || s->trs_inflight_num2[i]) {
+        tx_video_session_put(tx_mgr, sch_idx);
+        notice("%s(%d), Retry %d out of %d \n", __func__, sch_idx, retry, ST_TX_VIDEO_WAIT_FOR_INBOUND_RETRY);
+        usleep(1000);
+        tx_video_session_get(tx_mgr, sch_idx);
+      } else {
+        tx_video_session_put(tx_mgr, sch_idx);
+        break;
+      }
+    }
+
+    if (retry == ST_TX_VIDEO_WAIT_FOR_INBOUND_RETRY)
+      tx_video_session_put(tx_mgr, sch_idx);
+  }
+
+  return 0;
+}
+
+int st_tx_wait_for_inbound(struct mtl_main_impl* impl){
+  struct mtl_sch_impl *sch;
+  struct st_tx_video_sessions_mgr* tx_mgr;
+  int ret;
+
+
+  for (int sch_idx = 0; sch_idx < MT_MAX_SCH_NUM; sch_idx++) {
+    sch = mt_sch_instance(impl, sch_idx);
+    tx_mgr = &sch->tx_video_mgr;
+
+    for (int j = 0; j < tx_mgr->max_idx; j++) {
+      ret = st_tx_session_wait_for_inbound(tx_mgr, j);
+
+      if(ret)
+        return ret;
+    }
+  }
+
+  return 0;
+}
+
 int st_tx_video_sessions_sch_init(struct mtl_main_impl* impl, struct mtl_sch_impl* sch) {
   int ret, idx = sch->idx;
 

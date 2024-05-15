@@ -5,6 +5,7 @@
 #include "st22_pipeline_tx.h"
 
 #include "../../mt_log.h"
+#include "../st_tx_video_session.h"
 
 static const char* st22p_tx_frame_stat_name[ST22P_TX_FRAME_STATUS_MAX] = {
     "free", "in_user", "ready", "in_encoding", "encoded", "in_trans",
@@ -801,6 +802,13 @@ st22p_tx_handle st22p_tx_create(mtl_handle mt, struct st22p_tx_ops* ops) {
   if (!ctx->block_get) tx_st22p_notify_frame_available(ctx);
 
   return ctx;
+}
+
+
+int st22p_tx_wait_inbound(st22p_tx_handle handle) {
+  struct st22p_tx_ctx* ctx = handle;
+  struct mtl_main_impl* impl = ctx->impl;
+  return st_tx_wait_for_inbound(impl);
 }
 
 int st22p_tx_free(st22p_tx_handle handle) {

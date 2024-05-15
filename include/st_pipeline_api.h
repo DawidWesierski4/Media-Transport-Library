@@ -1346,6 +1346,18 @@ int st_get_plugins_nb(mtl_handle mt);
  */
 st22p_tx_handle st22p_tx_create(mtl_handle mt, struct st22p_tx_ops* ops);
 
+
+/**
+ * Awaits the completion of the transmission session for ST 2110-20 data packets
+ *
+ * @param impl
+ *   The handle to the tx st2110-20 mtl_main
+ * @return
+ *   - 0: Success, we have waited
+ *   - <0: Error code of the tx inboud wait.
+ */
+int st22p_tx_wait_inbound(st22p_tx_handle handle);
+
 /**
  * Free the tx st2110-22 pipeline session.
  *
@@ -1628,6 +1640,17 @@ st20p_tx_handle st20p_tx_create(mtl_handle mt, struct st20p_tx_ops* ops);
  *   - <0: Error code of the tx st2110-20 pipeline session free.
  */
 int st20p_tx_free(st20p_tx_handle handle);
+
+/**
+ * Awaits the completion of the transmission session for ST 2110-20 data packets
+ *
+ * @param impl
+ *   The handle to the tx st2110-20 mtl_main
+ * @return
+ *   - 0: Success, we have waited
+ *   - <0: Error code of the tx inboud wait.
+ */
+int st20p_tx_wait_inbound(st20p_tx_handle handle);
 
 /**
  * Get one tx frame from the tx st2110-20 pipeline session.
