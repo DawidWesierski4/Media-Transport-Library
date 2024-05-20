@@ -11,7 +11,7 @@
 
 #define ST_TX_VIDEO_RTCP_BURST_SIZE (32)
 #define ST_TX_VIDEO_RTCP_RING_SIZE (1024)
-#define ST_TX_VIDEO_WAIT_FOR_INBOUND_RETRY (2000)
+#define ST_TX_VIDEO_WAIT_FOR_INBOUND_RETRY (200)
 
 int st_tx_video_sessions_sch_init(struct mtl_main_impl* impl, struct mtl_sch_impl* sch);
 

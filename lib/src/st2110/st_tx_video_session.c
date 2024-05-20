@@ -3625,7 +3625,7 @@ static int st_tx_session_wait_for_inbound(struct st_tx_video_sessions_mgr* tx_mg
                                           int sch_idx) {
   struct st_tx_video_session_impl* s = tx_video_session_get(tx_mgr, sch_idx);
   int num_port = s->ops.num_port;
-  int retry;
+  unsigned int retry;
 
   tx_video_session_put(tx_mgr, sch_idx);
 
@@ -3634,11 +3634,12 @@ static int st_tx_session_wait_for_inbound(struct st_tx_video_sessions_mgr* tx_mg
       s = tx_video_session_try_get(tx_mgr, sch_idx);
       if (!s) continue;
 
-      if (s->trs_inflight_num[i] || s->trs_inflight_num2[i]) {
+      if (s->inflight[i][0] || s->trs_inflight_num[i] || s->trs_inflight_num2[i]) {
         tx_video_session_put(tx_mgr, sch_idx);
-        notice("%s(%d), Retry %d out of %d \n", __func__, sch_idx, retry, ST_TX_VIDEO_WAIT_FOR_INBOUND_RETRY);
-        usleep(1000);
+        usleep(10000);
+        notice("%s(%d), Retry %d out of %u \n", __func__, sch_idx, retry, ST_TX_VIDEO_WAIT_FOR_INBOUND_RETRY);
       } else {
+        notice("%s(%d), DEBUG %d \n", __func__, sch_idx, i);
         tx_video_session_put(tx_mgr, sch_idx);
         break;
       }
