@@ -596,7 +596,7 @@ static void tx_st22p_framebuffs_flush(struct st22p_tx_ctx* ctx) {
       if (framebuff->stat == ST22P_TX_FRAME_IN_TRANSMITTING) {
         /* make sure transport to finish the transmit */
         /* WA to use sleep here, todo: add a transport API to query the stat */
-        mt_sleep_ms(50);
+        mt_sleep_ms(150);
         break;
       }
 
