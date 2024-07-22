@@ -138,13 +138,23 @@ int main(int argc, char** argv) {
   struct st_sample_context ctx;
   int ret;
 
+
   /* init sample(st) dev */
   memset(&ctx, 0, sizeof(ctx));
+  ctx.sessions = 2000;
+  ctx.param.memzone_max = 25600;
+
   ret = tx_sample_parse_args(&ctx, argc, argv);
   if (ret < 0) return ret;
 
+  // just to be sure ;) 
+  ctx.param.memzone_max = 25600;
+  ctx.sessions = 2000;
+
   /* enable auto start/stop */
   ctx.param.flags |= MTL_FLAG_DEV_AUTO_START_STOP;
+  ctx.param.flags |= MTL_FLAG_SHARED_TX_QUEUE;
+  ctx.param.log_level = MTL_LOG_LEVEL_INFO;
   ctx.st = mtl_init(&ctx.param);
   if (!ctx.st) {
     err("%s: mtl_init fail\n", __func__);
