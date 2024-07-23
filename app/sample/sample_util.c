@@ -501,6 +501,38 @@ static int sample_set_afxdp(struct st_sample_context* ctx) {
   return 0;
 }
 
+int app_dump_io_stat(struct st_sample_context* ctx) {
+  struct mtl_fix_info fix;
+  struct mtl_port_status stats;
+  int ret;
+  uint64_t cur_time = sample_get_monotonic_time();
+  double time_sec =
+      (double)(sample_get_monotonic_time() - ctx->last_stat_time_ns) / NS_PER_S;
+  double tx_rate_m, rx_rate_m;
+
+  ret = mtl_get_fix_info(ctx->st, &fix);
+  if (ret < 0) return ret;
+
+  for (uint8_t port = 0; port < fix.num_ports; port++) {
+    ret = mtl_get_port_stats(ctx->st, port, &stats);
+    if (ret < 0) return ret;
+    tx_rate_m = (double)stats.tx_bytes * 8 / time_sec / MTL_STAT_M_UNIT;
+    rx_rate_m = (double)stats.rx_bytes * 8 / time_sec / MTL_STAT_M_UNIT;
+    info("%s(%u), tx %f Mb/s rx %f Mb/s\n", __func__, port, tx_rate_m, rx_rate_m);
+    if (stats.rx_hw_dropped_packets || stats.rx_err_packets || stats.rx_nombuf_packets ||
+        stats.tx_err_packets) {
+      warn("%s(%u), hw drop %" PRIu64 " rx err %" PRIu64 " no mbuf %" PRIu64
+           " tx err %" PRIu64 "\n",
+           __func__, port, stats.rx_hw_dropped_packets, stats.rx_err_packets,
+           stats.rx_nombuf_packets, stats.tx_err_packets);
+    }
+    mtl_reset_port_stats(ctx->st, port);
+  }
+
+  ctx->last_stat_time_ns = cur_time;
+  return 0;
+}
+
 int sample_parse_args(struct st_sample_context* ctx, int argc, char** argv, bool tx,
                       bool rx, bool unicast) {
   struct mtl_init_params* p = &ctx->param;

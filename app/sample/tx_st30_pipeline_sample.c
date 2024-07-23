@@ -137,12 +137,15 @@ static void* tx_st30p_frame_thread(void* arg) {
 int main(int argc, char** argv) {
   struct st_sample_context ctx;
   int ret;
+  uint64_t cur_time = sample_get_monotonic_time();
 
 
   /* init sample(st) dev */
   memset(&ctx, 0, sizeof(ctx));
+  ctx.last_stat_time_ns = cur_time;
   ctx.sessions = 2000;
   ctx.param.memzone_max = 25600;
+  ctx.param.dump_period_s = 60;
 
   ret = tx_sample_parse_args(&ctx, argc, argv);
   if (ret < 0) return ret;
@@ -236,6 +239,7 @@ int main(int argc, char** argv) {
       ret = -EIO;
       goto error;
     }
+    // if (i % 100 == 0) app_dump_io_stat(&ctx);
   }
 
   while (!ctx.exit) {

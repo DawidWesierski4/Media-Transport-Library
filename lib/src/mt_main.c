@@ -542,7 +542,7 @@ mtl_handle mtl_init(struct mtl_init_params* p) {
 
   impl->tx_audio_sessions_max_per_sch = p->tx_audio_sessions_max_per_sch;
   if (!impl->tx_audio_sessions_max_per_sch) {
-    impl->tx_audio_sessions_max_per_sch = 300; /* default 300 */
+    impl->tx_audio_sessions_max_per_sch = 200; /* default 300 */
   }
   impl->rx_audio_sessions_max_per_sch = p->rx_audio_sessions_max_per_sch;
   if (!impl->rx_audio_sessions_max_per_sch) {
