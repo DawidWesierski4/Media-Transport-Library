@@ -108,8 +108,7 @@ int main(int argc, char** argv) {
 
   /* init sample(st) dev */
   memset(&ctx, 0, sizeof(ctx));
-  ctx.sessions = 2000;
-  ctx.param.rx_queues_cnt[0] = 18;
+  ctx.sessions = 255;
   ret = rx_sample_parse_args(&ctx, argc, argv);
   if (ret < 0) return ret;
 
