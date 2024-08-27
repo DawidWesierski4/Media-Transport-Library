@@ -50,9 +50,11 @@ static struct st30p_rx_frame* rx_st30p_next_available(
 
   /* check ready frame from idx_start */
   while (1) {
-    if (!framebuff)
+    if (! ctx->framebuffs)
       continue;
-    framebuff = &ctx->framebuffs[idx];
+    else
+      framebuff = &ctx->framebuffs[idx];
+
     if (desired == framebuff->stat) {
       /* find one desired */
       return framebuff;
