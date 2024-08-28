@@ -108,13 +108,11 @@ int main(int argc, char** argv) {
 
   /* init sample(st) dev */
   memset(&ctx, 0, sizeof(ctx));
-  ctx.sessions = 2000;
   ret = rx_sample_parse_args(&ctx, argc, argv);
   if (ret < 0) return ret;
 
   /* enable auto start/stop */
   ctx.param.flags |= MTL_FLAG_DEV_AUTO_START_STOP;
-  ctx.param.flags |= MTL_FLAG_SHARED_RX_QUEUE;
   ctx.st = mtl_init(&ctx.param);
   if (!ctx.st) {
     err("%s: mtl_init fail\n", __func__);
