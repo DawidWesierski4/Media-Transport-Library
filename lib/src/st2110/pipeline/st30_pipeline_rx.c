@@ -138,6 +138,11 @@ static int rx_st30p_create_transport(struct mtl_main_impl* impl, struct st30p_rx
     ops_rx.flags |= ST30_RX_FLAG_FORCE_NUMA;
   }
 
+  if (ops->flags & ST30_RX_FLAG_TIMING_PARSER_META)
+    ops_rx.flags |= ST30_RX_FLAG_TIMING_PARSER_META;
+  if (ops->flags & ST30_RX_FLAG_TIMING_PARSER_STAT)
+    ops_rx.flags |= ST30_RX_FLAG_TIMING_PARSER_STAT;
+
   transport = st30_rx_create(impl, &ops_rx);
   if (!transport) {
     err("%s(%d), transport create fail\n", __func__, idx);
