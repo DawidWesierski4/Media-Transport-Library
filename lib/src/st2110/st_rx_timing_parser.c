@@ -3,6 +3,7 @@
  */
 
 #include "st_rx_timing_parser.h"
+#include <time.h>
 
 #include "../mt_log.h"
 
@@ -446,6 +447,8 @@ void ra_tp_on_packet(struct st_rx_audio_session_impl* s, enum mtl_session_port s
   struct st_rx_audio_tp* tp = s->tp;
   struct st_ra_tp_slot* slot = &tp->slot[s_port];
 
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
   uint64_t epoch = (double)pkt_time / tp->pkt_time;
   uint64_t epoch_ns = (double)epoch * tp->pkt_time;
   double fpt_delta = (double)pkt_time - epoch_ns;

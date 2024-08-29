@@ -517,7 +517,7 @@ int main(int argc, char** argv) {
     return -EIO;
   }
 
-  ret = st_app_rx_audio_sessions_init(ctx);
+  ret = st_app_rx_audio_sessions_init (ctx);
   if (ret < 0) {
     err("%s, st_app_rx_audio_sessions_init fail %d\n", __func__, ret);
     st_app_ctx_free(ctx);

@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
   /* init sample(st) dev */
   memset(&ctx, 0, sizeof(ctx));
 
-  ctx.sessions = 2000; // increase the number of created sessions
+  ctx.sessions = 1; // increase the number of created sessions
 
   /**
    * For scenarios involving this number of streams, additional memory is required.

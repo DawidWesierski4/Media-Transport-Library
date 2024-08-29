@@ -319,6 +319,8 @@ static int app_rx_audio_init(struct st_app_context* ctx, st_json_audio_session_t
   st30_rx_handle handle;
   memset(&ops, 0, sizeof(ops));
 
+  ctx->enable_timing_parser_meta = true;
+
   snprintf(name, 32, "app_rx_audio%d", idx);
   ops.name = name;
   ops.priv = s;
@@ -381,6 +383,7 @@ static int app_rx_audio_init(struct st_app_context* ctx, st_json_audio_session_t
   if (ctx->enable_timing_parser_meta) {
     ops.notify_timing_parser_result = app_rx_audio_timing_parser_result;
     ops.flags |= ST30_RX_FLAG_TIMING_PARSER_META;
+    ops.flags |= ST30_RX_FLAG_TIMING_PARSER_STAT;
     s->enable_timing_parser_meta = true;
   }
 

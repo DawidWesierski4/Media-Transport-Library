@@ -13,9 +13,10 @@
             "interface": [
                 0
             ],
-            "st30p": [
+            "audio": [
                 {
                     "replicas": 1,
+                    "type": "frame",
                     "start_port": 30000,
                     "payload_type": 111,
                     "audio_format": "PCM16",
