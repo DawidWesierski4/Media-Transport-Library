@@ -361,6 +361,7 @@ static int rx_audio_session_handle_frame_pkt(struct mtl_main_impl* impl,
     meta->sampling = ops->sampling;
     meta->channel = ops->channel;
     meta->rtp_timestamp = tmstamp;
+    
     meta->frame_recv_size = s->frame_recv_size;
 
     MT_USDT_ST30_RX_FRAME_AVAILABLE(s->mgr->idx, s->idx, frame->idx, frame->addr, tmstamp,

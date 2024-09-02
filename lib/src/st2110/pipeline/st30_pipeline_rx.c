@@ -6,6 +6,7 @@
 
 #include "../../mt_log.h"
 #include "../../mt_stat.h"
+#include <time.h>
 
 static const char* st30p_rx_frame_stat_name[ST30P_RX_FRAME_STATUS_MAX] = {
     "free",
@@ -75,6 +76,19 @@ static int rx_st30p_frame_ready(void* priv, void* addr, struct st30_rx_frame_met
   mt_pthread_mutex_lock(&ctx->lock);
   framebuff =
       rx_st30p_next_available(ctx, ctx->framebuff_producer_idx, ST30P_RX_FRAME_FREE);
+
+
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+
+    uint64_t timestamp_ns = (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
+
+    double converted = (double)timestamp_ns * 1e-9 * 48000;
+    uint64_t scaled_timestamp = (uint64_t)converted;
+    scaled_timestamp = scaled_timestamp & 0xffffffff;
+    scaled_timestamp -= meta->rtp_timestamp;
+
+    printf("%s latency == %lu \n", __func__, scaled_timestamp);
 
   /* not any free frame */
   if (!framebuff) {
