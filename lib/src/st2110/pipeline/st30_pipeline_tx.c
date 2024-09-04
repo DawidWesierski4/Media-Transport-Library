@@ -122,6 +122,18 @@ static int tx_st30p_frame_done(void* priv, uint16_t frame_idx,
     ctx->ops.notify_frame_done(ctx->ops.priv, frame);
   }
 
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+
+    uint64_t timestamp_ns = (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
+
+    double converted = (double)timestamp_ns * 1e-9 * 48000;
+    uint64_t scaled_timestamp = (uint64_t)converted;
+    scaled_timestamp = scaled_timestamp & 0xffffffff;
+    scaled_timestamp -= meta->rtp_timestamp;
+
+    printf("%s latency == %lu \n", __func__, scaled_timestamp);
+
   /* notify app can get frame */
   tx_st30p_notify_frame_available(ctx);
 
