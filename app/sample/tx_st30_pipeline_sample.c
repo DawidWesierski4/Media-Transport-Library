@@ -94,18 +94,18 @@ static int tx_st30p_frame_done(void* priv, struct st30_frame* frame) {
   struct tx_st30p_sample_ctx* s = priv;
   MTL_MAY_UNUSED(frame);
 
-   time_t current_time;
+  //  time_t current_time;
 
-   struct timespec ts;
-   clock_gettime(CLOCK_REALTIME, &ts);
+  //  struct timespec ts;
+  //  clock_gettime(CLOCK_REALTIME, &ts);
 
-  uint64_t timestamp_ns = (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
+  // uint64_t timestamp_ns = (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
 
   s->fb_send_done++;
-  if (s->fb_send_done % 100 == 0) {
-    // info("%s(%d), done %d -- rtp_timestamp = %u %lu %lu\n", __func__, s->idx, s->fb_send_done, frame->rtp_timestamp, frame->timestamp, timestamp_ns );
-    info ("%s latency %lu\n", __func__, frame->timestamp - timestamp_ns);
-  }
+  // if (s->fb_send_done % 100 == 0) {
+  //   // info("%s(%d), done %d -- rtp_timestamp = %u %lu %lu\n", __func__, s->idx, s->fb_send_done, frame->rtp_timestamp, frame->timestamp, timestamp_ns );
+  //   info ("%s latency %lu\n", __func__, frame->timestamp - timestamp_ns);
+  // }
 
   return 0;
 }
