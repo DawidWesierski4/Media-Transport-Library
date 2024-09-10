@@ -129,7 +129,7 @@ static int tx_st30p_frame_done(void* priv, uint16_t frame_idx,
     scaled_timestamp = scaled_timestamp & 0xffffffff;
     scaled_timestamp = meta->rtp_timestamp - scaled_timestamp;
 
-    printf("%s latency == %lu \n", __func__, scaled_timestamp);
+    //printf("%s latency == %lu \n", __func__, scaled_timestamp);
 
   if (ctx->ops.notify_frame_done) { /* notify app which frame done */
     ctx->ops.notify_frame_done(ctx->ops.priv, frame);

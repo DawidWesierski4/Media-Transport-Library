@@ -557,7 +557,7 @@ int sample_parse_args(struct st_sample_context* ctx, int argc, char** argv, bool
   ctx->audio_channel = 8;
   ctx->audio_sampling = ST30_SAMPLING_48K;
   ctx->audio_ptime = ST30_PTIME_1MS;
-  snprintf(ctx->tx_audio_url, sizeof(ctx->tx_audio_url), "%s", "/root/sample_wids/output_1.wav");
+  snprintf(ctx->tx_audio_url, sizeof(ctx->tx_audio_url), "%s", "/home/usersbd/output_1.wav");
   snprintf(ctx->rx_audio_url, sizeof(ctx->rx_audio_url), "%s", "rx.pcm");
   ctx->audio_udp_port = 30000;
   ctx->audio_payload_type = 111;

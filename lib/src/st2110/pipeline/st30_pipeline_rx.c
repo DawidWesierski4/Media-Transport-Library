@@ -88,7 +88,7 @@ static int rx_st30p_frame_ready(void* priv, void* addr, struct st30_rx_frame_met
     scaled_timestamp = scaled_timestamp & 0xffffffff;
     scaled_timestamp -= meta->rtp_timestamp;
 
-    printf("%s latency == %lu \n", __func__, scaled_timestamp);
+    //printf("%s latency == %lu \n", __func__, scaled_timestamp);
 
   /* not any free frame */
   if (!framebuff) {

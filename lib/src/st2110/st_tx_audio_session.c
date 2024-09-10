@@ -210,7 +210,7 @@ static int tx_audio_session_init_pacing(struct st_tx_audio_session_impl* s) {
 
   pacing->max_onward_epochs = (double)(NS_PER_S * 1) / pkt_time;     /* 1s */
   pacing->max_late_epochs = (double)(NS_PER_S * 1) / pkt_time / 100; /* 10ms */
-  dbg("%s[%02d], max_onward_epochs %u max_late_epochs %u\n", __func__, idx,
+  info("%s[%02d], max_onward_epochs %u max_late_epochs %u\n", __func__, idx,
       pacing->max_onward_epochs, pacing->max_late_epochs);
 
   info("%s[%02d], trs %f pkt_time_sampling %f\n", __func__, idx, pacing->trs,
