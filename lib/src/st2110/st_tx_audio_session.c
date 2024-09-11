@@ -233,7 +233,7 @@ static inline double tx_audio_pacing_time(struct st_tx_audio_session_pacing* pac
 
 static inline uint32_t tx_audio_pacing_time_stamp(
     struct st_tx_audio_session_pacing* pacing, uint64_t epochs) {
-  uint64_t tmstamp64 = epochs * pacing->pkt_time_sampling;
+  uint64_t tmstamp64 = (epochs+1) * pacing->pkt_time_sampling;
   uint32_t tmstamp32 = tmstamp64;
 
   return tmstamp32;
