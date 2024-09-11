@@ -1807,13 +1807,14 @@ static int tx_audio_session_init_trans_ring(struct st_tx_audio_sessions_mgr* mgr
   unsigned int count = ST_TX_AUDIO_SESSIONS_RING_SIZE;
   int mgr_idx = mgr->idx, idx = s->idx;
   int num_port = s->ops.num_port;
-  uint16_t trans_ring_thresh = s->ops.fifo_size;
+  uint16_t trans_ring_thresh = s->ops.fifo_size; 
 
   /* make sure the ring is smaller than max_onward_epochs */
   while (count > s->pacing.max_onward_epochs) {
     count /= 2;
   }
 
+  //count = 2;
   for (int port = 0; port < num_port; port++) {
     ring = mt_u64_fifo_init(count, s->socket_id);
     if (!ring) {
@@ -1827,7 +1828,7 @@ static int tx_audio_session_init_trans_ring(struct st_tx_audio_sessions_mgr* mgr
   if (!trans_ring_thresh) {
     trans_ring_thresh =
         (double)(ST30_TX_FIFO_DEFAULT_TIME_MS * NS_PER_MS) / s->pacing.trs;
-    trans_ring_thresh = RTE_MAX(trans_ring_thresh, 2); /* min: 2 frame */
+    trans_ring_thresh = RTE_MAX(trans_ring_thresh, 2); /* min: 2 frame */ //TODO: why 2 frames
   }
   s->trans_ring_thresh = trans_ring_thresh;
 

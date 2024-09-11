@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
   /* init sample(st) dev */
   memset(&ctx, 0, sizeof(ctx));
 
-  ctx.sessions = 1; // increase the number of created sessions
+  ctx.sessions = 100; // increase the number of created sessions
 
   /**
    * For scenarios involving this number of streams, additional memory is required.
@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
     ops_tx.channel = ctx.audio_channel;
     ops_tx.sampling = ctx.audio_sampling;
     ops_tx.ptime = ctx.audio_ptime;
-    ops_tx.fifo_size = 1;
+    ops_tx.fifo_size = 0; // TODO:
 
     /* set frame size to 10ms time */
     int framebuff_size = st30_calculate_framebuff_size(

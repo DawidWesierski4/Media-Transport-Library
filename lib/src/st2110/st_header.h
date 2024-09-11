@@ -46,7 +46,7 @@
 /* max tx/rx audio(st_30) sessions */
 #define ST_SCH_MAX_TX_AUDIO_SESSIONS (512) /* max audio tx sessions per sch lcore */
 #define ST_TX_AUDIO_SESSIONS_RING_SIZE (ST_SCH_MAX_TX_AUDIO_SESSIONS * 2)
-#define ST_SCH_MAX_RX_AUDIO_SESSIONS (512 * 2) /* max audio rx sessions per sch lcore */
+#define ST_SCH_MAX_RX_AUDIO_SESSIONS (256) /* max audio rx sessions per sch lcore */
 
 /* max tx/rx anc(st_40) sessions */
 #define ST_MAX_TX_ANC_SESSIONS (180)
