@@ -44,14 +44,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef __GST_MTL_TX_SINK_H__
-#define __GST_MTL_TX_SINK_H__
+#ifndef __GST_MTL_ST20P_RX_H__
+#define __GST_MTL_ST20P_RX_H__
 
-#include <arpa/inet.h>
-#include <gst/gst.h>
-#include <gst/video/video.h>
-#include <mtl/mtl_api.h>
-#include <mtl/st_pipeline_api.h>
+#include "gst_mtl_common.h"
 
 G_BEGIN_DECLS
 
@@ -63,25 +59,10 @@ G_BEGIN_DECLS
 #define NS_PER_S (1000 * NS_PER_MS)
 #endif
 
-#define GST_TYPE_MTL_TX_SINK (gst_mtltxsink_get_type())
-G_DECLARE_FINAL_TYPE(GstMtlTxSink, gst_mtltxsink, GST, MTL_TX_SINK, GstVideoSink)
+#define GST_TYPE_MTL_ST20P_RX (gst_mtl_st20p_rx_get_type())
+G_DECLARE_FINAL_TYPE(Gst_Mtl_St20p_Rx, gst_mtl_st20p_rx, GST, MTL_ST20P_RX, GstVideoSink)
 
-typedef struct StDevArgs {
-  gchar port[MTL_PORT_MAX_LEN];
-  gchar local_ip_string[MTL_PORT_MAX_LEN];
-  gint tx_queues_cnt[MTL_PORT_MAX];
-  gint rx_queues_cnt[MTL_PORT_MAX];
-  gchar dma_dev[MTL_PORT_MAX_LEN];
-} StDevArgs;
-
-typedef struct StTxSessionPortArgs {
-  gchar tx_ip_string[MTL_PORT_MAX_LEN];
-  gchar port[MTL_PORT_MAX_LEN];
-  gint udp_port;
-  gint payload_type;
-} StTxSessionPortArgs;
-
-struct _GstMtlTxSink {
+struct _Gst_Mtl_St20p_Rx {
   GstVideoSink element;
   GstElement* child;
   gboolean silent;
@@ -112,4 +93,4 @@ struct _GstMtlTxSink {
 
 G_END_DECLS
 
-#endif /* __GST_MTL_TX_SINK_H__ */
+#endif /* __GST_MTL_ST20P_RX_H__ */
