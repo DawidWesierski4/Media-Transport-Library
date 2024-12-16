@@ -133,43 +133,6 @@ static GstFlowReturn gst_mtl_st20p_tx_chain(GstPad* pad, GstObject* parent, GstB
 static gboolean gst_mtl_st20p_tx_start(GstBaseSink* bsink);
 static gboolean gst_mtl_st20p_tx_stop(GstBaseSink* bsink);
 
-static gboolean gst_mtl_st20p_tx_parse_fps_code(gint fps_code, enum st_fps* fps);
-
-// TODO add support for the partial fps
-static gboolean gst_mtl_st20p_tx_parse_fps(GstVideoInfo* info, enum st_fps* fps) {
-  gint fps_div;
-  if (info->fps_n <= 0 || info->fps_d <= 0) {
-    return FALSE;
-  }
-
-  fps_div = info->fps_n / info->fps_d;
-
-  switch (fps_div) {
-    case 24:
-      *fps = ST_FPS_P24;
-      break;
-    case 25:
-      *fps = ST_FPS_P25;
-      break;
-    case 30:
-      *fps = ST_FPS_P30;
-      break;
-    case 50:
-      *fps = ST_FPS_P50;
-      break;
-    case 60:
-      *fps = ST_FPS_P60;
-      break;
-    case 120:
-      *fps = ST_FPS_P120;
-      break;
-    default:
-      return FALSE;
-  }
-
-  return TRUE;
-}
-
 static void gst_mtl_st20p_tx_class_init(Gst_Mtl_St20p_TxClass* klass) {
   GObjectClass* gobject_class;
   GstElementClass* gstelement_class;
@@ -469,17 +432,17 @@ static gboolean gst_mtl_st20p_tx_session_create(Gst_Mtl_St20p_Tx* sink, GstCaps*
     return FALSE;
   }
 
-  if (!gst_mtl_parse_input_fmt(info, &ops_tx.input_fmt)) {
+  if (!gst_mtl_common_parse_input_fmt(info, &ops_tx.input_fmt)) {
     GST_ERROR("Failed to parse input format");
     return FALSE;
   }
 
   if (sink->framerate) {
-    if (!gst_mtl_st20p_tx_parse_fps_code(sink->framerate, &ops_tx.fps)) {
+    if (!gst_mtl_common_parse_fps_code(sink->framerate, &ops_tx.fps)) {
       GST_ERROR("Failed to parse custom ops_tx fps code %d", sink->framerate);
       return FALSE;
     }
-  } else if (!gst_mtl_st20p_tx_parse_fps(info, &ops_tx.fps)) {
+  } else if (!gst_mtl_common_parse_fps(info, &ops_tx.fps)) {
     GST_ERROR("Failed to parse fps");
     return FALSE;
   }

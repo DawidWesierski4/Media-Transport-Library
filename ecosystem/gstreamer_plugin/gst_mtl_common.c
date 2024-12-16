@@ -8,7 +8,7 @@
 
 #include "gst_mtl_common.h"
 
-static gboolean gst_mtl_parse_input_fmt(GstVideoInfo* info,
+gboolean gst_mtl_common_parse_input_fmt(GstVideoInfo* info,
                                               enum st_frame_fmt* fmt) {
   GstVideoFormatInfo* finfo = info->finfo;
 
@@ -23,7 +23,7 @@ static gboolean gst_mtl_parse_input_fmt(GstVideoInfo* info,
   return TRUE;
 }
 
-static gboolean gst_mtl_parse_fps_code(gint fps_code, enum st_fps* fps) {
+gboolean gst_mtl_common_parse_fps_code(gint fps_code, enum st_fps* fps) {
   if (!fps) {
     GST_ERROR("Invalid fps pointer");
     return FALSE;
@@ -66,5 +66,39 @@ static gboolean gst_mtl_parse_fps_code(gint fps_code, enum st_fps* fps) {
     default:
       return FALSE;
   }
+  return TRUE;
+}
+
+gboolean gst_mtl_common_parse_fps(GstVideoInfo* info, enum st_fps* fps) {
+  gint fps_div;
+  if (info->fps_n <= 0 || info->fps_d <= 0) {
+    return FALSE;
+  }
+
+  fps_div = info->fps_n / info->fps_d;
+
+  switch (fps_div) {
+    case 24:
+      *fps = ST_FPS_P24;
+      break;
+    case 25:
+      *fps = ST_FPS_P25;
+      break;
+    case 30:
+      *fps = ST_FPS_P30;
+      break;
+    case 50:
+      *fps = ST_FPS_P50;
+      break;
+    case 60:
+      *fps = ST_FPS_P60;
+      break;
+    case 120:
+      *fps = ST_FPS_P120;
+      break;
+    default:
+      return FALSE;
+  }
+
   return TRUE;
 }
