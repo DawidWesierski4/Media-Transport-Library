@@ -70,7 +70,7 @@ struct _Gst_Mtl_St20p_Rx {
   /* arguments for imtl initialization device */
   StDevArgs devArgs;
   /* arguments for imtl rx session */
-  StRxSessionPortArgs portArgs;
+  SessionPortArgs portArgs;
 
   /* arguments for session */
   guint framebuffer_num;

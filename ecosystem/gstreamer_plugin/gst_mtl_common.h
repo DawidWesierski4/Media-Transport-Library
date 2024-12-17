@@ -19,19 +19,12 @@ typedef struct StDevArgs {
   gchar dma_dev[MTL_PORT_MAX_LEN];
 } StDevArgs;
 
-typedef struct StTxSessionPortArgs {
-  gchar tx_ip_string[MTL_PORT_MAX_LEN];
+typedef struct SessionPortArgs {
+  gchar session_ip_string[MTL_PORT_MAX_LEN];
   gchar port[MTL_PORT_MAX_LEN];
   gint udp_port;
   gint payload_type;
-} StTxSessionPortArgs;
-
-typedef struct StRxSessionPortArgs {
-  gchar sip[MTL_PORT_MAX_LEN];
-  gchar port[MTL_PORT_MAX_LEN];
-  gint udp_port;
-  gint payload_type;
-} StRxSessionPortArgs;
+} SessionPortArgs;
 
 gboolean gst_mtl_common_parse_input_fmt(GstVideoInfo* info, enum st_frame_fmt* fmt);
 gboolean gst_mtl_common_parse_fps(GstVideoInfo* info, enum st_fps* fps);

@@ -57,7 +57,7 @@ gst_mtl_st20p_rx_sources = [
 ]
 
 gst_mtl_st20p_rx = library('gstmtl_st20p_rx',
-  gst_mtl_common_sources + gst_mtl_st20p_tx_sources,
+  gst_mtl_common_sources + gst_mtl_st20p_rx_sources,
   dependencies : [gst_dep, gstbase_dep, gstreamer_video_dep, mtl_dep],
   install : true,
   install_dir : plugins_install_dir,

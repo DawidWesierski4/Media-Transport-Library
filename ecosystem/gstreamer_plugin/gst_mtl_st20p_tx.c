@@ -329,7 +329,7 @@ static void gst_mtl_st20p_tx_set_property(GObject* object, guint prop_id,
       strncpy(self->portArgs.port, g_value_get_string(value), MTL_PORT_MAX_LEN);
       break;
     case PROP_TX_PORT_IP:
-      strncpy(self->portArgs.tx_ip_string, g_value_get_string(value), MTL_PORT_MAX_LEN);
+      strncpy(self->portArgs.session_ip_string, g_value_get_string(value), MTL_PORT_MAX_LEN);
       break;
     case PROP_TX_PORT_UDP_PORT:
       self->portArgs.udp_port = g_value_get_uint(value);
@@ -373,7 +373,7 @@ static void gst_mtl_st20p_tx_get_property(GObject* object, guint prop_id, GValue
       g_value_set_string(value, sink->portArgs.port);
       break;
     case PROP_TX_PORT_IP:
-      g_value_set_string(value, sink->portArgs.tx_ip_string);
+      g_value_set_string(value, sink->portArgs.session_ip_string);
       break;
     case PROP_TX_PORT_UDP_PORT:
       g_value_set_uint(value, sink->portArgs.udp_port);
@@ -447,9 +447,9 @@ static gboolean gst_mtl_st20p_tx_session_create(Gst_Mtl_St20p_Tx* sink, GstCaps*
     return FALSE;
   }
 
-  if (inet_pton(AF_INET, sink->portArgs.tx_ip_string, ops_tx.port.dip_addr[MTL_PORT_P]) !=
+  if (inet_pton(AF_INET, sink->portArgs.session_ip_string, ops_tx.port.dip_addr[MTL_PORT_P]) !=
       1) {
-    GST_ERROR("Invalid destination IP address: %s", sink->portArgs.tx_ip_string);
+    GST_ERROR("Invalid destination IP address: %s", sink->portArgs.session_ip_string);
     return FALSE;
   }
 

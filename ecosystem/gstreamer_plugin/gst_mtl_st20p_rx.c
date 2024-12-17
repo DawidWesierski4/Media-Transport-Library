@@ -328,7 +328,7 @@ static void gst_mtl_st20p_rx_set_property(GObject* object, guint prop_id,
       strncpy(self->portArgs.port, g_value_get_string(value), MTL_PORT_MAX_LEN);
       break;
     case PROP_RX_PORT_IP:
-      strncpy(self->portArgs.rx_ip_string, g_value_get_string(value), MTL_PORT_MAX_LEN);
+      strncpy(self->portArgs.session_ip_string, g_value_get_string(value), MTL_PORT_MAX_LEN);
       break;
     case PROP_RX_PORT_UDP_PORT:
       self->portArgs.udp_port = g_value_get_uint(value);
