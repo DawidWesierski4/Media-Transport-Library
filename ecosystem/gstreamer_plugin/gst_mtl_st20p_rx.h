@@ -48,26 +48,20 @@
 #define __GST_MTL_ST20P_RX_H__
 
 #include "gst_mtl_common.h"
+#include <gst/base/gstbasesrc.h>
 
 G_BEGIN_DECLS
 
-#ifndef NS_PER_MS
-#define NS_PER_MS (1000 * 1000)
-#endif
-
-#ifndef NS_PER_S
-#define NS_PER_S (1000 * NS_PER_MS)
-#endif
-
 #define GST_TYPE_MTL_ST20P_RX (gst_mtl_st20p_rx_get_type())
-G_DECLARE_FINAL_TYPE(Gst_Mtl_St20p_Rx, gst_mtl_st20p_rx, GST, MTL_ST20P_RX, GstVideoSink)
+G_DECLARE_FINAL_TYPE(Gst_Mtl_St20p_Rx, gst_mtl_st20p_rx, GST, MTL_ST20P_RX, GstBaseSrc)
 
 struct _Gst_Mtl_St20p_Rx {
-  GstVideoSink element;
-  GstElement* child;
+  GstBaseSrc element;
+
+  /*< private >*/
   gboolean silent;
   mtl_handle mtl_lib_handle;
-  st20p_tx_handle tx_handle;
+  st20p_rx_handle rx_handle;
 
   /* arguments for incomplete frame buffers */
   guint retry_frame;
@@ -75,8 +69,8 @@ struct _Gst_Mtl_St20p_Rx {
 
   /* arguments for imtl initialization device */
   StDevArgs devArgs;
-  /* arguments for imtl tx session */
-  StTxSessionPortArgs portArgs;
+  /* arguments for imtl rx session */
+  StRxSessionPortArgs portArgs;
 
   /* arguments for session */
   guint framebuffer_num;
