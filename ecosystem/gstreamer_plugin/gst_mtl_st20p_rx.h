@@ -59,6 +59,7 @@ struct _Gst_Mtl_St20p_Rx {
   GstBaseSrc element;
 
   /*< private >*/
+  struct st20p_rx_ops ops_rx;
   gboolean silent;
   mtl_handle mtl_lib_handle;
   st20p_rx_handle rx_handle;
