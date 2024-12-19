@@ -432,7 +432,7 @@ static gboolean gst_mtl_st20p_tx_session_create(Gst_Mtl_St20p_Tx* sink, GstCaps*
     return FALSE;
   }
 
-  if (!gst_mtl_common_parse_input_fmt(info, &ops_tx.input_fmt)) {
+  if (!gst_mtl_common_parse_input_finfo(info->finfo, &ops_tx.input_fmt)) {
     GST_ERROR("Failed to parse input format");
     return FALSE;
   }

@@ -26,9 +26,9 @@ typedef struct SessionPortArgs {
   gint payload_type;
 } SessionPortArgs;
 
-gboolean gst_mtl_common_parse_input_fmt(GstVideoInfo* info, enum st_frame_fmt* fmt);
+gboolean gst_mtl_common_parse_input_finfo(const GstVideoFormatInfo *finfo, enum st_frame_fmt* fmt);
 gboolean gst_mtl_common_parse_fps(GstVideoInfo* info, enum st_fps* fps);
 gboolean gst_mtl_common_parse_fps_code(gint fps_code, enum st_fps* fps);
-
+gboolean gst_mtl_common_parse_pixel_format(const char* format, enum st_frame_fmt* fmt);
 
 #endif /* __GST_MTL_COMMON_H__ */

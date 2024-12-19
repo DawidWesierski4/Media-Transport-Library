@@ -8,9 +8,8 @@
 
 #include "gst_mtl_common.h"
 
-gboolean gst_mtl_common_parse_input_fmt(GstVideoInfo* info,
+gboolean gst_mtl_common_parse_input_finfo(const GstVideoFormatInfo *finfo,
                                               enum st_frame_fmt* fmt) {
-  GstVideoFormatInfo* finfo = info->finfo;
 
   if (finfo->format == GST_VIDEO_FORMAT_v210) {
     *fmt = ST_FRAME_FMT_V210;
@@ -98,6 +97,66 @@ gboolean gst_mtl_common_parse_fps(GstVideoInfo* info, enum st_fps* fps) {
       break;
     default:
       return FALSE;
+  }
+
+  return TRUE;
+}
+
+
+/* includes all formats supported by the library for future support */
+gboolean gst_mtl_common_parse_pixel_format(const char* format, enum st_frame_fmt* fmt) {
+  if (!fmt || !format) {
+    GST_ERROR("%s, invalid input\n", __func__);
+    return FALSE;
+  }
+
+  if (strcmp(format, "YUV422PLANAR10LE") == 0) {
+    *fmt = ST_FRAME_FMT_YUV422PLANAR10LE;
+  } else if (strcmp(format, "V210") == 0) {
+    *fmt = ST_FRAME_FMT_V210;
+  } else if (strcmp(format, "Y210") == 0) {
+    *fmt = ST_FRAME_FMT_Y210;
+  } else if (strcmp(format, "YUV422PLANAR8") == 0) {
+    *fmt = ST_FRAME_FMT_YUV422PLANAR8;
+  } else if (strcmp(format, "UYVY") == 0) {
+    *fmt = ST_FRAME_FMT_UYVY;
+  } else if (strcmp(format, "YUV422RFC4175PG2BE10") == 0) {
+    *fmt = ST_FRAME_FMT_YUV422RFC4175PG2BE10;
+  } else if (strcmp(format, "YUV422PLANAR12LE") == 0) {
+    *fmt = ST_FRAME_FMT_YUV422PLANAR12LE;
+  } else if (strcmp(format, "YUV422RFC4175PG2BE12") == 0) {
+    *fmt = ST_FRAME_FMT_YUV422RFC4175PG2BE12;
+  } else if (strcmp(format, "YUV444PLANAR10LE") == 0) {
+    *fmt = ST_FRAME_FMT_YUV444PLANAR10LE;
+  } else if (strcmp(format, "YUV444RFC4175PG4BE10") == 0) {
+    *fmt = ST_FRAME_FMT_YUV444RFC4175PG4BE10;
+  } else if (strcmp(format, "YUV444PLANAR12LE") == 0) {
+    *fmt = ST_FRAME_FMT_YUV444PLANAR12LE;
+  } else if (strcmp(format, "YUV444RFC4175PG2BE12") == 0) {
+    *fmt = ST_FRAME_FMT_YUV444RFC4175PG2BE12;
+  } else if (strcmp(format, "YUV420CUSTOM8") == 0) {
+    *fmt = ST_FRAME_FMT_YUV420CUSTOM8;
+  } else if (strcmp(format, "YUV422CUSTOM8") == 0) {
+    *fmt = ST_FRAME_FMT_YUV422CUSTOM8;
+  } else if (strcmp(format, "YUV420PLANAR8") == 0) {
+    *fmt = ST_FRAME_FMT_YUV420PLANAR8;
+  } else if (strcmp(format, "ARGB") == 0) {
+    *fmt = ST_FRAME_FMT_ARGB;
+  } else if (strcmp(format, "BGRA") == 0) {
+    *fmt = ST_FRAME_FMT_BGRA;
+  } else if (strcmp(format, "RGB8") == 0) {
+    *fmt = ST_FRAME_FMT_RGB8;
+  } else if (strcmp(format, "GBRPLANAR10LE") == 0) {
+    *fmt = ST_FRAME_FMT_GBRPLANAR10LE;
+  } else if (strcmp(format, "RGBRFC4175PG4BE10") == 0) {
+    *fmt = ST_FRAME_FMT_RGBRFC4175PG4BE10;
+  } else if (strcmp(format, "GBRPLANAR12LE") == 0) {
+    *fmt = ST_FRAME_FMT_GBRPLANAR12LE;
+  } else if (strcmp(format, "RGBRFC4175PG2BE12") == 0) {
+    *fmt = ST_FRAME_FMT_RGBRFC4175PG2BE12;
+  } else {
+    GST_ERROR("invalid output format %s\n", format);
+    return FALSE;
   }
 
   return TRUE;

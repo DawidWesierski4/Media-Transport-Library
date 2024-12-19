@@ -57,6 +57,7 @@ G_DECLARE_FINAL_TYPE(Gst_Mtl_St20p_Rx, gst_mtl_st20p_rx, GST, MTL_ST20P_RX, GstB
 
 struct _Gst_Mtl_St20p_Rx {
   GstBaseSrc element;
+  GstBuffer *buffer;
 
   /*< private >*/
   struct st20p_rx_ops ops_rx;
@@ -74,6 +75,10 @@ struct _Gst_Mtl_St20p_Rx {
   SessionPortArgs portArgs;
 
   /* arguments for session */
+  guint width;
+  guint height;
+  gboolean interlaced;
+  gchar *pixel_format;
   guint framebuffer_num;
   guint framerate;
 
@@ -82,7 +87,7 @@ struct _Gst_Mtl_St20p_Rx {
   gboolean gpu_direct_enabled;
   gint gpu_driver_index;
   gint gpu_device_index;
-  gboolean* gpu_context;
+  guint8* gpu_context;
 #endif /* MTL_GPU_DIRECT_ENABLED */
 };
 
