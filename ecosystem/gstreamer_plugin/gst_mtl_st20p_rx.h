@@ -78,7 +78,7 @@ struct _Gst_Mtl_St20p_Rx {
   guint width;
   guint height;
   gboolean interlaced;
-  gchar *pixel_format;
+  gchar pixel_format[MTL_PORT_MAX_LEN];
   guint framebuffer_num;
   guint framerate;
 

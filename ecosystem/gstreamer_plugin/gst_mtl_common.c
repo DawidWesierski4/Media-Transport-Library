@@ -29,42 +29,43 @@ gboolean gst_mtl_common_parse_fps_code(gint fps_code, enum st_fps* fps) {
   }
 
   switch (fps_code) {
-    case 120:
+    case GST_MTL_SUPPORTED_FPS_120:
       *fps = ST_FPS_P120;
       break;
-    case 11988:
+    case GST_MTL_SUPPORTED_FPS_119_88:
       *fps = ST_FPS_P119_88;
       break;
-    case 100:
+    case GST_MTL_SUPPORTED_FPS_100:
       *fps = ST_FPS_P100;
       break;
-    case 60:
+    case GST_MTL_SUPPORTED_FPS_60:
       *fps = ST_FPS_P60;
       break;
-    case 5994:
+    case GST_MTL_SUPPORTED_FPS_59_94:
       *fps = ST_FPS_P59_94;
       break;
-    case 50:
+    case GST_MTL_SUPPORTED_FPS_50:
       *fps = ST_FPS_P50;
       break;
-    case 30:
+    case GST_MTL_SUPPORTED_FPS_30:
       *fps = ST_FPS_P30;
       break;
-    case 2997:
+    case GST_MTL_SUPPORTED_FPS_29_97:
       *fps = ST_FPS_P29_97;
       break;
-    case 25:
+    case GST_MTL_SUPPORTED_FPS_25:
       *fps = ST_FPS_P25;
       break;
-    case 24:
+    case GST_MTL_SUPPORTED_FPS_24:
       *fps = ST_FPS_P24;
       break;
-    case 2398:
+    case GST_MTL_SUPPORTED_FPS_23_98:
       *fps = ST_FPS_P23_98;
       break;
     default:
       return FALSE;
   }
+
   return TRUE;
 }
 
@@ -112,7 +113,7 @@ gboolean gst_mtl_common_parse_pixel_format(const char* format, enum st_frame_fmt
 
   if (strcmp(format, "YUV422PLANAR10LE") == 0) {
     *fmt = ST_FRAME_FMT_YUV422PLANAR10LE;
-  } else if (strcmp(format, "V210") == 0) {
+  } else if (strcmp(format, "v210") == 0) {
     *fmt = ST_FRAME_FMT_V210;
   } else if (strcmp(format, "Y210") == 0) {
     *fmt = ST_FRAME_FMT_Y210;

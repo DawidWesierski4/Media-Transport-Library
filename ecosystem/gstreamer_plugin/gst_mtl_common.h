@@ -11,6 +11,20 @@
 #include <mtl/mtl_api.h>
 #include <mtl/st_pipeline_api.h>
 
+enum gst_mtl_supported_fps {
+  GST_MTL_SUPPORTED_FPS_23_98 = 2398,
+  GST_MTL_SUPPORTED_FPS_24 = 24,
+  GST_MTL_SUPPORTED_FPS_25 = 25,
+  GST_MTL_SUPPORTED_FPS_29_97 = 2997,
+  GST_MTL_SUPPORTED_FPS_30 = 30,
+  GST_MTL_SUPPORTED_FPS_50 = 50,
+  GST_MTL_SUPPORTED_FPS_59_94 = 5994,
+  GST_MTL_SUPPORTED_FPS_60 = 60,
+  GST_MTL_SUPPORTED_FPS_100 = 100,
+  GST_MTL_SUPPORTED_FPS_119_88 = 11988,
+  GST_MTL_SUPPORTED_FPS_120 = 120
+};
+
 typedef struct StDevArgs {
   gchar port[MTL_PORT_MAX_LEN];
   gchar local_ip_string[MTL_PORT_MAX_LEN];
