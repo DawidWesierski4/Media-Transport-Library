@@ -30,6 +30,7 @@ inc_dirs = include_directories(
 )
 
 gstreamer_video_dep = dependency('gstreamer-video-1.0')
+gstreamer_audio_dep = dependency('gstreamer-audio-1.0')
 mtl_dep             = dependency('mtl')
 
 gst_mtl_common_sources = [
@@ -65,4 +66,18 @@ gst_mtl_st20p_rx = library('gstmtl_st20p_rx',
   c_args: plugin_c_args
 )
 
+
+# mtl_st30p_rx Plugin
+gst_mtl_st30p_rx_sources = [
+  'gst_mtl_st30p_rx.c'
+]
+
+gst_mtl_st30p_rx = library('gstmtl_st30p_rx',
+  gst_mtl_common_sources + gst_mtl_st30p_rx_sources,
+  dependencies : [gst_dep, gstbase_dep, gstreamer_audio_dep, mtl_dep],
+  install : true,
+  install_dir : plugins_install_dir,
+  include_directories: inc_dirs,
+  c_args: plugin_c_args
+)
 
