@@ -429,11 +429,8 @@ static void gst_mtl_st30p_rx_set_property(GObject* object, guint prop_id,
     case PROP_RX_PORT_RX_QUEUES:
       self->devArgs.rx_queues_cnt[MTL_PORT_P] = g_value_get_uint(value);
       break;
-    case PROP_RX_FRAMERATE:
-      self->channel = g_value_get_uint(value);
-      break;
     case PROP_RX_FRAMEBUFF_NUM:
-      self->sampling = g_value_get_uint(value);
+      self->framebuffer_num = g_value_get_uint(value);
       break;
     case PROP_RX_CHANNEL:
       self->channel = g_value_get_uint(value);
