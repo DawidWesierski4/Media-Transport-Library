@@ -1,0 +1,99 @@
+  *-network:0
+       description: Ethernet interface
+       product: Ethernet Controller E810-C for QSFP
+       vendor: Intel Corporation
+       physical id: 0
+       bus info: pci@0000:4b:00.0
+       logical name: ens785f0np0
+       version: 02
+       serial: 6c:fe:54:91:69:10
+       capacity: 25Gbit/s
+       width: 64 bits
+       clock: 33MHz
+       capabilities: bus_master cap_list rom ethernet physical fibre 25000bx-fd autonegotiation
+       configuration: autonegotiation=on broadcast=yes driver=ice driverversion=Kahawai_1.14.9_20240613 duplex=full firmware=4.60 0x8001e8b1 1.3682.0 latency=0 link=yes multicast=yes
+       resources: iomemory:38bf0-38bef iomemory:38bf0-38bef irq:18 memory:38bffa000000-38bffbffffff memory:38bffe020000-38bffe02ffff memory:b1000000-b10fffff memory:38bffd020000-38bffe01ffff memory:38bffe230000-38bffe42ffff
+  *-network:1
+       description: Ethernet interface
+       product: Ethernet Controller E810-C for QSFP
+       vendor: Intel Corporation
+       physical id: 0.1
+       bus info: pci@0000:4b:00.1
+       logical name: ens785f1np1
+       version: 02
+       serial: 6c:fe:54:91:69:11
+       capacity: 25Gbit/s
+       width: 64 bits
+       clock: 33MHz
+       capabilities: bus_master cap_list rom ethernet physical fibre 25000bx-fd autonegotiation
+       configuration: autonegotiation=on broadcast=yes driver=ice driverversion=Kahawai_1.14.9_20240613 duplex=full firmware=4.60 0x8001e8b1 1.3682.0 latency=0 link=yes multicast=yes
+       resources: iomemory:38bf0-38bef iomemory:38bf0-38bef irq:18 memory:38bff8000000-38bff9ffffff memory:38bffd000000-38bffd00ffff memory:b1100000-b11fffff memory:38bffc000000-38bffcffffff memory:38bffe030000-38bffe22ffff
+  *-network:0
+       description: Ethernet interface
+       product: Ethernet Controller E810-C for QSFP
+       vendor: Intel Corporation
+       physical id: 0
+       bus info: pci@0000:b1:00.0
+       logical name: ens801f0np0
+       version: 01
+       serial: 40:a6:b7:0a:7a:60
+       capacity: 25Gbit/s
+       width: 64 bits
+       clock: 33MHz
+       capabilities: bus_master cap_list rom ethernet physical fibre 25000bx-fd autonegotiation
+       configuration: autonegotiation=on broadcast=yes driver=ice driverversion=Kahawai_1.14.9_20240613 duplex=full firmware=4.60 0x8001e8dc 1.3682.0 latency=0 link=yes multicast=yes
+       resources: iomemory:39ff0-39fef iomemory:39ff0-39fef irq:18 memory:39fffa000000-39fffbffffff memory:39fffe020000-39fffe02ffff memory:dbc00000-dbcfffff memory:39fffd020000-39fffe01ffff memory:39fffe230000-39fffe42ffff
+  *-network:1
+       description: Ethernet interface
+       product: Ethernet Controller E810-C for QSFP
+       vendor: Intel Corporation
+       physical id: 0.1
+       bus info: pci@0000:b1:00.1
+       logical name: ens801f1np1
+       version: 01
+       serial: 40:a6:b7:0a:7a:61
+       capacity: 25Gbit/s
+       width: 64 bits
+       clock: 33MHz
+       capabilities: bus_master cap_list rom ethernet physical fibre 25000bx-fd autonegotiation
+       configuration: autonegotiation=on broadcast=yes driver=ice driverversion=Kahawai_1.14.9_20240613 duplex=full firmware=4.60 0x8001e8dc 1.3682.0 latency=0 link=yes multicast=yes
+       resources: iomemory:39ff0-39fef iomemory:39ff0-39fef irq:18 memory:39fff8000000-39fff9ffffff memory:39fffd000000-39fffd00ffff memory:dbd00000-dbdfffff memory:39fffc000000-39fffcffffff memory:39fffe030000-39fffe22ffff
+  *-network:0
+       description: Ethernet interface
+       product: Ethernet Controller X550
+       vendor: Intel Corporation
+       physical id: 0
+       bus info: pci@0000:ca:00.0
+       logical name: ens802f0
+       version: 01
+       serial: b4:96:91:39:ee:ec
+       size: 10Gbit/s
+       capacity: 10Gbit/s
+       width: 64 bits
+       clock: 33MHz
+       capabilities: bus_master cap_list rom ethernet physical tp 100bt-fd 1000bt-fd 2500bt-fd 5000bt-fd 10000bt-fd autonegotiation
+       configuration: autonegotiation=on broadcast=yes driver=ixgbe driverversion=5.14.0-503.23.1.el9_5.x86_64 duplex=full firmware=0x80000a02, 1.1276.0 ip=10.123.235.20 latency=0 link=yes multicast=yes port=twisted pair speed=10Gbit/s
+       resources: irq:19 memory:e6c00000-e6ffffff memory:e7004000-e7007fff memory:e7080000-e70fffff memory:e7100000-e71fffff memory:e7200000-e72fffff
+  *-network:1
+       description: Ethernet interface
+       product: Ethernet Controller X550
+       vendor: Intel Corporation
+       physical id: 0.1
+       bus info: pci@0000:ca:00.1
+       logical name: ens802f1
+       version: 01
+       serial: b4:96:91:39:ee:ed
+       capacity: 10Gbit/s
+       width: 64 bits
+       clock: 33MHz
+       capabilities: bus_master cap_list rom ethernet physical tp 100bt-fd 1000bt-fd 2500bt-fd 5000bt-fd 10000bt-fd autonegotiation
+       configuration: autonegotiation=on broadcast=yes driver=ixgbe driverversion=5.14.0-503.23.1.el9_5.x86_64 firmware=0x80000a02, 1.1276.0 latency=0 link=no multicast=yes port=twisted pair
+       resources: irq:18 memory:e6800000-e6bfffff memory:e7000000-e7003fff memory:e7300000-e73fffff memory:e7400000-e74fffff
+  *-network
+       description: Ethernet interface
+       physical id: 5
+       bus info: usb@1:2.1
+       logical name: enp0s20f0u2u1
+       serial: b0:3a:f6:1a:d7:8a
+       capabilities: ethernet physical
+       configuration: autonegotiation=off broadcast=yes driver=rndis_host driverversion=5.14.0-503.23.1.el9_5.x86_64 duplex=half firmware=RNDIS device link=yes multicast=yes port=twisted pair
