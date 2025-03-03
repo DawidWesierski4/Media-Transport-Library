@@ -5,6 +5,10 @@
 #ifndef _MT_LIB_UTIL_HEAD_H_
 #define _MT_LIB_UTIL_HEAD_H_
 
+#define MT_UTIL_IS_OUT_OF_RANGE (value, reference, max_difference) \
+  (((value) < ((reference) - (max_difference))) || \
+   ((value) > ((reference) + (max_difference))))
+
 #include "mt_main.h"
 
 static inline bool mt_rtp_len_valid(uint16_t len) {

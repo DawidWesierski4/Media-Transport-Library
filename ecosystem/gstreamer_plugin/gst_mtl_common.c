@@ -422,6 +422,7 @@ mtl_handle gst_mtl_common_init_handle(StDevArgs* devArgs, guint* log_level,
     return NULL;
   }
   mtl_init_params.flags |= MTL_FLAG_BIND_NUMA;
+  mtl_init_params.flags |= MTL_FLAG_PTP_ENABLE;
 
   /*
    * Log levels range from 1 to LOG_LEVEL_MAX.

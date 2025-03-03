@@ -264,7 +264,7 @@ MTL support two type of PTP client settings, the built-in PTP client implementat
 
 #### 5.4.1. Built-in PTP
 
-This project includes a built-in support for the PTP client protocol, which is also based on the hardware offload timesync feature. This combination allows for achieving a PTP time clock source with an accuracy of approximately 30ns.
+Generally the recommended configuration for ptp is to synchronize your system clock with ptp grandmaster and let the MTL library use the system time (this is enabled by default). But mtl also supports a built-in support for the PTP client protocol, which is also based on the hardware offload timesync feature. This combination allows for achieving a PTP time clock source with an accuracy of approximately 30ns.
 
 To enable this feature in the RxTxApp sample application, use the `--ptp` argument. The control for the built-in PTP feature is the `MTL_FLAG_PTP_ENABLE` flag in the `mtl_init_params` structure.
 

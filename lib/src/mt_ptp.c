@@ -25,6 +25,11 @@
 #define MT_PTP_DEFAULT_KP 5e-10 /* to be tuned */
 #define MT_PTP_DEFAULT_KI 1e-10 /* to be tuned */
 
+/* how many continuous errors can we have with VF's */
+#define MT_PTP_NO_TIMESYNC_DELTA_ERROR_COUNT_THRESHOLD (20)
+/* max 1us delta */
+#define MT_PTP_NO_TIMESYNC_DELTA_THRESHOLD (1000)
+
 #ifdef WINDOWSENV
 // clang-format off
 #define be64toh(x) \
@@ -637,141 +642,66 @@ static void ptp_sync_timeout_handler(void* param) {
   }
 }
 
-static int ptp_parse_result(struct mt_ptp_impl* ptp) {
-  struct mtl_main_impl* impl = ptp->impl;
-  int64_t t2_t1_delta = ((int64_t)ptp->t2 - ptp->t1);
-  int64_t t4_t3_delta = ((int64_t)ptp->t4 - ptp->t3);
+static void ptp_parse_deltas_without_timesync(struct mt_ptp_impl* ptp, int64_t t2_t1_delta, int64_t t4_t3_delta) {
+  if (ptp->expect_t2_t1_delta_avg) { /* check t2_t1_delta */
+    if (MT_LIB_UTIL_OUT_OF_RANGE(t2_t1_delta, ptp->expect_t2_t1_delta_avg, MT_PTP_NO_TIMESYNC_DELTA_THRESHOLD)) {
+      ptp->t2_t1_delta_continuous_err++;
+      if (ptp->t2_t1_delta_continuous_err > 20) {
+        err("%s(%d), t2_t1_delta %" PRId64 ", reset as too many continuous errors\n",
+            __func__, ptp->port, t2_t1_delta);
+      }
 
-  dbg("%s(%d), t1 %" PRIu64 " t2 %" PRIu64 " t3 %" PRIu64 " t4 %" PRIu64 "\n", __func__,
-      ptp->port, ptp->t1, ptp->t2, ptp->t3, ptp->t4);
-  dbg("%s(%d), t2-t1 delta %" PRId64 " t4-t3 delta %" PRIu64 "\n", __func__, ptp->port,
-      t2_t1_delta, t4_t3_delta);
-  if (ptp->calibrate_t2_t3) {
-    /* max 1us delta */
-    int32_t max_diff = 1000;
-    if (ptp->expect_t2_t1_delta_avg) { /* check t2_t1_delta */
-      if (t2_t1_delta < (ptp->expect_t2_t1_delta_avg - max_diff) ||
-          t2_t1_delta > (ptp->expect_t2_t1_delta_avg + max_diff)) {
-        ptp->t2_t1_delta_continuous_err++;
-        if (ptp->t2_t1_delta_continuous_err > 20) {
-          err("%s(%d), t2_t1_delta %" PRId64 ", reset as too many continuous errors\n",
-              __func__, ptp->port, t2_t1_delta);
-        }
-        t2_t1_delta = ptp->expect_t2_t1_delta_avg;
-        ptp->t2 = ptp->t1 + t2_t1_delta; /* update t2 */
-        ptp->stat_t2_t1_delta_calibrate++;
+      t2_t1_delta = ptp->expect_t2_t1_delta_avg;
+      ptp->t2 = ptp->t1 + t2_t1_delta; /* update t2 */
+      ptp->stat_t2_t1_delta_calibrate++;
 
-        if (ptp->t2_t1_delta_continuous_err > 20) {
-          ptp->expect_t2_t1_delta_avg = 0;
-          ptp->t2_t1_delta_continuous_err = 0;
-          ptp_expect_result_clear(ptp);
-        }
-      } else {
+      if (ptp->t2_t1_delta_continuous_err > MT_PTP_NO_TIMESYNC_DELTA_ERROR_COUNT_THRESHOLD) {
+        ptp->expect_t2_t1_delta_avg = 0;
         ptp->t2_t1_delta_continuous_err = 0;
+        ptp_expect_result_clear(ptp);
       }
-    }
-    if (ptp->expect_t4_t3_delta_avg) { /* check t4_t3_delta */
-      if (t4_t3_delta < (ptp->expect_t4_t3_delta_avg - max_diff) ||
-          t4_t3_delta > (ptp->expect_t4_t3_delta_avg + max_diff)) {
-        ptp->t4_t3_delta_continuous_err++;
-        if (ptp->t4_t3_delta_continuous_err > 20) {
-          err("%s(%d), t4_t3_delta %" PRId64 ", reset as too many continuous errors\n",
-              __func__, ptp->port, t4_t3_delta);
-        }
-        t4_t3_delta = ptp->expect_t4_t3_delta_avg;
-        ptp->t3 = ptp->t4 - t4_t3_delta; /* update t3 */
-        ptp->stat_t4_t3_delta_calibrate++;
 
-        if (ptp->t4_t3_delta_continuous_err > 20) {
-          ptp->expect_t4_t3_delta_avg = 0;
-          ptp->t4_t3_delta_continuous_err = 0;
-          ptp_expect_result_clear(ptp);
-        }
-      } else {
+    } else {
+      ptp->t2_t1_delta_continuous_err = 0;
+    }
+  }
+
+   /* check t4_t3_delta */
+  if (ptp->expect_t4_t3_delta_avg) {
+    if (MT_LIB_UTIL_OUT_OF_RANGE(t4_t3_delta, ptp->expect_t4_t3_delta_avg, MT_PTP_NO_TIMESYNC_DELTA_THRESHOLD)) {
+      ptp->t4_t3_delta_continuous_err++;
+      if (ptp->t4_t3_delta_continuous_err > 20) {
+        err("%s(%d), t4_t3_delta %" PRId64 ", reset as too many continuous errors\n",
+            __func__, ptp->port, t4_t3_delta);
+      }
+      t4_t3_delta = ptp->expect_t4_t3_delta_avg;
+      ptp->t3 = ptp->t4 - t4_t3_delta; /* update t3 */
+      ptp->stat_t4_t3_delta_calibrate++;
+
+      if (ptp->t4_t3_delta_continuous_err > 20) {
+        ptp->expect_t4_t3_delta_avg = 0;
         ptp->t4_t3_delta_continuous_err = 0;
+        ptp_expect_result_clear(ptp);
       }
+    } else {
+      ptp->t4_t3_delta_continuous_err = 0;
     }
   }
+}
 
-  int64_t delta = t4_t3_delta - t2_t1_delta;
-  int64_t path_delay = t2_t1_delta + t4_t3_delta;
-  uint64_t abs_delta, expect_delta;
 
-  delta /= 2;
+static void ptp_parse_sync_event(struct mt_ptp_impl* ptp, int64_t delta, int64_t correct_delta,
+                                 int64_t t2_t1_delta, int64_t t4_t3_delta) {
+  struct mtl_init_params* p = mt_get_user_params(ptp->impl);
+  struct mtl_ptp_sync_notify_meta meta;
 
-  path_delay /= 2;
-  abs_delta = labs(delta);
+  if (! p->ptp_sync_notify || (MTL_PORT_P != ptp->port))
+    return;
 
-  /* cancel the monitor */
-  rte_eal_alarm_cancel(ptp_sync_timeout_handler, ptp);
-  rte_eal_alarm_cancel(ptp_monitor_handler, ptp);
-  if (ptp->delta_result_cnt) {
-    expect_delta = abs(ptp->expect_result_avg) * (RTE_MIN(ptp->delta_result_err + 2, 5));
-    if (!expect_delta) {
-      expect_delta = ptp->delta_result_sum / ptp->delta_result_cnt * 2;
-      expect_delta = RTE_MAX(expect_delta, 100 * 1000); /* min 100us */
-    }
-    if (abs_delta > expect_delta) {
-#if MT_PTP_PRINT_ERR_RESULT
-      err("%s(%d), error abs_delta %" PRIu64 "\n", __func__, ptp->port, abs_delta);
-      err("%s(%d), t1 %" PRIu64 " t2 %" PRIu64 " t3 %" PRIu64 " t4 %" PRIu64 "\n",
-          __func__, ptp->port, ptp->t1, ptp->t2, ptp->t3, ptp->t4);
-#endif
-      ptp_t_result_clear(ptp);
-      ptp_expect_result_clear(ptp);
-      ptp->delta_result_err++;
-      ptp->stat_result_err++;
-      if (ptp->delta_result_err > 10) {
-        dbg("%s(%d), reset the result as too many errors\n", __func__, ptp->port);
-        ptp_result_reset(ptp);
-      }
-      ptp_sync_expect_result(ptp);
-#ifdef MTL_HAS_DPDK_TIMESYNC_ADJUST_FREQ
-      if (!ptp->phc2sys_active) return -EIO;
-#else
-      return -EIO;
-#endif
-    }
-  }
-  ptp->delta_result_err = 0;
+  meta.master_utc_offset = ptp->master_utc_offset;
+  meta.delta = delta;
+  p->ptp_sync_notify(p->priv, &meta);
 
-  /* measure frequency corrected delta */
-  int64_t correct_delta = ((int64_t)ptp->t4 - ptp_correct_ts(ptp, ptp->t3)) -
-                          ((int64_t)ptp_correct_ts(ptp, ptp->t2) - ptp->t1);
-  correct_delta /= 2;
-  dbg("%s(%d), correct_delta %" PRId64 "\n", __func__, ptp->port, correct_delta);
-  /* update correct delta and path delay result */
-  ptp->stat_correct_delta_min = RTE_MIN(correct_delta, ptp->stat_correct_delta_min);
-  ptp->stat_correct_delta_max = RTE_MAX(correct_delta, ptp->stat_correct_delta_max);
-  ptp->stat_correct_delta_cnt++;
-  ptp->stat_correct_delta_sum += labs(correct_delta);
-  ptp->stat_path_delay_min = RTE_MIN(path_delay, ptp->stat_path_delay_min);
-  ptp->stat_path_delay_max = RTE_MAX(path_delay, ptp->stat_path_delay_max);
-  ptp->stat_path_delay_cnt++;
-  ptp->stat_path_delay_sum += labs(path_delay);
-
-  if (ptp->use_pi && labs(correct_delta) < 1000) {
-    /* fine tune coefficient */
-    ptp_update_coefficient(ptp, correct_delta);
-    ptp->last_sync_ts = ptp_get_raw_time(ptp) + delta; /* approximation */
-  } else {
-    /* re-calculate coefficient */
-    ptp_calculate_coefficient(ptp, delta);
-  }
-
-  ptp_adjust_delta(ptp, delta, false);
-  MT_USDT_PTP_RESULT(ptp->port, delta, correct_delta);
-  ptp_t_result_clear(ptp);
-  ptp->connected = true;
-
-  /* notify the sync event if ptp_sync_notify is enabled */
-  struct mtl_init_params* p = mt_get_user_params(impl);
-  if (p->ptp_sync_notify && (MTL_PORT_P == ptp->port)) {
-    struct mtl_ptp_sync_notify_meta meta;
-    meta.master_utc_offset = ptp->master_utc_offset;
-    meta.delta = delta;
-    p->ptp_sync_notify(p->priv, &meta);
-  }
 
   if (ptp->delta_result_cnt > 10) {
     if (labs(delta) < 30000) {
@@ -805,6 +735,94 @@ static int ptp_parse_result(struct mt_ptp_impl* ptp) {
       ptp_expect_result_clear(ptp);
     }
   }
+}
+
+
+static int ptp_parse_result(struct mt_ptp_impl* ptp) {
+  uint64_t abs_delta, expect_delta;
+  int64_t delta, path_delay, correct_delta;
+  int64_t t2_t1_delta = ((int64_t)ptp->t2 - ptp->t1);
+  int64_t t4_t3_delta = ((int64_t)ptp->t4 - ptp->t3);
+
+  dbg("%s(%d), t1 %" PRIu64 " t2 %" PRIu64 " t3 %" PRIu64 " t4 %" PRIu64 "\n", __func__,
+      ptp->port, ptp->t1, ptp->t2, ptp->t3, ptp->t4);
+  dbg("%s(%d), t2-t1 delta %" PRId64 " t4-t3 delta %" PRIu64 "\n", __func__, ptp->port,
+      t2_t1_delta, t4_t3_delta);
+
+  if (ptp->no_timesync && ptp->calibrate_t2_t3) {
+    ptp_parse_deltas_without_timesync(ptp, t2_t1_delta, t4_t3_delta);
+  }
+
+  delta = (t4_t3_delta - t2_t1_delta) / 2;
+  path_delay = (t2_t1_delta + t4_t3_delta) / 2;
+  abs_delta = labs(delta);
+
+  /* cancel the monitor */
+  rte_eal_alarm_cancel(ptp_sync_timeout_handler, ptp);
+  rte_eal_alarm_cancel(ptp_monitor_handler, ptp);
+
+  if (ptp->delta_result_cnt) {
+    expect_delta = abs(ptp->expect_result_avg) * (RTE_MIN(ptp->delta_result_err + 2, 5));
+    if (!expect_delta) {
+      expect_delta = ptp->delta_result_sum / ptp->delta_result_cnt * 2;
+      expect_delta = RTE_MAX(expect_delta, 100 * 1000); /* min 100us */
+    }
+
+    if (abs_delta > expect_delta) {
+#if MT_PTP_PRINT_ERR_RESULT
+      err("%s(%d), error abs_delta %" PRIu64 "\n", __func__, ptp->port, abs_delta);
+      err("%s(%d), t1 %" PRIu64 " t2 %" PRIu64 " t3 %" PRIu64 " t4 %" PRIu64 "\n",
+          __func__, ptp->port, ptp->t1, ptp->t2, ptp->t3, ptp->t4);
+#endif
+      ptp_t_result_clear(ptp);
+      ptp_expect_result_clear(ptp);
+      ptp->delta_result_err++;
+      ptp->stat_result_err++;
+      if (ptp->delta_result_err > 10) {
+        dbg("%s(%d), reset the result as too many errors\n", __func__, ptp->port);
+        ptp_result_reset(ptp);
+      }
+      ptp_sync_expect_result(ptp);
+#ifdef MTL_HAS_DPDK_TIMESYNC_ADJUST_FREQ
+      if (!ptp->phc2sys_active) return -EIO;
+#else
+      return -EIO;
+#endif
+    }
+  }
+  ptp->delta_result_err = 0;
+
+  /* measure frequency corrected delta */
+  correct_delta = (((int64_t)ptp->t4 - ptp_correct_ts(ptp, ptp->t3)) -
+                  ((int64_t)ptp_correct_ts(ptp, ptp->t2) - ptp->t1)) / 2;
+  dbg("%s(%d), correct_delta %" PRId64 "\n", __func__, ptp->port, correct_delta);
+
+  /* update correct delta and path delay result */
+  ptp->stat_correct_delta_min = RTE_MIN(correct_delta, ptp->stat_correct_delta_min);
+  ptp->stat_correct_delta_max = RTE_MAX(correct_delta, ptp->stat_correct_delta_max);
+  ptp->stat_correct_delta_cnt++;
+  ptp->stat_correct_delta_sum += labs(correct_delta);
+  ptp->stat_path_delay_min = RTE_MIN(path_delay, ptp->stat_path_delay_min);
+  ptp->stat_path_delay_max = RTE_MAX(path_delay, ptp->stat_path_delay_max);
+  ptp->stat_path_delay_cnt++;
+  ptp->stat_path_delay_sum += labs(path_delay);
+
+  if (ptp->use_pi && labs(correct_delta) < 1000) {
+    /* fine tune coefficient */
+    ptp_update_coefficient(ptp, correct_delta);
+    ptp->last_sync_ts = ptp_get_raw_time(ptp) + delta; /* approximation */
+  } else {
+    /* re-calculate coefficient */
+    ptp_calculate_coefficient(ptp, delta);
+  }
+
+  ptp_adjust_delta(ptp, delta, false);
+  MT_USDT_PTP_RESULT(ptp->port, delta, correct_delta);
+  ptp_t_result_clear(ptp);
+  ptp->connected = true;
+
+  /* notify the sync event if ptp_sync_notify is enabled */
+  ptp_parse_sync_event(ptp, delta, correct_delta, t2_t1_delta, t4_t3_delta);
 
   return 0;
 }
