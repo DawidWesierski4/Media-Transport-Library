@@ -90,6 +90,10 @@ GST_DEBUG_CATEGORY_STATIC(gst_mtl_st20p_tx_debug);
 #define PACKAGE_VERSION "1.0"
 #endif
 
+
+gint DEBUG_fps_for_logging = 0; //TODO DELETE
+gint DEBUG_fps = 0; //TODO DELETE
+
 enum {
   PROP_ST20P_TX_RETRY = PROP_GENERAL_MAX,
   PROP_ST20P_TX_FRAMEBUFF_NUM,
@@ -318,6 +322,8 @@ static gboolean gst_mtl_st20p_tx_session_create(Gst_Mtl_St20p_Tx* sink, GstCaps*
 
   if (info->fps_d != 0) {
     ops_tx.fps = st_frame_rate_to_st_fps((double)info->fps_n / info->fps_d);
+    DEBUG_fps = info->fps_n / info->fps_d; //TODO DELETE
+
     if (ops_tx.fps == ST_FPS_MAX) {
       GST_ERROR("Unsupported framerate from caps: %d/%d", info->fps_n, info->fps_d);
       return FALSE;
@@ -410,6 +416,10 @@ static gboolean gst_mtl_st20p_tx_sink_event(GstPad* pad, GstObject* parent,
   return ret;
 }
 
+struct timespec last_ts;
+struct timespec processing_start_ts, processing_end_ts;
+double processing_time_agregate = 0;
+
 /*
  * Takes the buffer from the source pad and sends it to the mtl library via
  * frame buffers, supports incomplete frames. But buffers needs to add up to the
@@ -424,6 +434,31 @@ static GstFlowReturn gst_mtl_st20p_tx_chain(GstPad* pad, GstObject* parent,
   gint frame_size = sink->frame_size;
   GstMemory* gst_buffer_memory;
   GstMapInfo map_info;
+  char time_buffer[100];
+  struct timespec ts;
+  struct tm* tm_info;
+
+ if (DEBUG_fps_for_logging == 0) {
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+
+    tm_info = localtime(&ts.tv_sec);
+    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+
+
+    GST_ERROR(" DEBUG INFORMATION \n"
+              "fps enough for a second: %s \n"
+              "difference between two frames: %f \n",
+                time_buffer, (double)(ts.tv_sec - last_ts.tv_sec) + (double)(ts.tv_nsec - last_ts.tv_nsec) / 1e9);
+   processing_time_agregate = 0;
+   last_ts = ts;
+
+    DEBUG_fps_for_logging = 1;
+  } else if (DEBUG_fps_for_logging < DEBUG_fps) {
+    DEBUG_fps_for_logging++;
+  } else {
+    DEBUG_fps_for_logging = 0;
+  }
 
   if (sink->async_session_create) {
     pthread_mutex_lock(&sink->session_mutex);
@@ -455,8 +490,10 @@ static GstFlowReturn gst_mtl_st20p_tx_chain(GstPad* pad, GstObject* parent,
       return GST_FLOW_ERROR;
     }
 
+    clock_gettime(CLOCK_REALTIME, &processing_start_ts);
+
     frame = st20p_tx_get_frame(sink->tx_handle);
-    if (!frame) {
+    if (!frame){
       GST_ERROR("Failed to get frame");
       return GST_FLOW_ERROR;
     }
@@ -464,7 +501,18 @@ static GstFlowReturn gst_mtl_st20p_tx_chain(GstPad* pad, GstObject* parent,
     mtl_memcpy(frame->addr[0], map_info.data, buffer_size);
     gst_memory_unmap(gst_buffer_memory, &map_info);
     st20p_tx_put_frame(sink->tx_handle, frame);
+    clock_gettime(CLOCK_REALTIME, &processing_end_ts);
   }
+
+
+  double tm = (double)(processing_end_ts.tv_sec - processing_start_ts.tv_sec) + (double)(processing_end_ts.tv_nsec - processing_start_ts.tv_nsec) / 1e9;
+  processing_time_agregate += tm;
+
+  if (DEBUG_fps_for_logging == 0)
+  {  GST_ERROR(" DEBUG INFORMATION \n"
+      "Processing time: %f \n"
+      "Processing time aggregate %f", tm, processing_time_agregate);}
+
   gst_buffer_unref(buf);
   return GST_FLOW_OK;
 }

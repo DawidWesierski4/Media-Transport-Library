@@ -415,14 +415,20 @@ static int dev_eal_init(struct mtl_init_params* p, struct mt_kport_info* kport_i
     argc++;
   }
 
-  /* --main-lcore */
-  char main_lcore[64];
-  argv[argc] = "--main-lcore";
-  argc++;
-  info("%s, main_lcore: %u\n", __func__, p->main_lcore);
-  snprintf(main_lcore, sizeof(main_lcore), "%u", p->main_lcore);
-  argv[argc] = main_lcore;
-  argc++;
+  // /* --main-lcore */
+  // char main_lcore[64];
+
+  // argv[argc] = "--main-lcore";
+  // argc++;
+
+  //p->main_lcore = rte_get_next_lcore(p->main_lcore, 1, 1);
+
+
+
+  // info("%s, main_lcore: %u\n", __func__, p->main_lcore);
+  // snprintf(main_lcore, sizeof(main_lcore), "%u", p->main_lcore);
+  // argv[argc] = main_lcore;
+  // argc++;
 
   char lcores[128];
   if (p->lcores) {
