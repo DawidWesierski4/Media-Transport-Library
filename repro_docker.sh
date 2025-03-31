@@ -39,7 +39,7 @@ init_test() {
 
     if ! mount | grep -q "${INPUT_FOLDER}.*tmpfs"; then
         echo "${INPUT_FOLDER} is not a ramdisk. Please mount it as a tmpfs."
-        sudo mount -t tmpfs -o size=22G tmpfs ${INPUT_FOLDER}
+        mount -t tmpfs -o size=22G tmpfs ${INPUT_FOLDER}
     fi
 
     if [[ ! -f ${INPUT} ]]; then
@@ -47,7 +47,15 @@ init_test() {
         echo "Creating input file ${INPUT}"
         dd if=/dev/zero of=${INPUT} bs=${BLOCKSIZE} count=$((VIDEO_FPS * 15 / VIDEO_FPS_DIV))
     fi
-    exit 1
+
+
+    if $(pgrep MtlManager > /dev/null); then
+        echo "MtlManager is already running"
+    else
+        echo "Starting MtlManager"
+        MtlManager &
+        sleep 3
+    fi
 }
 
 function_test() {
@@ -146,6 +154,11 @@ function_test2() {
 # only when not sourced :3 <3 ( ͡° ͜ʖ ͡°)
 if [[ ${BASH_SOURCE} == ${0} ]]; then
     init_test
+
+    if [[ $EUID -ne 0 ]]; then
+        echo "This script must be run as root" 
+        exit 1
+    fi
     function_test2 $VFIO_PORT_1 $IP_PORT_2 &
     function_test2 $VFIO_PORT_3 $IP_PORT_4 &
     function_test2 $VFIO_PORT_5 $IP_PORT_6 &
