@@ -91,3 +91,4 @@ gpu_direct/tests/fff.h
 gpu_direct/subprojects/*
 !gpu_direct/subprojects/gtest.wrap
 _temp*
+logs_repro_docker.sh/
