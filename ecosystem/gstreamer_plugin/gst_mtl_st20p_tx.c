@@ -188,7 +188,7 @@ static gboolean gst_mtl_st20p_tx_start(GstBaseSink* bsink) {
 
   GST_DEBUG_OBJECT(sink, "start");
   GST_DEBUG("Media Transport Initialization start");
-  gst_base_sink_set_async_enabled(bsink, FALSE);
+  // gst_base_sink_set_async_enabled(bsink, FALSE);
 
   sink->mtl_lib_handle = gst_mtl_common_init_handle(&(sink->generalArgs), FALSE);
 
@@ -209,7 +209,7 @@ static gboolean gst_mtl_st20p_tx_start(GstBaseSink* bsink) {
     sink->session_ready = FALSE;
   }
 
-  gst_element_set_state(GST_ELEMENT(sink), GST_STATE_PLAYING);
+  // gst_element_set_state(GST_ELEMENT(sink), GST_STATE_PLAYING);
 
   return true;
 }
@@ -454,7 +454,7 @@ static GstFlowReturn gst_mtl_st20p_tx_chain(GstPad* pad, GstObject* parent,
    last_ts = ts;
 
     DEBUG_fps_for_logging = 1;
-  } else if (DEBUG_fps_for_logging < DEBUG_fps) {
+  } else if (DEBUG_fps_for_logging < DEBUG_fps * 10) {
     DEBUG_fps_for_logging++;
   } else {
     DEBUG_fps_for_logging = 0;

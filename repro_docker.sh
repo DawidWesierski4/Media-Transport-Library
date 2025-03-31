@@ -84,7 +84,7 @@ init_test() {
     echo "Log directory: $LOG_FILE"
 }
 
-function_test() {
+function_test2() {
     docker run --rm \
         --ulimit memlock=-1:-1 \
         --device /dev/vfio:/dev/vfio \
@@ -93,6 +93,7 @@ function_test() {
         --volume /hugepages:/hugepages \
         --cap-add SYS_NICE \
         --cap-add IPC_LOCK \
+        --cpuset-cpus=28-55 \
         -e GSTREAMER_PLUGINS_PATH=$GSTREAMER_PLUGINS_PATH \
         -e INPUT=$INPUT \
         -e BLOCKSIZE=$BLOCKSIZE \
@@ -106,36 +107,58 @@ function_test() {
         -e IP_MULTICAST2=$IP_MULTICAST2 \
         -e GST_DEBUG=WARNING \
         mtl_rockod_gstreamer:latest \
-        "GST_PLUGIN_PATH=$GSTREAMER_PLUGINS_PATH gst-launch-1.0 -v filesrc location=$INPUT blocksize=$BLOCKSIZE ! \
-        video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
-        tee name=t t. ! \
-        queue ! \
-        mtl_st20p_tx payload-type=96 \
-                    async=false \
-                    sync=false \
-                    log-level=$LOG_LEVEL \
-                    ip=$IP_MULTICAST \
-                    udp-port=$VIDEO_UDP_PORT \
-                    dev-port=$1 \
-                    dev-ip=$2 t. ! \
-        queue ! \
-        mtl_st20p_tx payload-type=96 \
-                    async=false \
-                    sync=false \
-                    ip=$IP_MULTICAST \
-                    log-level=$LOG_LEVEL \
-                    udp-port=$VIDEO_UDP_PORT \
-                    dev-port=$1 \
-                    dev-ip=$2 t. ! \
-        queue ! \
-        mtl_st20p_tx payload-type=96 \
-                    async=false \
-                    sync=false \
-                    log-level=$LOG_LEVEL \
-                    ip=$IP_MULTICAST \
-                    udp-port=$VIDEO_UDP_PORT \
-                    dev-port=$1 \
-                    dev-ip=$2  "
+        "GST_PLUGIN_PATH=$GSTREAMER_PLUGINS_PATH gst-launch-1.0 -v \
+    videotestsrc blocksize=$BLOCKSIZE ! \
+    video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
+    tee name=t t. ! \
+    queue ! \
+    mtl_st20p_tx payload-type=96 \
+                 async=false \
+                 sync=false \
+                 ip=$IP_MULTICAST \
+                 udp-port=$VIDEO_UDP_PORT \
+                 dev-port=$1 \
+                 dev-ip=$2 \
+    audiotestsrc wave=sine freq=440 ! \
+    audio/x-raw,format=S16LE,channels=1,rate=44100 ! \
+    queue ! \
+    mtl_st30p_tx payload-type=97 \
+                 async=false \
+                 sync=false \
+                 ip=$IP_MULTICAST \
+                 udp-port=$AUDIO_UDP_PORT \
+                 dev-port=$1 \
+                 dev-ip=$2 \
+    audiotestsrc wave=sine freq=550 ! \
+    audio/x-raw,format=S16LE,channels=1,rate=44100 ! \
+    queue ! \
+    mtl_st30p_tx payload-type=98 \
+                 async=false \
+                 sync=false \
+                 ip=$IP_MULTICAST \
+                 udp-port=$((AUDIO_UDP_PORT + 1)) \
+                 dev-port=$1 \
+                 dev-ip=$2 \
+    audiotestsrc wave=sine freq=660 ! \
+    audio/x-raw,format=S16LE,channels=1,rate=44100 ! \
+    queue ! \
+    mtl_st30p_tx payload-type=99 \
+                 async=false \
+                 sync=false \
+                 ip=$IP_MULTICAST \
+                 udp-port=$((AUDIO_UDP_PORT + 2)) \
+                 dev-port=$1 \
+                 dev-ip=$2 \
+    audiotestsrc wave=sine freq=770 ! \
+    audio/x-raw,format=S16LE,channels=1,rate=44100 ! \
+    queue ! \
+    mtl_st30p_tx payload-type=100 \
+                 async=false \
+                 sync=false \
+                 ip=$IP_MULTICAST \
+                 udp-port=$((AUDIO_UDP_PORT + 3)) \
+                 dev-port=$1 \
+                 dev-ip=$2 "
 }
 
 function_test_numa_force() {
@@ -177,7 +200,6 @@ function_test_numa_force() {
 # unused $VFIO_PORT_2 $IP_PORT_1
 # unused $VFIO_PORT_4 $IP_PORT_3
 # unused $VFIO_PORT_6 $IP_PORT_5
-# only when not sourced :3 <3 ( ͡° ͜ʖ ͡°)
 if [[ ${BASH_SOURCE} == ${0} ]]; then
     init_test
 
@@ -185,20 +207,20 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
         echo "This script must be run as root" 
         exit 1
     fi
-    function_test $VFIO_PORT_1 $IP_PORT_2 &
-    function_test $VFIO_PORT_3 $IP_PORT_4 &
-    function_test $VFIO_PORT_5 $IP_PORT_6 &
-    function_test $VFIO_PORT_2 $IP_PORT_1 &
-    function_test $VFIO_PORT_4 $IP_PORT_3 &
-    function_test $VFIO_PORT_6 $IP_PORT_5 &
+    function_test2 $VFIO_PORT_1 $IP_PORT_2 &
+    function_test2 $VFIO_PORT_3 $IP_PORT_4 &
+    function_test2 $VFIO_PORT_5 $IP_PORT_6 &
+    function_test2 $VFIO_PORT_2 $IP_PORT_1 &
+    function_test2 $VFIO_PORT_4 $IP_PORT_3 &
+    function_test2 $VFIO_PORT_6 $IP_PORT_5 &
 
     #numactl --cpunodebind=0 --membind=0
-    function_test_numa_force $VFIO_PORT_1 $IP_PORT_2 &
-    function_test_numa_force $VFIO_PORT_3 $IP_PORT_4 &
-    function_test_numa_force $VFIO_PORT_5 $IP_PORT_6 &
-    function_test_numa_force $VFIO_PORT_2 $IP_PORT_1 &
-    function_test_numa_force $VFIO_PORT_4 $IP_PORT_3 &
-    function_test_numa_force $VFIO_PORT_6 $IP_PORT_5 &
+    # function_test_numa_force $VFIO_PORT_1 $IP_PORT_2 &
+    # function_test_numa_force $VFIO_PORT_3 $IP_PORT_4 &
+    # function_test_numa_force $VFIO_PORT_5 $IP_PORT_6 &
+    # function_test_numa_force $VFIO_PORT_2 $IP_PORT_1 &
+    # function_test_numa_force $VFIO_PORT_4 $IP_PORT_3 &
+    # function_test_numa_force $VFIO_PORT_6 $IP_PORT_5 &
 
     # function_test_red $VFIO_PORT_1 $IP_PORT_2 $VFIO_PORT_2 $IP_PORT_1 &
     # function_test_red $VFIO_PORT_3 $IP_PORT_4 $VFIO_PORT_4 $IP_PORT_3 &
