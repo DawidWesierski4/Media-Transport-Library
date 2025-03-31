@@ -48,7 +48,7 @@ init_test() {
     if [[ ! -f ${INPUT} ]]; then
 
         echo "Creating input file ${INPUT}"
-        dd if=/dev/zero of=${INPUT} bs=${BLOCKSIZE} count=$((VIDEO_FPS * 5 / VIDEO_FPS_DIV))
+        dd if=/dev/zero of=${INPUT} bs=${BLOCKSIZE} count=$((VIDEO_FPS * 25 / VIDEO_FPS_DIV))
     fi
 
 
