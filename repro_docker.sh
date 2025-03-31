@@ -193,12 +193,12 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
     function_test $VFIO_PORT_6 $IP_PORT_5 &
 
     #numactl --cpunodebind=0 --membind=0
-    # function_test_numa_force $VFIO_PORT_1 $IP_PORT_2 &
-    # function_test_numa_force $VFIO_PORT_3 $IP_PORT_4 &
-    # function_test_numa_force $VFIO_PORT_5 $IP_PORT_6 &
-    # function_test_numa_force $VFIO_PORT_2 $IP_PORT_1 &
-    # function_test_numa_force $VFIO_PORT_4 $IP_PORT_3 &
-    # function_test_numa_force $VFIO_PORT_6 $IP_PORT_5 &
+    function_test_numa_force $VFIO_PORT_1 $IP_PORT_2 &
+    function_test_numa_force $VFIO_PORT_3 $IP_PORT_4 &
+    function_test_numa_force $VFIO_PORT_5 $IP_PORT_6 &
+    function_test_numa_force $VFIO_PORT_2 $IP_PORT_1 &
+    function_test_numa_force $VFIO_PORT_4 $IP_PORT_3 &
+    function_test_numa_force $VFIO_PORT_6 $IP_PORT_5 &
 
     # function_test_red $VFIO_PORT_1 $IP_PORT_2 $VFIO_PORT_2 $IP_PORT_1 &
     # function_test_red $VFIO_PORT_3 $IP_PORT_4 $VFIO_PORT_4 $IP_PORT_3 &
