@@ -115,6 +115,7 @@ function_test2() {
     mtl_st20p_tx payload-type=96 \
                  async=false \
                  sync=false \
+                 lcore-list=$6 \
                  ip=$IP_MULTICAST \
                  udp-port=$VIDEO_UDP_PORT \
                  udp-port-red=$((VIDEO_UDP_PORT + 10)) \
@@ -237,11 +238,11 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
         echo "This script must be run as root" 
         exit 1
     fi
-    function_test2 $VFIO_PORT_1 $IP_PORT_2 $VFIO_PORT_2 $IP_PORT_1 ${LOG_FILE}_1 &
+    function_test2 $VFIO_PORT_1 $IP_PORT_2 $VFIO_PORT_2 $IP_PORT_1 ${LOG_FILE}_1 "1,2" &
     PID1=$!
-    function_test2 $VFIO_PORT_3 $IP_PORT_4 $VFIO_PORT_4 $IP_PORT_3 ${LOG_FILE}_2 &
+    function_test2 $VFIO_PORT_3 $IP_PORT_4 $VFIO_PORT_4 $IP_PORT_3 ${LOG_FILE}_2 "3,4" &
     PID2=$!
-    function_test2 $VFIO_PORT_5 $IP_PORT_6 $VFIO_PORT_6 $IP_PORT_5 ${LOG_FILE}_3 &
+    function_test2 $VFIO_PORT_5 $IP_PORT_6 $VFIO_PORT_6 $IP_PORT_5 ${LOG_FILE}_3 "4,5" &
     PID3=$!
     # function_test2 $VFIO_PORT_2 $IP_PORT_1 &
     # function_test2 $VFIO_PORT_4 $IP_PORT_3 &

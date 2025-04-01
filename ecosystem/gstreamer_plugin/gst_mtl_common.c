@@ -287,6 +287,13 @@ void gst_mtl_common_init_general_arguments(GObjectClass* gobject_class) {
       g_param_spec_boolean("enable-ptp", "Enable onboard PTP",
                            "Enable onboard PTP client", FALSE,
                            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property(
+      gobject_class, PROP_GENERAL_LCORE_LIST,
+      g_param_spec_string(
+          "lcore-list", "dpdk core list",
+          "List or range of cores to run on for DPDK (e.g., '1,2,3' or '1-3').", NULL,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 void gst_mtl_common_set_general_arguments(GObject* object, guint prop_id,
@@ -350,6 +357,9 @@ void gst_mtl_common_set_general_arguments(GObject* object, guint prop_id,
     case PROP_GENERAL_ENABLE_ONBOARD_PTP:
       general_args->enable_onboard_ptp = g_value_get_boolean(value);
       break;
+    case PROP_GENERAL_LCORE_LIST:
+      strncpy(general_args->lcore_map, g_value_get_string(value), MTL_PORT_MAX_LEN);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
       break;
@@ -399,6 +409,12 @@ void gst_mtl_common_get_general_arguments(GObject* object, guint prop_id,
       break;
     case PROP_GENERAL_PORT_TX_QUEUES:
       g_value_set_uint(value, general_args->tx_queues_cnt[MTL_PORT_P]);
+      break;
+    case PROP_GENERAL_ENABLE_ONBOARD_PTP:
+      g_value_set_boolean(value, general_args->enable_onboard_ptp);
+      break;
+    case PROP_GENERAL_LCORE_LIST:
+      g_value_set_string(value, general_args->lcore_map);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -554,6 +570,10 @@ gboolean gst_mtl_common_parse_general_arguments(struct mtl_init_params* mtl_init
   if (general_args->enable_onboard_ptp) {
     mtl_init_params->flags |= MTL_FLAG_PTP_ENABLE;
     GST_INFO("Using MTL library's onboard PTP");
+  }
+
+  if (strlen(general_args->lcore_map)) {
+    mtl_init_params->lcores = general_args->lcore_map;
   }
 
   while (mtl_port_idx <= MTL_PORT_R && strlen(general_args->port[mtl_port_idx]) != 0) {

@@ -417,7 +417,6 @@ static int dev_eal_init(struct mtl_init_params* p, struct mt_kport_info* kport_i
 
   /* --main-lcore */
   char main_lcore[64];
-  
   char lcores[MTL_CORE_LIST_MAX_SIZE];
 
   if (p->main_lcore) {
@@ -429,7 +428,6 @@ static int dev_eal_init(struct mtl_init_params* p, struct mt_kport_info* kport_i
     info("%s, main_lcore: %s\n", __func__, argv[argc]);
     argc++;
   }
-
 
   if (p->lcores) {
     argv[argc] = "-l";
