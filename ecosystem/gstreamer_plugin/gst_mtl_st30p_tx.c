@@ -446,8 +446,11 @@ static gboolean gst_mtl_st30p_tx_sink_event(GstPad* pad, GstObject* parent,
 
 static struct st30_frame* mtl_st30p_fetch_frame(Gst_Mtl_St30p_Tx* sink) {
   if (!sink->cur_frame) {
+    GST_INFO("Fetching new frame");
     sink->cur_frame = st30p_tx_get_frame(sink->tx_handle);
     sink->cur_frame_available_size = sink->frame_size;
+  } else {
+    GST_INFO("Preexisting frame available");
   }
   return sink->cur_frame;
 }
@@ -489,6 +492,8 @@ static GstFlowReturn gst_mtl_st30p_tx_chain(GstPad* pad, GstObject* parent,
     bytes_to_write = gst_buffer_get_size(buf);
     gst_buffer_memory = gst_buffer_peek_memory(buf, i);
 
+    GST_INFO("Buffer size %d", bytes_to_write);
+
     if (!gst_memory_map(gst_buffer_memory, &map_info, GST_MAP_READ)) {
       GST_ERROR("Failed to map memory");
       return GST_FLOW_ERROR;
@@ -496,26 +501,37 @@ static GstFlowReturn gst_mtl_st30p_tx_chain(GstPad* pad, GstObject* parent,
 
     /* This could be done with GstAdapter */
     while (bytes_to_write > 0) {
+
       frame = mtl_st30p_fetch_frame(sink);
       if (!frame) {
         GST_ERROR("Failed to get frame");
         return GST_FLOW_ERROR;
+      } else {
+        GST_INFO("Frame buffer taken");
       }
+
       cur_addr_frame = frame->addr + sink->frame_size - sink->cur_frame_available_size;
       cur_addr_buf = map_info.data + gst_buffer_get_size(buf) - bytes_to_write;
 
       if (sink->cur_frame_available_size > bytes_to_write) {
         mtl_memcpy(cur_addr_frame, cur_addr_buf, bytes_to_write);
         sink->cur_frame_available_size -= bytes_to_write;
+        GST_INFO("Current frame available size is bigger than bytes to write left %u", sink->cur_frame_available_size);
+  
         bytes_to_write = 0;
         break;
       } else {
         mtl_memcpy(cur_addr_frame, cur_addr_buf, sink->cur_frame_available_size);
+        GST_INFO("Finished with the frame starting to put frame");
+
         st30p_tx_put_frame(sink->tx_handle, frame);
+
         sink->cur_frame = NULL;
         bytes_to_write -= sink->cur_frame_available_size;
+        GST_INFO("Finished putting frame left bytes to write %u", bytes_to_write);
       }
     }
+    GST_INFO("Finished unmaping the memory");
     gst_memory_unmap(gst_buffer_memory, &map_info);
   }
   gst_buffer_unref(buf);
