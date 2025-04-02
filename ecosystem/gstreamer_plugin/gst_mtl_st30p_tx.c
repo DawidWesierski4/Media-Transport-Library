@@ -283,6 +283,8 @@ static void gst_mtl_st30p_tx_get_property(GObject* object, guint prop_id, GValue
   }
 }
 
+
+guint DEBUG_size_of_the_second = 0, DEBUG_bits_per_second = 0;
 /*
  * Create MTL session tx handle and initialize the session with the parameters
  * from caps negotiated by the pipeline.
@@ -313,10 +315,13 @@ static gboolean gst_mtl_st30p_tx_session_create(Gst_Mtl_St30p_Tx* sink, GstCaps*
   } else {
     if (info->finfo->format == GST_AUDIO_FORMAT_S24LE) {
       ops_tx.fmt = ST30_FMT_PCM24;
+      DEBUG_bits_per_second = 24;
     } else if (info->finfo->format == GST_AUDIO_FORMAT_S16LE) {
+      DEBUG_bits_per_second = 16;
       ops_tx.fmt = ST30_FMT_PCM16;
     } else if (info->finfo->format == GST_AUDIO_FORMAT_S8) {
       ops_tx.fmt = ST30_FMT_PCM8;
+      DEBUG_bits_per_second = 8;
     } else {
       gst_audio_info_free(info);
       GST_ERROR(" invalid format audio");
@@ -382,6 +387,7 @@ static gboolean gst_mtl_st30p_tx_session_create(Gst_Mtl_St30p_Tx* sink, GstCaps*
     pthread_mutex_unlock(&sink->session_mutex);
   }
 
+  DEBUG_size_of_the_second = info->rate * ops_tx.channel * DEBUG_bits_per_second * ops_tx.ptime / 400 * 8;
   return TRUE;
 }
 
@@ -452,6 +458,12 @@ static struct st30_frame* mtl_st30p_fetch_frame(Gst_Mtl_St30p_Tx* sink) {
   return sink->cur_frame;
 }
 
+struct timespec last_ts;
+struct timespec processing_start_ts, processing_end_ts;
+double processing_time_agregate = 0;
+
+guint DEBUG_aggregate_data=0;
+
 /*
  * Takes the buffer from the source pad and sends it to the mtl library via
  * frame buffers, supports incomplete frames. But buffers needs to add up to the
@@ -467,6 +479,10 @@ static GstFlowReturn gst_mtl_st30p_tx_chain(GstPad* pad, GstObject* parent,
   gint bytes_to_write;
   void* cur_addr_frame;
   void* cur_addr_buf;
+  struct tm* tm_info;
+  char time_buffer[100];
+  struct timespec ts;
+
 
   if (sink->async_session_create) {
     pthread_mutex_lock(&sink->session_mutex);
@@ -487,6 +503,25 @@ static GstFlowReturn gst_mtl_st30p_tx_chain(GstPad* pad, GstObject* parent,
 
   for (int i = 0; i < buffer_n; i++) {
     bytes_to_write = gst_buffer_get_size(buf);
+    DEBUG_aggregate_data+=bytes_to_write;
+
+    if (DEBUG_aggregate_data > DEBUG_size_of_the_second) {
+      processing_time_agregate = 0;
+      DEBUG_aggregate_data = 0;
+
+      clock_gettime(CLOCK_REALTIME, &ts);
+
+      tm_info = localtime(&ts.tv_sec);
+      strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+  
+  
+      GST_ERROR(" DEBUG INFORMATION \n"
+                "fps enough for a second: %s \n"
+                "difference between two frames: %f \n",
+                  time_buffer, (double)(ts.tv_sec - last_ts.tv_sec) + (double)(ts.tv_nsec - last_ts.tv_nsec) / 1e9);
+                  last_ts = ts;
+                }
+
     gst_buffer_memory = gst_buffer_peek_memory(buf, i);
 
     if (!gst_memory_map(gst_buffer_memory, &map_info, GST_MAP_READ)) {
@@ -496,7 +531,9 @@ static GstFlowReturn gst_mtl_st30p_tx_chain(GstPad* pad, GstObject* parent,
 
     /* This could be done with GstAdapter */
     while (bytes_to_write > 0) {
+
       frame = mtl_st30p_fetch_frame(sink);
+      
       if (!frame) {
         GST_ERROR("Failed to get frame");
         return GST_FLOW_ERROR;

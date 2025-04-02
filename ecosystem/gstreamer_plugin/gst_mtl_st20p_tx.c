@@ -454,7 +454,7 @@ static GstFlowReturn gst_mtl_st20p_tx_chain(GstPad* pad, GstObject* parent,
    last_ts = ts;
 
     DEBUG_fps_for_logging = 1;
-  } else if (DEBUG_fps_for_logging < DEBUG_fps * 10) {
+  } else if (DEBUG_fps_for_logging < DEBUG_fps) {
     DEBUG_fps_for_logging++;
   } else {
     DEBUG_fps_for_logging = 0;
