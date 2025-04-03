@@ -1,7 +1,7 @@
 #include <gst/gst.h>
 #include <unistd.h>
 #include "gst_mtl_cpu_element.h"
-#define pthread (7)
+#define pthread (22)
 
 GST_DEBUG_CATEGORY_STATIC(gst_mtl_cpu_element_debug);
 #define GST_CAT_DEFAULT gst_mtl_cpu_element_debug

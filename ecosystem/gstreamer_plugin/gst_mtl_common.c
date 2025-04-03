@@ -613,6 +613,74 @@ gboolean gst_mtl_common_parse_general_arguments(struct mtl_init_params* mtl_init
 
   return ret;
 }
+#define MTL_CORES_PATH "/var/run/imtl/cores"
+
+char* read_and_process_lcore_file() {
+  char* mtl_init_params_lcores = malloc(100);
+  if (mtl_init_params_lcores == NULL) {
+      GST_ERROR("Memory allocation failed.");
+      return NULL;
+  }
+
+  FILE* file = fopen(MTL_CORES_PATH, "r+");
+  if (file == NULL) {
+      GST_ERROR("Failed to open MTL_CORES_PATH for reading.");
+      free(mtl_init_params_lcores);
+      return NULL;
+  } else {
+      GST_ERROR("Opened MTL_CORES_PATH for reading.");
+
+      if (fgets(mtl_init_params_lcores, 100, file) == NULL) {
+          GST_ERROR("Failed to read from MTL_CORES_PATH.");
+          fclose(file);
+          free(mtl_init_params_lcores);
+          return NULL;
+      }
+      size_t len = strlen(mtl_init_params_lcores);
+      if (len > 0 && mtl_init_params_lcores[len - 1] == '\n') {
+          mtl_init_params_lcores[len - 1] = '\0';
+      }
+      GST_ERROR("Read line from MTL_CORES_PATH.");
+
+      FILE* temp_file = tmpfile();
+      if (temp_file == NULL) {
+          GST_ERROR("Failed to create temporary file.");
+          fclose(file);
+          free(mtl_init_params_lcores);
+          return NULL;
+      }
+      GST_ERROR("Created temporary file.");
+
+      char buffer[9999];
+      while (fgets(buffer, sizeof(buffer), file) != NULL) {
+          fputs(buffer, temp_file);
+      }
+      GST_ERROR("Copied remaining lines to temporary file.");
+
+      fclose(file);
+
+      file = fopen(MTL_CORES_PATH, "w");
+      if (file == NULL) {
+          GST_ERROR("Failed to open " MTL_CORES_PATH " for writing.");
+          fclose(temp_file);
+          free(mtl_init_params_lcores);
+          return NULL;
+      }
+      GST_ERROR("Opened "MTL_CORES_PATH" for writing.");
+
+      rewind(temp_file);
+      while (fgets(buffer, sizeof(buffer), temp_file) != NULL) {
+          fputs(buffer, file);
+      }
+      GST_ERROR("Copied lines from temporary file back to "MTL_CORES_PATH".");
+
+      fclose(file);
+      fclose(temp_file);
+      GST_ERROR("Closed all files.");
+  }
+
+  return mtl_init_params_lcores;
+}
 
 /**
  * Initializes the device with the given parameters.
@@ -634,10 +702,11 @@ mtl_handle gst_mtl_common_init_handle(GeneralArgs* general_args,
   mtl_handle handle;
   gint ret;
 
+  GST_ERROR("Initializing MTL library");
   pthread_mutex_lock(&common_handle.mutex);
 
   if (!force_to_initialize_new_instance && common_handle.mtl_handle) {
-    GST_INFO("Mtl is already initialized with shared handle %p",
+    GST_ERROR("Mtl is already initialized with shared handle %p",
              common_handle.mtl_handle);
     common_handle.mtl_handle_reference_count++;
 
@@ -657,57 +726,10 @@ mtl_handle gst_mtl_common_init_handle(GeneralArgs* general_args,
     pthread_mutex_unlock(&common_handle.mutex);
     return NULL;
   }
-  char* mtl_init_params_lcores = malloc(100);
-  if (mtl_init_params_lcores == NULL) {
-      return NULL;
-  }
 
-  FILE* file = fopen("/tmp/cores", "r+");
-  if (file == NULL) {
-      free(mtl_init_params_lcores);
-      return NULL;
-  } else {
-      if (fgets(mtl_init_params_lcores, 100, file) == NULL) {
-          fclose(file);
-          free(mtl_init_params_lcores);
-          return NULL;
-      }
-
-
-      FILE* temp_file = tmpfile();
-      if (temp_file == NULL) {
-          fclose(file);
-          free(mtl_init_params_lcores);
-          return NULL;
-      }
-
-
-      char buffer[9999];
-
-
-      while (fgets(buffer, sizeof(buffer), file) != NULL) {
-          fputs(buffer, temp_file);
-      }
-
-      fclose(file);
-
-      file = fopen("/tmp/cores", "w");
-      if (file == NULL) {
-          fclose(temp_file);
-          free(mtl_init_params_lcores);
-          return NULL;
-      }
-
-      rewind(temp_file);
-      while (fgets(buffer, sizeof(buffer), temp_file) != NULL) {
-          fputs(buffer, file);
-      }
-
-      fclose(file);
-      fclose(temp_file);
-
-    }
-  mtl_init_params.lcores = mtl_init_params_lcores;
+  mtl_init_params.flags |= MTL_FLAG_NOT_BIND_PROCESS_NUMA;
+  mtl_init_params.flags |= MTL_FLAG_DEDICATED_SYS_LCORE;
+  mtl_init_params.lcores = read_and_process_lcore_file();
   GST_ERROR("lcore_map: %s", mtl_init_params.lcores);
   handle = mtl_init(&mtl_init_params);
   if (!handle) {

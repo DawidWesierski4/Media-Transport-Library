@@ -7,15 +7,15 @@ AUDIO_UDP_PORT=30000
 VIDEO_PAYLOAD_TYPE=112
 AUDIO_PAYLOAD_TYPE=111
 VIDEO_FPS_DIV=1001
-WIDTH=3840
-HEIGHT=2160
+WIDTH=1920
+HEIGHT=1080
 LOG_LEVEL=0
 FORMAT=I422_10LE
-VIDEO_FPS=30000
+VIDEO_FPS=60000
 VIDEO_FPS_DIV=1001
 INPUT_FOLDER=/mnt/ramdisk_src
 INPUT=${INPUT_FOLDER}/GSTREAMER_${WIDTH}_${HEIGHT}_${FORMAT}_${VIDEO_FPS}_${VIDEO_FPS_DIV}.raw
-BLOCKSIZE=33177600
+BLOCKSIZE=8294400
 GSTREAMER_PLUGINS_PATH=/home/mtl/gstreamer/
 IP_MULTICAST=239.168.75.30
 IP_MULTICAST2=239.168.75.32
@@ -125,9 +125,26 @@ function_test2() {
                  dev-port-red=$3 \
                  ip-red=$IP_MULTICAST2 \
                  enable-ptp=true \
-    audiotestsrc wave=sine freq=770 ! \
+    filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
+    video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
+    queue ! \
+    mtl_st20p_tx payload-type=96 \
+                 async=false \
+                 sync=false \
+                 lcore-list=$6 \
+                 ip=$IP_MULTICAST \
+                 udp-port=$VIDEO_UDP_PORT \
+                 udp-port-red=$((VIDEO_UDP_PORT + 10)) \
+                 dev-port=$1 \
+                 dev-ip=$2 \
+                 dev-ip-red=$4 \
+                 dev-port-red=$3 \
+                 ip-red=$IP_MULTICAST2 \
+                 enable-ptp=true \
+    audiotestsrc is-live=true wave=sine freq=770 ! \
+    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0xFF\" ! \
     mtl_cpu_element ! \
-    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0x63\" ! \
+    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0xFF\" ! \
     queue ! \
     mtl_st30p_tx payload-type=97 \
                  async=false \
@@ -141,9 +158,10 @@ function_test2() {
                  dev-port-red=$3 \
                  ip-red=$IP_MULTICAST2 \
                  enable-ptp=true \
-    audiotestsrc wave=sine freq=770 ! \
+    audiotestsrc is-live=true wave=sine freq=770 ! \
+    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0xFF\" ! \
     mtl_cpu_element ! \
-    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0x63\" ! \
+    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0xFF\" ! \
     queue ! \
     mtl_st30p_tx payload-type=98 \
                  async=false \
@@ -157,9 +175,10 @@ function_test2() {
                  dev-port-red=$3 \
                  ip-red=$IP_MULTICAST2 \
                  enable-ptp=true \
-    audiotestsrc wave=sine freq=770 ! \
+    audiotestsrc is-live=true wave=sine freq=770 ! \
+    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0xFF\" ! \
     mtl_cpu_element ! \
-    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0x63\" ! \
+    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0xFF\" ! \
     queue ! \
     mtl_st30p_tx payload-type=99 \
                  async=false \
@@ -173,9 +192,10 @@ function_test2() {
                  dev-port-red=$3 \
                  ip-red=$IP_MULTICAST2 \
                  enable-ptp=true \
-    audiotestsrc wave=sine freq=770 ! \
+    audiotestsrc is-live=true wave=sine freq=770 ! \
+    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0xFF\" ! \
     mtl_cpu_element ! \
-    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0x63\" ! \
+    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0xFF\" ! \
     mtl_st30p_tx payload-type=100 \
                  async=false \
                  sync=false \
@@ -187,7 +207,34 @@ function_test2() {
                  dev-port=$1 \
                  ip-red=$IP_MULTICAST2 \
                  dev-ip=$2 \
-                 enable-ptp=true" 2>&1 | tee -a $5
+                 enable-ptp=true \
+        audiotestsrc is-live=true wave=sine freq=770 ! \
+            mtl_st30p_tx payload-type=100 \
+                 async=false \
+                 sync=false \
+                 ip=$IP_MULTICAST \
+                 udp-port=$((AUDIO_UDP_PORT + 3)) \
+                 udp-port-red=$((AUDIO_UDP_PORT + 13)) \
+                 dev-ip-red=$4 \
+                 dev-port-red=$3 \
+                 dev-port=$1 \
+                 ip-red=$IP_MULTICAST2 \
+                 dev-ip=$2 \
+                 enable-ptp=true \
+        audiotestsrc is-live=true wave=sine freq=770 ! \
+            mtl_st30p_tx payload-type=100 \
+                 async=false \
+                 sync=false \
+                 ip=$IP_MULTICAST \
+                 udp-port=$((AUDIO_UDP_PORT + 3)) \
+                 udp-port-red=$((AUDIO_UDP_PORT + 13)) \
+                 dev-ip-red=$4 \
+                 dev-port-red=$3 \
+                 dev-port=$1 \
+                 ip-red=$IP_MULTICAST2 \
+                 dev-ip=$2 \
+                 enable-ptp=true \
+                 " 2>&1 | tee -a $5
 }
 
 
@@ -240,10 +287,12 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
     fi
     function_test2 $VFIO_PORT_1 $IP_PORT_2 $VFIO_PORT_2 $IP_PORT_1 ${LOG_FILE}_1 "1,2" &
     PID1=$!
-    function_test2 $VFIO_PORT_3 $IP_PORT_4 $VFIO_PORT_4 $IP_PORT_3 ${LOG_FILE}_2 "3,4" &
-    PID2=$!
-    function_test2 $VFIO_PORT_5 $IP_PORT_6 $VFIO_PORT_6 $IP_PORT_5 ${LOG_FILE}_3 "4,5" &
-    PID3=$!
+    sleep 8
+    # function_test2 $VFIO_PORT_3 $IP_PORT_4 $VFIO_PORT_4 $IP_PORT_3 ${LOG_FILE}_2 "3,4" &
+    # PID2=$!
+    # sleep 8
+    # function_test2 $VFIO_PORT_5 $IP_PORT_6 $VFIO_PORT_6 $IP_PORT_5 ${LOG_FILE}_3 "4,5" &
+    # PID3=$!
     # function_test2 $VFIO_PORT_2 $IP_PORT_1 &
     # function_test2 $VFIO_PORT_4 $IP_PORT_3 &
     # function_test2 $VFIO_PORT_6 $IP_PORT_5 &

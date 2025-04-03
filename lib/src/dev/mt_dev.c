@@ -416,18 +416,8 @@ static int dev_eal_init(struct mtl_init_params* p, struct mt_kport_info* kport_i
   }
 
   /* --main-lcore */
-  char main_lcore[64];
+  //char main_lcore[64];
   char lcores[MTL_CORE_LIST_MAX_SIZE];
-
-  if (p->main_lcore) {
-    argv[argc] = "--main-lcore";
-    argc++;
-    snprintf(main_lcore, sizeof(main_lcore), "%u", p->main_lcore);
-    argv[argc] = main_lcore;
-
-    info("%s, main_lcore: %s\n", __func__, argv[argc]);
-    argc++;
-  }
 
   if (p->lcores) {
     argv[argc] = "-l";
@@ -435,7 +425,7 @@ static int dev_eal_init(struct mtl_init_params* p, struct mt_kport_info* kport_i
     snprintf(lcores, sizeof(lcores), "%s", p->lcores);
     argv[argc] = lcores;
 
-    info("%s, lcores: %s\n", __func__, argv[argc]);
+    info("%s, lcores new (╯ರ ~ ರ）╯︵ ┻━┻.%s\"\n", __func__, argv[argc]);
     argc++;
   }
 
