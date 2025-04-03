@@ -657,9 +657,57 @@ mtl_handle gst_mtl_common_init_handle(GeneralArgs* general_args,
     pthread_mutex_unlock(&common_handle.mutex);
     return NULL;
   }
-  // mtl_init_params.lcores = malloc(100);
-  // strncpy(mtl_init_params.lcores, "0,1,2,3,4,5", 100);
-  // mtl_init_params.main_lcore=0;
+  char* mtl_init_params_lcores = malloc(100);
+  if (mtl_init_params_lcores == NULL) {
+      return NULL;
+  }
+
+  FILE* file = fopen("/tmp/cores", "r+");
+  if (file == NULL) {
+      free(mtl_init_params_lcores);
+      return NULL;
+  } else {
+      if (fgets(mtl_init_params_lcores, 100, file) == NULL) {
+          fclose(file);
+          free(mtl_init_params_lcores);
+          return NULL;
+      }
+
+
+      FILE* temp_file = tmpfile();
+      if (temp_file == NULL) {
+          fclose(file);
+          free(mtl_init_params_lcores);
+          return NULL;
+      }
+
+
+      char buffer[9999];
+
+
+      while (fgets(buffer, sizeof(buffer), file) != NULL) {
+          fputs(buffer, temp_file);
+      }
+
+      fclose(file);
+
+      file = fopen("/tmp/cores", "w");
+      if (file == NULL) {
+          fclose(temp_file);
+          free(mtl_init_params_lcores);
+          return NULL;
+      }
+
+      rewind(temp_file);
+      while (fgets(buffer, sizeof(buffer), temp_file) != NULL) {
+          fputs(buffer, file);
+      }
+
+      fclose(file);
+      fclose(temp_file);
+
+    }
+
   handle = mtl_init(&mtl_init_params);
   if (!handle) {
     GST_ERROR("Failed to initialize MTL library");
