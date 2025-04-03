@@ -707,7 +707,8 @@ mtl_handle gst_mtl_common_init_handle(GeneralArgs* general_args,
       fclose(temp_file);
 
     }
-
+  mtl_init_params.lcores = mtl_init_params_lcores;
+  GST_ERROR("lcore_map: %s", mtl_init_params.lcores);
   handle = mtl_init(&mtl_init_params);
   if (!handle) {
     GST_ERROR("Failed to initialize MTL library");
