@@ -6,13 +6,12 @@ VIDEO_UDP_PORT=20000
 AUDIO_UDP_PORT=30000
 VIDEO_PAYLOAD_TYPE=112
 AUDIO_PAYLOAD_TYPE=111
+VIDEO_FPS=30000
 VIDEO_FPS_DIV=1001
 WIDTH=3840
 HEIGHT=2160
 LOG_LEVEL=0
 FORMAT=I422_10LE
-VIDEO_FPS=30000
-VIDEO_FPS_DIV=1001
 INPUT_FOLDER=/mnt/ramdisk_src
 INPUT=${INPUT_FOLDER}/GSTREAMER_${WIDTH}_${HEIGHT}_${FORMAT}_${VIDEO_FPS}_${VIDEO_FPS_DIV}.raw
 BLOCKSIZE=33177600
@@ -125,8 +124,7 @@ function_test2() {
                  ip-red=$IP_MULTICAST2 \
                  enable-ptp=true \
     audiotestsrc wave=sine freq=770 ! \
-    mtl_cpu_element ! \
-    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0x63\" ! \
+    \"audio/x-raw,format=S24LE,channels=8,rate=48000\" ! \
     queue ! \
     mtl_st30p_tx payload-type=97 \
                  async=false \
@@ -141,9 +139,8 @@ function_test2() {
                  ip-red=$IP_MULTICAST2 \
                  enable-ptp=true \
     audiotestsrc wave=sine freq=770 ! \
-    mtl_cpu_element ! \
-    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0x63\" ! \
-    queue ! \
+    \"audio/x-raw,format=S24LE,channels=8,rate=48000\" ! \
+        queue ! \
     mtl_st30p_tx payload-type=98 \
                  async=false \
                  sync=false \
@@ -157,9 +154,8 @@ function_test2() {
                  ip-red=$IP_MULTICAST2 \
                  enable-ptp=true \
     audiotestsrc wave=sine freq=770 ! \
-    mtl_cpu_element ! \
-    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0x63\" ! \
-    queue ! \
+    \"audio/x-raw,format=S24LE,channels=8,rate=48000\" ! \
+        queue ! \
     mtl_st30p_tx payload-type=99 \
                  async=false \
                  sync=false \
@@ -173,8 +169,7 @@ function_test2() {
                  ip-red=$IP_MULTICAST2 \
                  enable-ptp=true \
     audiotestsrc wave=sine freq=770 ! \
-    mtl_cpu_element ! \
-    \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0x63\" ! \
+    \"audio/x-raw,format=S24LE,channels=8,rate=48000\" ! \
     mtl_st30p_tx payload-type=100 \
                  async=false \
                  sync=false \
@@ -237,12 +232,9 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
         echo "This script must be run as root" 
         exit 1
     fi
-    function_test2 $VFIO_PORT_1 $IP_PORT_2 $VFIO_PORT_2 $IP_PORT_1 ${LOG_FILE}_1 &
-    PID1=$!
-    function_test2 $VFIO_PORT_3 $IP_PORT_4 $VFIO_PORT_4 $IP_PORT_3 ${LOG_FILE}_2 &
-    PID2=$!
-    function_test2 $VFIO_PORT_5 $IP_PORT_6 $VFIO_PORT_6 $IP_PORT_5 ${LOG_FILE}_3 &
-    PID3=$!
+    function_test2 $VFIO_PORT_1 $IP_PORT_2 $VFIO_PORT_2 $IP_PORT_1  ${LOG_FILE}_1 &
+    function_test2 $VFIO_PORT_3 $IP_PORT_4 $VFIO_PORT_4 $IP_PORT_3  ${LOG_FILE}_2 &
+    function_test2 $VFIO_PORT_5 $IP_PORT_6 $VFIO_PORT_6 $IP_PORT_5  ${LOG_FILE}_3 &
     # function_test2 $VFIO_PORT_2 $IP_PORT_1 &
     # function_test2 $VFIO_PORT_4 $IP_PORT_3 &
     # function_test2 $VFIO_PORT_6 $IP_PORT_5 &
@@ -265,8 +257,6 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
     # function_test_3 $VFIO_PORT_2 $IP_PORT_1
     # function_test_3 $VFIO_PORT_4 $IP_PORT_3
     # function_test_3 $VFIO_PORT_6 $IP_PORT_5
+
     wait
-    kill -9 $PID1
-    kill -9 $PID2
-    kill -9 $PID3
 fi

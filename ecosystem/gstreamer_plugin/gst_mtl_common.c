@@ -637,7 +637,9 @@ mtl_handle gst_mtl_common_init_handle(GeneralArgs* general_args,
     pthread_mutex_unlock(&common_handle.mutex);
     return NULL;
   }
-
+  // mtl_init_params.lcores = malloc(100);
+  // strncpy(mtl_init_params.lcores, "0,1,2,3,4,5", 100);
+  // mtl_init_params.main_lcore=0;
   handle = mtl_init(&mtl_init_params);
   if (!handle) {
     GST_ERROR("Failed to initialize MTL library");
