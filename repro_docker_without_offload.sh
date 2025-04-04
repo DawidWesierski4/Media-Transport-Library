@@ -199,34 +199,7 @@ function_test2() {
                  dev-port=$1 \
                  ip-red=$IP_MULTICAST2 \
                  dev-ip=$2 \
-                 enable-ptp=true \
-        audiotestsrc is-live=true wave=sine freq=770 ! \
-            mtl_st30p_tx payload-type=100 \
-                 async=false \
-                 sync=false \
-                 ip=$IP_MULTICAST \
-                 udp-port=$((AUDIO_UDP_PORT + 3)) \
-                 udp-port-red=$((AUDIO_UDP_PORT + 13)) \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 dev-port=$1 \
-                 ip-red=$IP_MULTICAST2 \
-                 dev-ip=$2 \
-                 enable-ptp=true \
-        audiotestsrc is-live=true wave=sine freq=770 ! \
-            mtl_st30p_tx payload-type=100 \
-                 async=false \
-                 sync=false \
-                 ip=$IP_MULTICAST \
-                 udp-port=$((AUDIO_UDP_PORT + 3)) \
-                 udp-port-red=$((AUDIO_UDP_PORT + 13)) \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 dev-port=$1 \
-                 ip-red=$IP_MULTICAST2 \
-                 dev-ip=$2 \
-                 enable-ptp=true \
-                 " 2>&1 | tee -a $5
+                 enable-ptp=true " 2>&1 | tee -a $5
 }
 
 
