@@ -728,7 +728,6 @@ mtl_handle gst_mtl_common_init_handle(GeneralArgs* general_args,
   }
 
   mtl_init_params.flags |= MTL_FLAG_NOT_BIND_PROCESS_NUMA;
-  mtl_init_params.flags |= MTL_FLAG_DEDICATED_SYS_LCORE;
   mtl_init_params.lcores = read_and_process_lcore_file();
   GST_ERROR("lcore_map: %s", mtl_init_params.lcores);
   handle = mtl_init(&mtl_init_params);
