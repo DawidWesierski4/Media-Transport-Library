@@ -301,8 +301,11 @@ static int tx_audio_session_sync_pacing(struct mtl_main_impl* impl,
   to_epoch = tx_audio_pacing_time(pacing, epochs) - ptp_time;
   if (to_epoch < 0) {
     /* time bigger than the assigned epoch time */
+    info("PACKET MISSED BY %f us\n", -(double)to_epoch / NS_PER_US);  
     s->stat_epoch_mismatch++;
     to_epoch = 0; /* send asap */
+  // mtl_init_params.flags |= MTL_FLAG_NOT_BIND_PROCESS_NUMA;
+
   }
 
   if (epochs > next_epochs) s->stat_epoch_drop += (epochs - next_epochs);

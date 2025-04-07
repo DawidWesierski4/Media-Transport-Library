@@ -727,10 +727,13 @@ mtl_handle gst_mtl_common_init_handle(GeneralArgs* general_args,
     return NULL;
   }
 
-  mtl_init_params.flags |= MTL_FLAG_NOT_BIND_PROCESS_NUMA;
+  // mtl_init_params.flags |= MTL_FLAG_NOT_BIND_PROCESS_NUMA;
   mtl_init_params.lcores = read_and_process_lcore_file();
   GST_ERROR("lcore_map: %s", mtl_init_params.lcores);
   handle = mtl_init(&mtl_init_params);
+
+  GST_ERROR("Mtl taks a nap for 10s ᶻ 𝗓 𐰁(ᴗ_ ᴗ。)");
+  g_usleep(10000000);
   if (!handle) {
     GST_ERROR("Failed to initialize MTL library");
     pthread_mutex_unlock(&common_handle.mutex);

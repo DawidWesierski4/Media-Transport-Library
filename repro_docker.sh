@@ -108,39 +108,6 @@ function_test2() {
         -e GST_DEBUG=WARNING \
         mtl_rockod_gstreamer:latest \
         "GST_PLUGIN_PATH=$GSTREAMER_PLUGINS_PATH gst-launch-1.0 -v \
-    filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
-    video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
-    tee name=t t. ! \
-    queue ! \
-    mtl_st20p_tx payload-type=96 \
-                 async=false \
-                 sync=false \
-                 lcore-list=$6 \
-                 ip=$IP_MULTICAST \
-                 udp-port=$VIDEO_UDP_PORT \
-                 udp-port-red=$((VIDEO_UDP_PORT + 10)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
-                 enable-ptp=true \
-    filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
-    video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
-    queue ! \
-    mtl_st20p_tx payload-type=96 \
-                 async=false \
-                 sync=false \
-                 lcore-list=$6 \
-                 ip=$IP_MULTICAST \
-                 udp-port=$VIDEO_UDP_PORT \
-                 udp-port-red=$((VIDEO_UDP_PORT + 10)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
-                 enable-ptp=true \
     audiotestsrc is-live=true wave=sine freq=770 ! \
     \"audio/x-raw,layout=(string)interleaved,format=S24LE,channels=8,rate=48000,channel-mask=(bitmask)0xFF\" ! \
     mtl_cpu_element ! \
