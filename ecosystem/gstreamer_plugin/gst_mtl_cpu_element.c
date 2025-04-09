@@ -26,45 +26,85 @@ void encode_one_frame_repeatedly() {
     EbBufferHeaderType *input_buffer = NULL;
     EbBufferHeaderType *output_buffer = NULL;
     uint8_t *frame_data = NULL;
-    EbComponentType      *app_cfg = NULL;
+    EbComponentType *eb_component_type = NULL;
+    EbErrorType res;
 
-    app_cfg = (EbComponentType *)malloc(sizeof(EbComponentType));
+    // eb_component_type = svt_av1_enc_init_handle(eb_component_type, sv );
 
-    memset(&enc_config, 0, sizeof(EbSvtAv1EncConfiguration));
-    enc_config.source_width = FRAME_WIDTH;
-    enc_config.source_height = FRAME_HEIGHT;
-    enc_config.frame_rate_numerator = FRAME_RATE;
-    enc_config.frame_rate_denominator = 1;
-    enc_config.encoder_bit_depth = 8;
+    // uint32_t size;
+    // void    *p_component_private;
+    // void    *p_application_private;
+    // eb_component_type->object_type = EB_ENC_COMPONENT;
+    // if (!eb_component_type) {
+    //     fprintf(stderr, "Failed to allocate memory for encoder configuration\n");
+    //     return;
+    // }
 
-    frame_data = (uint8_t *)malloc(FRAME_WIDTH * FRAME_HEIGHT * 3 / 2);
-    memset(frame_data, 64, FRAME_WIDTH * FRAME_HEIGHT * 3 / 2);
+    // res = svt_av1_enc_init(eb_component_type);
+    // if (res != EB_ErrorNone) {
+    //     fprintf(stderr, "Failed to initialize encoder %d\n", res);
+    //     free(eb_component_type);
+    //     return;
+    // }
 
-    input_buffer = (EbBufferHeaderType *)malloc(sizeof(EbBufferHeaderType));
+    // memset(&enc_config, 0, sizeof(EbSvtAv1EncConfiguration));
+    // enc_config.source_width = FRAME_WIDTH;
+    // enc_config.source_height = FRAME_HEIGHT;
+    // enc_config.frame_rate_numerator = FRAME_RATE;
+    // enc_config.frame_rate_denominator = 1;
+    // enc_config.encoder_bit_depth = 8;
 
-    memset(input_buffer, 0, sizeof(EbBufferHeaderType));
-    input_buffer->p_buffer = frame_data;
-    input_buffer->n_alloc_len = FRAME_WIDTH * FRAME_HEIGHT * 3 / 2;
-    input_buffer->n_filled_len = FRAME_WIDTH * FRAME_HEIGHT * 3 / 2;
-    input_buffer->n_tick_count = 0;
+    // frame_data = (uint8_t *)malloc(FRAME_WIDTH * FRAME_HEIGHT * 3 / 2);
+    // if (!frame_data) {
+    //     fprintf(stderr, "Failed to allocate memory for frame data\n");
+    //     free(eb_component_type);
+    //     return;
+    // }
+    // memset(frame_data, 64, FRAME_WIDTH * FRAME_HEIGHT * 3 / 2);
 
-    output_buffer = (EbBufferHeaderType *)malloc(sizeof(EbBufferHeaderType));
-    memset(output_buffer, 0, sizeof(EbBufferHeaderType));
+    // input_buffer = (EbBufferHeaderType *)malloc(sizeof(EbBufferHeaderType));
+    // if (!input_buffer) {
+    //     fprintf(stderr, "Failed to allocate memory for input buffer\n");
+    //     free(frame_data);
+    //     free(eb_component_type);
+    //     return;
+    // }
+    // memset(input_buffer, 0, sizeof(EbBufferHeaderType));
+    // input_buffer->p_buffer = frame_data;
+    // input_buffer->n_alloc_len = FRAME_WIDTH * FRAME_HEIGHT * 3 / 2;
+    // input_buffer->n_filled_len = FRAME_WIDTH * FRAME_HEIGHT * 3 / 2;
+    // input_buffer->n_tick_count = 0;
 
-    for (int i = 0; true; i++) {
+    // output_buffer = (EbBufferHeaderType *)malloc(sizeof(EbBufferHeaderType));
+    // if (!output_buffer) {
+    //     fprintf(stderr, "Failed to allocate memory for output buffer\n");
+    //     free(input_buffer);
+    //     free(frame_data);
+    //     free(eb_component_type);
+    //     return;
+    // }
+    // memset(output_buffer, 0, sizeof(EbBufferHeaderType));
 
-        return_error = svt_av1_enc_send_picture(app_cfg, input_buffer);
-        if (return_error != EB_ErrorNone) {
-            fprintf(stderr, "Error encoding frame %d\n", i);
-            break;
-        }
 
-        return_error = svt_av1_enc_get_packet(app_cfg, output_buffer, 0);
-    }
+    // for (int i = 0; i < ENCODE_COUNT; i++) {
+    //     return_error = svt_av1_enc_send_picture(eb_component_type, input_buffer);
+    //     if (return_error != EB_ErrorNone) {
+    //         fprintf(stderr, "Error encoding frame %d\n", i);
+    //         break;
+    //     }
 
-    free(frame_data);
-    free(input_buffer);
-    free(output_buffer);
+    //     return_error = svt_av1_enc_get_packet(eb_component_type, output_buffer, 0);
+    //     if (return_error != EB_ErrorNone) {
+    //         fprintf(stderr, "Error getting packet for frame %d\n", i);
+    //         break;
+    //     }
+
+    // }
+
+    // free(output_buffer);
+    // free(input_buffer);
+    // free(frame_data);
+    // free(eb_component_type);
 }
 
 static void gst_mtl_cpu_element_finalize(GObject* object);

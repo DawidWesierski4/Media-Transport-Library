@@ -209,7 +209,6 @@ function_test_bare_metal() {
                  dev-port-red=$3 \
                  dev-port=$1 \
                  ip-red=$IP_MULTICAST2 \
-                 enable-ptp=true \
                  dev-ip=$2 2>&1 | tee -a $5
 }
 
