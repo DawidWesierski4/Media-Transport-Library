@@ -59,6 +59,7 @@ struct _Gst_Mtl_St30p_Tx {
   mtl_handle mtl_lib_handle;
   st30p_tx_handle tx_handle;
   guint frame_size;
+  GstAdapter* adapter;
 
   gboolean session_ready;
   pthread_mutex_t session_mutex;
