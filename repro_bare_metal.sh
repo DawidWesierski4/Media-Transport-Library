@@ -21,20 +21,20 @@ BLOCKSIZE=8294400
 IP_MULTICAST=239.168.75.30
 IP_MULTICAST2=239.168.75.32
 
-VFIO_PORT_1=0000:4b:01.0
-VFIO_PORT_2=0000:4b:01.1
-VFIO_PORT_3=0000:4b:01.2
-VFIO_PORT_4=0000:4b:01.3
-VFIO_PORT_5=0000:4b:01.4
-VFIO_PORT_6=0000:4b:01.5
+VFIO_PORT_1=0000:${PF_1}.0
+VFIO_PORT_2=0000:${PF_1}.1
+VFIO_PORT_3=0000:${PF_1}.2
+VFIO_PORT_4=0000:${PF_1}.3
+VFIO_PORT_5=0000:${PF_1}.4
+VFIO_PORT_6=0000:${PF_1}.5
 
 
-VFIO_PORT_1_2=0000:4b:11.0
-VFIO_PORT_2_2=0000:4b:11.1
-VFIO_PORT_3_2=0000:4b:11.2
-VFIO_PORT_4_2=0000:4b:11.3
-VFIO_PORT_5_2=0000:4b:11.4
-VFIO_PORT_6_2=0000:4b:11.5
+VFIO_PORT_1_2=0000:${PF_2}.0
+VFIO_PORT_2_2=0000:${PF_2}.1
+VFIO_PORT_3_2=0000:${PF_2}.2
+VFIO_PORT_4_2=0000:${PF_2}.3
+VFIO_PORT_5_2=0000:${PF_2}.4
+VFIO_PORT_6_2=0000:${PF_2}.5
 
 IP_PORT_1=192.168.12.181
 IP_PORT_2=192.168.12.182
@@ -200,6 +200,13 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
         echo "This script must be run as root" 
         exit 1
     fi
+
+    if [ -z "$PF_1" ] || [ -z "$PF_2" ]; then
+        echo "Error: PF_1 (primary port) or PF_2 (redundant port) is not set."
+        echo "Please use dpdk-devbind.py -s to check the available devices."
+        echo "For example, if you see a device like 0000:b1:01.2, set PF_1=b1:01."
+        exit 1
+    fi
     init_test
 
     #/home/labrat/SVT-AV1/Bin/Release/SvtAv1EncApp -i $INPUT --qp 31 --preset 0 --lp 1 &
@@ -211,7 +218,7 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
         export GST_PLUGIN_PATH=$GSTREAMER_PLUGINS_PATH
         function_test_bare_metal $VFIO_PORT_1   $IP_PORT_2 $VFIO_PORT_2_2 $IP_PORT_1 ${LOG_FILE}_1 &
         function_test_bare_metal $VFIO_PORT_3   $IP_PORT_4 $VFIO_PORT_4_2 $IP_PORT_3 ${LOG_FILE}_2 &
-        function_test_bare_metal $VFIO_PORT_5   $IP_PORT_6 $VFIO_PORT_6_2 $IP_PORT_5 ${LOG_FILE}_3 &
+        # function_test_bare_metal $VFIO_PORT_5   $IP_PORT_6 $VFIO_PORT_6_2 $IP_PORT_5 ${LOG_FILE}_3 &
         wait
     fi
     #function_test_bare_metal $VFIO_PORT_1_2 $IP_PORT_2 $VFIO_PORT_2   $IP_PORT_1 ${LOG_FILE}_4 &
