@@ -145,3 +145,24 @@ gst_mtl_st40p_tx = library('gstmtl_st40p_tx',
   include_directories: inc_dirs,
   c_args: plugin_c_args
 )
+
+
+
+svt_av1_dep = dependency('SvtAv1Enc', required: false)
+
+if svt_av1_dep.found()
+  message('SVT-AV1 Encoder library found, building gst_mtl_cpu_element with SVT support.')
+
+  gst_mtl_cpu_element_sources = [
+    'gst_mtl_cpu_element.c'
+  ]
+
+  gst_mtl_cpu_element = library('gstmtl_cpu_element',
+    gst_mtl_cpu_element_sources,
+    dependencies : [gst_dep, gstbase_dep, svt_av1_dep],
+    install : true,
+    install_dir : plugins_install_dir,
+    include_directories: inc_dirs,
+    c_args: plugin_c_args
+  )
+endif

@@ -553,6 +553,7 @@ gboolean gst_mtl_common_parse_general_arguments(struct mtl_init_params* mtl_init
 
   if (general_args->enable_onboard_ptp) {
     mtl_init_params->flags |= MTL_FLAG_PTP_ENABLE;
+    mtl_init_params->flags |= MTL_FLAG_CNI_THREAD;
     GST_INFO("Using MTL library's onboard PTP");
   }
 
