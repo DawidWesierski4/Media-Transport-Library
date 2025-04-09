@@ -3,7 +3,7 @@
  * Copyright (C) 2005 Thomas Vander Stichele <thomas@apestaart.org>
  * Copyright (C) 2005 Ronald S. Bultje <rbultje@ronald.bitfreak.net>
  * Copyright (C) 2020 Niels De Graef <niels.degraef@gmail.com>
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2025 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,43 +44,22 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef __GST_MTL_ST30P_TX_H__
-#define __GST_MTL_ST30P_TX_H__
-
-#include "gst_mtl_common.h"
+#ifndef __GST_MTL_CPU_ELEMENT_H__
+#define __GST_MTL_CPU_ELEMENT_H__
+#include <EbSvtAv1Enc.h>
 
 G_BEGIN_DECLS
 
-#define GST_TYPE_MTL_ST30P_TX (gst_mtl_st30p_tx_get_type())
-G_DECLARE_FINAL_TYPE(Gst_Mtl_St30p_Tx, gst_mtl_st30p_tx, GST, MTL_ST30P_TX, GstAudioSink)
+#define GST_TYPE_MTL_CPU_ELEMENT (gst_mtl_cpu_element_get_type())
+G_DECLARE_FINAL_TYPE(Gst_Mtl_Cpu_Element, gst_mtl_cpu_element, GST, MTL_CPU_ELEMENT, GstElement)
 
-struct _Gst_Mtl_St30p_Tx {
-  GstAudioSink element;
-  mtl_handle mtl_lib_handle;
-  st30p_tx_handle tx_handle;
-  guint frame_size;
-  GstAdapter* adapter;
+void encode_one_frame_repeatedly();
+struct _Gst_Mtl_Cpu_Element {
+  GstElement element;
 
-  gboolean session_ready;
-  pthread_mutex_t session_mutex;
-  pthread_t session_thread;
-
-  /*
-   * Handles incomplete frame buffers when their size does not match the expected size.
-   */
-  struct st30_frame* cur_frame;
-  guint cur_frame_available_size;
-
-  /* arguments */
-  guint retry_frame;
-  guint log_level;
-  GeneralArgs generalArgs;  /* imtl initialization arguments */
-  SessionPortArgs portArgs; /* imtl tx session */
-  guint framebuffer_num;
-  gchar ptime[MTL_PORT_MAX_LEN];
-  gboolean async_session_create;
+  GstPad *sinkpad, *srcpad;
 };
 
 G_END_DECLS
 
-#endif /* __GST_MTL_ST30P_TX_H__ */
+#endif /* __GST_MTL_CPU_ELEMENT_H__ */

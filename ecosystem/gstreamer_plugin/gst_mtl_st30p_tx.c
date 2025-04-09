@@ -102,6 +102,7 @@ enum {
 /* Structure to pass arguments to the thread function */
 typedef struct {
   Gst_Mtl_St30p_Tx* sink;
+  GstAdapter* adapter;
   GstCaps* caps;
 } GstMtlSt30pTxThreadData;
 
@@ -205,6 +206,7 @@ static gboolean gst_mtl_st30p_tx_start(GstBaseSink* bsink) {
     sink->session_ready = FALSE;
   }
 
+  sink->adapter = gst_adapter_new();
   gst_element_set_state(GST_ELEMENT(sink), GST_STATE_PLAYING);
 
   return true;
@@ -464,9 +466,12 @@ static GstFlowReturn gst_mtl_st30p_tx_chain(GstPad* pad, GstObject* parent,
   struct st30_frame* frame = NULL;
   GstMemory* gst_buffer_memory;
   GstMapInfo map_info;
+  GstAdapter *adapter;
   gint bytes_to_write;
   void* cur_addr_frame;
   void* cur_addr_buf;
+  gint ret = GST_FLOW_OK;
+  const guint8 *data;
 
   if (sink->async_session_create) {
     pthread_mutex_lock(&sink->session_mutex);
@@ -485,41 +490,27 @@ static GstFlowReturn gst_mtl_st30p_tx_chain(GstPad* pad, GstObject* parent,
     return GST_FLOW_ERROR;
   }
 
-  for (int i = 0; i < buffer_n; i++) {
-    bytes_to_write = gst_buffer_get_size(buf);
-    gst_buffer_memory = gst_buffer_peek_memory(buf, i);
+  adapter = sink->adapter;
 
-    if (!gst_memory_map(gst_buffer_memory, &map_info, GST_MAP_READ)) {
-      GST_ERROR("Failed to map memory");
+  gst_adapter_push(adapter, buf);
+
+  while (gst_adapter_available(adapter) > sink->frame_size && ret == GST_FLOW_OK) {
+    data = gst_adapter_map (adapter, sink->frame_size);
+
+    frame = st30p_tx_get_frame(sink->tx_handle);
+    if (!frame) {
+      GST_ERROR("Failed to get frame");
       return GST_FLOW_ERROR;
     }
 
-    /* This could be done with GstAdapter */
-    while (bytes_to_write > 0) {
-      frame = mtl_st30p_fetch_frame(sink);
-      if (!frame) {
-        GST_ERROR("Failed to get frame");
-        return GST_FLOW_ERROR;
-      }
-      cur_addr_frame = frame->addr + sink->frame_size - sink->cur_frame_available_size;
-      cur_addr_buf = map_info.data + gst_buffer_get_size(buf) - bytes_to_write;
+    mtl_memcpy(frame->addr, data, sink->frame_size);
+    st30p_tx_put_frame(sink->tx_handle, frame);
 
-      if (sink->cur_frame_available_size > bytes_to_write) {
-        mtl_memcpy(cur_addr_frame, cur_addr_buf, bytes_to_write);
-        sink->cur_frame_available_size -= bytes_to_write;
-        bytes_to_write = 0;
-        break;
-      } else {
-        mtl_memcpy(cur_addr_frame, cur_addr_buf, sink->cur_frame_available_size);
-        st30p_tx_put_frame(sink->tx_handle, frame);
-        sink->cur_frame = NULL;
-        bytes_to_write -= sink->cur_frame_available_size;
-      }
-    }
-    gst_memory_unmap(gst_buffer_memory, &map_info);
+    gst_adapter_unmap (adapter);
+    gst_adapter_flush (adapter, sink->frame_size);
   }
-  gst_buffer_unref(buf);
-  return GST_FLOW_OK;
+
+  return ret;
 }
 
 static void gst_mtl_st30p_tx_finalize(GObject* object) {

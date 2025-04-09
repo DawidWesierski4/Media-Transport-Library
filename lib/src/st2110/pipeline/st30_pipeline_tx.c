@@ -7,6 +7,7 @@
 #include "../../mt_log.h"
 #include "../../mt_stat.h"
 
+
 static const char* st30p_tx_frame_stat_name[ST30P_TX_FRAME_STATUS_MAX] = {
     "free",
     "in_user",
@@ -66,7 +67,7 @@ static struct st30p_tx_frame* tx_st30p_next_available(
   /* no any desired frame */
   return NULL;
 }
-
+#define NS_PER_SEC 1000000000
 static int tx_st30p_next_frame(void* priv, uint16_t* next_frame_idx,
                                struct st30_tx_frame_meta* meta) {
   struct st30p_tx_ctx* ctx = priv;
@@ -78,8 +79,19 @@ static int tx_st30p_next_frame(void* priv, uint16_t* next_frame_idx,
   mt_pthread_mutex_lock(&ctx->lock);
   framebuff =
       tx_st30p_next_available(ctx, ctx->framebuff_consumer_idx, ST30P_TX_FRAME_READY);
+  
   /* not any converted frame */
   if (!framebuff) {
+    info("\n%s(%d), framebuff READY -------------------------------- next-> %hu",__func__, ctx->idx, *next_frame_idx);
+
+    char time_str[120];
+
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    snprintf(time_str, sizeof(time_str), "Time: %ld.%09ld", ts.tv_sec, ts.tv_nsec);
+    info("%s\n\n", time_str);
+
+
     mt_pthread_mutex_unlock(&ctx->lock);
     return -EBUSY;
   }
@@ -279,9 +291,10 @@ static int tx_st30p_get_block_wait(struct st30p_tx_ctx* ctx) {
 
 static int tx_st30p_usdt_dump_close(struct st30p_tx_ctx* ctx) {
   int idx = ctx->idx;
+  MTL_MAY_UNUSED(idx);
 
   if (ctx->usdt_dump_fd >= 0) {
-    info("%s(%d), close fd %d, dumped frames %d\n", __func__, idx, ctx->usdt_dump_fd,
+    dbg("%s(%d), close fd %d, dumped frames %d\n", __func__, idx, ctx->usdt_dump_fd,
          ctx->usdt_dumped_frames);
     close(ctx->usdt_dump_fd);
     ctx->usdt_dump_fd = -1;
@@ -305,7 +318,7 @@ static int tx_st30p_usdt_dump_frame(struct st30p_tx_ctx* ctx, struct st30_frame*
       return ret;
     }
     ctx->usdt_dump_fd = ret;
-    info("%s(%d), mkstemps succ on %s fd %d\n", __func__, idx, ctx->usdt_dump_path,
+    dbg("%s(%d), mkstemps succ on %s fd %d\n", __func__, idx, ctx->usdt_dump_path,
          ctx->usdt_dump_fd);
   }
 
@@ -343,7 +356,7 @@ static void tx_st30p_framebuffs_flush(struct st30p_tx_ctx* ctx) {
           tx_st30p_stat_name(framebuff->stat), retry);
       retry++;
       if (retry > 100) {
-        info("%s(%d), frame %u are still in %s, retry %d\n", __func__, ctx->idx, i,
+        dbg("%s(%d), frame %u are still in %s, retry %d\n", __func__, ctx->idx, i,
              tx_st30p_stat_name(framebuff->stat), retry);
         break;
       }
@@ -494,7 +507,7 @@ st30p_tx_handle st30p_tx_create(mtl_handle mt, struct st30p_tx_ops* ops) {
 
   if (ops->flags & ST30P_RX_FLAG_FORCE_NUMA) {
     socket = ops->socket_id;
-    info("%s, ST30P_RX_FLAG_FORCE_NUMA to socket %d\n", __func__, socket);
+    dbg("%s, ST30P_RX_FLAG_FORCE_NUMA to socket %d\n", __func__, socket);
   }
 
   ctx = mt_rte_zmalloc_socket(sizeof(*ctx), socket);

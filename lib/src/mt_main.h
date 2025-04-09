@@ -119,7 +119,7 @@ struct mt_ptp_port_id {
 struct mt_ipv4_udp {
   struct rte_ipv4_hdr ip;
   struct rte_udp_hdr udp;
-} __attribute__((__packed__));
+} __attribute__((__packed__)) __attribute__((__aligned__(2)));
 
 enum mt_port_type {
   MT_PORT_ERR = 0,
@@ -1198,6 +1198,10 @@ struct mtl_main_impl {
   enum mt_handle_type type; /* for sanity check */
   uint64_t tsc_hz;
   pthread_t tsc_cal_tid;
+  /* tsc */
+  uint64_t tsc;
+  uint64_t tsc_set_simulate;
+  uint16_t tsc_cnt;
 
   enum rte_iova_mode iova_mode; /* current IOVA mode */
   size_t page_size;
@@ -1866,9 +1870,12 @@ static inline int mt_wait_tsc_stable(struct mtl_main_impl* impl) {
 
 /* Return relative TSC time in nanoseconds */
 static inline uint64_t mt_get_tsc(struct mtl_main_impl* impl) {
-  double tsc = rte_get_tsc_cycles();
-  double tsc_hz = impl->tsc_hz;
-  double time_nano = tsc / (tsc_hz / ((double)NS_PER_S));
+  double tsc, tsc_hz, time_nano;
+  MTL_MAY_UNUSED(impl);
+
+  tsc = rte_get_tsc_cycles();
+  tsc_hz = rte_get_tsc_hz();// impl->tsc_hz;
+  time_nano = tsc / (tsc_hz / ((double)NS_PER_S));
   return time_nano;
 }
 

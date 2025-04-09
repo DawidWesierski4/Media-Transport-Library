@@ -54,6 +54,7 @@ dkms.conf
 # Ours
 .*
 *.log
+*.log_*
 *.patch
 !patches/*.patch
 !ecosystem/*.patch
@@ -91,3 +92,5 @@ gpu_direct/tests/fff.h
 gpu_direct/subprojects/*
 !gpu_direct/subprojects/gtest.wrap
 _temp*
+
+logs_*
