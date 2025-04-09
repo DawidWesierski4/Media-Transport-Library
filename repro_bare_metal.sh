@@ -79,124 +79,93 @@ init_test() {
 }
 
 function_test_bare_metal() {
-    GST_PLUGIN_PATH=$GSTREAMER_PLUGINS_PATH gst-launch-1.0 -v \
+    echo "Starting test with $1 $2 $3 $4 $5"
+
+    gst-launch-1.0 -v \
     filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
     video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
     queue ! \
     mtl_st20p_tx payload-type=96 \
                  async=false \
                  sync=false \
+                 port=$1 \
+                 port-red=$3 \
                  ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
                  udp-port=$VIDEO_UDP_PORT \
                  udp-port-red=$((VIDEO_UDP_PORT)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
-                 enable-ptp=true \
     filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
     video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
     queue ! \
     mtl_st20p_tx payload-type=96 \
                  async=false \
                  sync=false \
+                 port=$1 \
+                 port-red=$3 \
                  ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
                  udp-port=$VIDEO_UDP_PORT \
                  udp-port-red=$((VIDEO_UDP_PORT + 10)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
-                 enable-ptp=true \
     filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
     video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
     queue ! \
     mtl_st20p_tx payload-type=96 \
                  async=false \
                  sync=false \
+                 port=$1 \
+                 port-red=$3 \
                  ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
                  udp-port=$((VIDEO_UDP_PORT + 1)) \
                  udp-port-red=$((VIDEO_UDP_PORT + 11)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
-                 enable-ptp=true \
-    filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
-    video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
+    filesrc location=/dev/zero blocksize=$((BLOCKSIZE * 4)) ! \
+    video/x-raw,format=$FORMAT,width=3840,height=2160,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
     queue ! \
     mtl_st20p_tx payload-type=96 \
                  async=false \
                  sync=false \
+                 port=$1 \
+                 port-red=$3 \
                  ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
                  udp-port=$((VIDEO_UDP_PORT + 2)) \
                  udp-port-red=$((VIDEO_UDP_PORT + 12)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
-                 enable-ptp=true \
-    filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
-    video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
-    queue ! \
-    mtl_st20p_tx payload-type=96 \
-                 async=false \
-                 sync=false \
-                 ip=$IP_MULTICAST \
-                 udp-port=$((VIDEO_UDP_PORT + 3)) \
-                 udp-port-red=$((VIDEO_UDP_PORT + 13)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
-                 enable-ptp=true \
     filesrc location=/dev/zero ! \
     "audio/x-raw,layout=(string)interleaved,format=S24LE,channels=2,rate=48000,channel-mask=(bitmask)0x63" ! \
     queue ! \
     mtl_st30p_tx payload-type=97 \
                  async=false \
                  sync=false \
+                 port=$1 \
+                 port-red=$3 \
                  ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
                  udp-port=$AUDIO_UDP_PORT \
                  udp-port-red=$((AUDIO_UDP_PORT + 10)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
     filesrc location=/dev/zero ! \
     "audio/x-raw,layout=(string)interleaved,format=S24LE,channels=2,rate=48000,channel-mask=(bitmask)0x63" ! \
     queue ! \
     mtl_st30p_tx payload-type=98 \
                  async=false \
                  sync=false \
+                 port=$1 \
+                 port-red=$3 \
                  ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
                  udp-port=$((AUDIO_UDP_PORT + 1)) \
                  udp-port-red=$((AUDIO_UDP_PORT + 11)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
     filesrc location=/dev/zero ! \
     "audio/x-raw,layout=(string)interleaved,format=S24LE,channels=2,rate=48000,channel-mask=(bitmask)0x63" ! \
     queue ! \
     mtl_st30p_tx payload-type=99 \
                  async=false \
                  sync=false \
+                 port=$1 \
+                 port-red=$3 \
                  ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
                  udp-port=$((AUDIO_UDP_PORT + 2)) \
                  udp-port-red=$((AUDIO_UDP_PORT + 12)) \
-                 dev-port=$1 \
-                 dev-ip=$2 \
-                 dev-ip-red=$4 \
-                 dev-port-red=$3 \
-                 ip-red=$IP_MULTICAST2 \
     filesrc location=/dev/zero ! \
     "audio/x-raw,layout=(string)interleaved,format=S24LE,channels=2,rate=48000,channel-mask=(bitmask)0x63" ! \
     mtl_st30p_tx payload-type=100 \
@@ -205,11 +174,12 @@ function_test_bare_metal() {
                  ip=$IP_MULTICAST \
                  udp-port=$((AUDIO_UDP_PORT + 3)) \
                  udp-port-red=$((AUDIO_UDP_PORT + 13)) \
+                 dev-ip=$2 \
                  dev-ip-red=$4 \
-                 dev-port-red=$3 \
                  dev-port=$1 \
+                 dev-port-red=$3 \
                  ip-red=$IP_MULTICAST2 \
-                 dev-ip=$2 2>&1 | tee -a $5
+                 enable-ptp=false 2>&1 | tee -a $5
 }
 
 
@@ -234,30 +204,21 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
 
     #/home/labrat/SVT-AV1/Bin/Release/SvtAv1EncApp -i $INPUT --qp 31 --preset 0 --lp 1 &
 
-
-
-    function_test_bare_metal $VFIO_PORT_1   $IP_PORT_2 $VFIO_PORT_2_2 $IP_PORT_1 ${LOG_FILE}_1 &
-    function_test_bare_metal $VFIO_PORT_3   $IP_PORT_4 $VFIO_PORT_4_2 $IP_PORT_3 ${LOG_FILE}_2 &
-    function_test_bare_metal $VFIO_PORT_5   $IP_PORT_6 $VFIO_PORT_6_2 $IP_PORT_5 ${LOG_FILE}_3 &
-
+    if [ "$0" = "docker" ]; then
+        echo "docker"
+    else
+        export GST_DEBUG=WARN
+        export GST_PLUGIN_PATH=$GSTREAMER_PLUGINS_PATH
+        function_test_bare_metal $VFIO_PORT_1   $IP_PORT_2 $VFIO_PORT_2_2 $IP_PORT_1 ${LOG_FILE}_1 &
+        function_test_bare_metal $VFIO_PORT_3   $IP_PORT_4 $VFIO_PORT_4_2 $IP_PORT_3 ${LOG_FILE}_2 &
+        function_test_bare_metal $VFIO_PORT_5   $IP_PORT_6 $VFIO_PORT_6_2 $IP_PORT_5 ${LOG_FILE}_3 &
+        wait
+    fi
     #function_test_bare_metal $VFIO_PORT_1_2 $IP_PORT_2 $VFIO_PORT_2   $IP_PORT_1 ${LOG_FILE}_4 &
     #function_test_bare_metal $VFIO_PORT_3_2 $IP_PORT_4 $VFIO_PORT_4   $IP_PORT_3 ${LOG_FILE}_5 &
     #function_test_bare_metal $VFIO_PORT_5_2 $IP_PORT_6 $VFIO_PORT_6   $IP_PORT_5 ${LOG_FILE}_6 &
 
-    if [[ $1 =~ ^[0-9]+$ ]]; then
-        for i in {0..$0}; do
-            echo "Starting instance $i on 8-27,66-83"
-            sudo taskset -c 8-27,64-83 /home/labrat/SVT-AV1/Bin/Release/SvtAv1EncApp -i $INPUT --qp 30 --preset 0 --lp 1 &
-            #sudo taskset -c 10-55,66-111 stress -c 10 --vm 1  --vm-stride 256 &
-            echo $i
-
-            if [[ $2 =~ ^[0-9]+$ ]]; then
-                sleep $2
-            fi
-        done
-    fi
 
 
 
-    wait
 fi
