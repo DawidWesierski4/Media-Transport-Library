@@ -239,7 +239,7 @@ static int tx_st30p_init_fbs(struct st30p_tx_ctx* ctx, struct st30p_tx_ops* ops)
     frame->ptime = ops->ptime;
     /* same to framebuffer size */
     frame->buffer_size = frame->data_size = ops->framebuff_size;
-    dbg("%s(%d), init fb %u\n", __func__, idx, i);
+    info("%s(%d), init fb %u\n", __func__, idx, i);
   }
 
   return 0;

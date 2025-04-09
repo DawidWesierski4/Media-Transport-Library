@@ -21,6 +21,8 @@ BLOCKSIZE=8294400
 IP_MULTICAST=239.168.75.30
 IP_MULTICAST2=239.168.75.32
 
+DISNEY_BUFFER_AUDIO_SIZE=4806
+
 VFIO_PORT_1=0000:${PF_1}.0
 VFIO_PORT_2=0000:${PF_1}.1
 VFIO_PORT_3=0000:${PF_1}.2
@@ -42,9 +44,10 @@ IP_PORT_3=192.168.12.183
 IP_PORT_4=192.168.12.184
 IP_PORT_5=192.168.12.185
 IP_PORT_6=192.168.12.186
-NUMA_NODE=1
 
-set -xe
+AUDIO_FB_CNT=18
+
+
 init_test() {
     if $(pgrep MtlManager > /dev/null); then
         echo "MtlManager is already running"
@@ -74,6 +77,14 @@ init_test() {
     cat $0 > $LOG_FILE
     exec > >(tee -a $LOG_FILE) 2>&1
 
+    if [ -z "$PF_1" ] || [ -z "$PF_2" ]; then
+        echo -e "\e[31mError: PF_1 (primary port value=\"$PF_1\") or PF_2 (redundant port value=\"$PF_2\") is not set. Please use dpdk-devbind.py -s to check the available devices. For example, if you see a device like 0000:b1:01.2, set PF_1=b1:01.\e[0m"
+        echo -e "\e[31mARE YOU SURE YOU ARE USING sudo -E  ಠ_ಠ ? \e[0m"
+        exit 1
+    fi
+
+    trap kill_ass EXIT
+    trap kill_ass SIGINT
     echo "Initialized $SCRIPT_BASENAME test iteration $REPO_NUMBER"
     echo "Log directory: $LOG_FILE"
 }
@@ -84,6 +95,7 @@ function_test_bare_metal() {
     gst-launch-1.0 -v \
     filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
     video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
+    tee name=t ! \
     queue ! \
     mtl_st20p_tx payload-type=96 \
                  async=false \
@@ -94,8 +106,7 @@ function_test_bare_metal() {
                  ip-red=$IP_MULTICAST2 \
                  udp-port=$VIDEO_UDP_PORT \
                  udp-port-red=$((VIDEO_UDP_PORT)) \
-    filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
-    video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
+    t. ! \
     queue ! \
     mtl_st20p_tx payload-type=96 \
                  async=false \
@@ -106,8 +117,7 @@ function_test_bare_metal() {
                  ip-red=$IP_MULTICAST2 \
                  udp-port=$VIDEO_UDP_PORT \
                  udp-port-red=$((VIDEO_UDP_PORT + 10)) \
-    filesrc location=/dev/zero blocksize=$BLOCKSIZE ! \
-    video/x-raw,format=$FORMAT,width=$WIDTH,height=$HEIGHT,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
+    t. ! \
     queue ! \
     mtl_st20p_tx payload-type=96 \
                  async=false \
@@ -116,46 +126,83 @@ function_test_bare_metal() {
                  port-red=$3 \
                  ip=$IP_MULTICAST \
                  ip-red=$IP_MULTICAST2 \
-                 udp-port=$((VIDEO_UDP_PORT + 1)) \
-                 udp-port-red=$((VIDEO_UDP_PORT + 11)) \
-    filesrc location=/dev/zero blocksize=$((BLOCKSIZE * 4)) ! \
-    video/x-raw,format=$FORMAT,width=3840,height=2160,framerate=${VIDEO_FPS}/${VIDEO_FPS_DIV} ! \
-    queue ! \
-    mtl_st20p_tx payload-type=96 \
-                 async=false \
-                 sync=false \
-                 port=$1 \
-                 port-red=$3 \
-                 ip=$IP_MULTICAST \
-                 ip-red=$IP_MULTICAST2 \
-                 udp-port=$((VIDEO_UDP_PORT + 2)) \
-                 udp-port-red=$((VIDEO_UDP_PORT + 12)) \
-    filesrc location=/dev/zero ! \
-    "audio/x-raw,layout=(string)interleaved,format=S24LE,channels=2,rate=48000,channel-mask=(bitmask)0x63" ! \
+                 udp-port=$VIDEO_UDP_PORT \
+                 udp-port-red=$((VIDEO_UDP_PORT + 10)) \
+    audiotestsrc wave=sine is-live=true ! \
+    "audio/x-raw,layout=(string)interleaved,format=S24LE,channels=1,rate=48000,blocksize=$DISNEY_BUFFER_AUDIO_SIZE" ! \
+    tee name=audio_tee ! \
     queue ! \
     mtl_st30p_tx payload-type=97 \
                  async=false \
                  sync=false \
+                 tx-framebuff-num=${AUDIO_FB_CNT} \
                  port=$1 \
                  port-red=$3 \
                  ip=$IP_MULTICAST \
                  ip-red=$IP_MULTICAST2 \
                  udp-port=$AUDIO_UDP_PORT \
                  udp-port-red=$((AUDIO_UDP_PORT + 10)) \
-    filesrc location=/dev/zero ! \
-    "audio/x-raw,layout=(string)interleaved,format=S24LE,channels=2,rate=48000,channel-mask=(bitmask)0x63" ! \
+    audio_tee. ! \
     queue ! \
     mtl_st30p_tx payload-type=98 \
                  async=false \
                  sync=false \
+                 tx-framebuff-num=${AUDIO_FB_CNT} \
                  port=$1 \
                  port-red=$3 \
                  ip=$IP_MULTICAST \
                  ip-red=$IP_MULTICAST2 \
                  udp-port=$((AUDIO_UDP_PORT + 1)) \
                  udp-port-red=$((AUDIO_UDP_PORT + 11)) \
-    filesrc location=/dev/zero ! \
-    "audio/x-raw,layout=(string)interleaved,format=S24LE,channels=2,rate=48000,channel-mask=(bitmask)0x63" ! \
+    audio_tee. ! \
+    queue ! \
+    mtl_st30p_tx payload-type=99 \
+                 async=false \
+                 sync=false \
+                 tx-framebuff-num=${AUDIO_FB_CNT} \
+                 port=$1 \
+                 port-red=$3 \
+                 ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
+                 udp-port=$((AUDIO_UDP_PORT + 2)) \
+                 udp-port-red=$((AUDIO_UDP_PORT + 12)) \
+    audio_tee. ! \
+    queue ! \
+    mtl_st30p_tx payload-type=99 \
+                 async=false \
+                 sync=false \
+                 tx-framebuff-num=${AUDIO_FB_CNT} \
+                 port=$1 \
+                 port-red=$3 \
+                 ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
+                 udp-port=$((AUDIO_UDP_PORT + 2)) \
+                 udp-port-red=$((AUDIO_UDP_PORT + 12)) \
+    audio_tee. ! \
+    queue ! \
+    mtl_st30p_tx payload-type=99 \
+                 async=false \
+                 sync=false \
+                 tx-framebuff-num=${AUDIO_FB_CNT} \
+                 port=$1 \
+                 port-red=$3 \
+                 ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
+                 udp-port=$((AUDIO_UDP_PORT + 2)) \
+                 udp-port-red=$((AUDIO_UDP_PORT + 12)) \
+    audio_tee. ! \
+    queue ! \
+    mtl_st30p_tx payload-type=99 \
+                 async=false \
+                 sync=false \
+                 tx-framebuff-num=${AUDIO_FB_CNT} \
+                 port=$1 \
+                 port-red=$3 \
+                 ip=$IP_MULTICAST \
+                 ip-red=$IP_MULTICAST2 \
+                 udp-port=$((AUDIO_UDP_PORT + 2)) \
+                 udp-port-red=$((AUDIO_UDP_PORT + 12)) \
+    audio_tee. ! \
     queue ! \
     mtl_st30p_tx payload-type=99 \
                  async=false \
@@ -166,8 +213,8 @@ function_test_bare_metal() {
                  ip-red=$IP_MULTICAST2 \
                  udp-port=$((AUDIO_UDP_PORT + 2)) \
                  udp-port-red=$((AUDIO_UDP_PORT + 12)) \
-    filesrc location=/dev/zero ! \
-    "audio/x-raw,layout=(string)interleaved,format=S24LE,channels=2,rate=48000,channel-mask=(bitmask)0x63" ! \
+    audio_tee. ! \
+    queue ! \
     mtl_st30p_tx payload-type=100 \
                  async=false \
                  sync=false \
@@ -179,7 +226,7 @@ function_test_bare_metal() {
                  dev-port=$1 \
                  dev-port-red=$3 \
                  ip-red=$IP_MULTICAST2 \
-                 enable-ptp=true 2>&1 | tee -a $5
+                 enable-ptp=false 2>&1 | tee -a $5
 }
 
 
@@ -193,7 +240,6 @@ function kill_ass()
 }
 
 
-trap kill_ass SIGINT
 if [[ ${BASH_SOURCE} == ${0} ]]; then
 
     if [[ $EUID -ne 0 ]]; then
@@ -201,26 +247,14 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
         exit 1
     fi
 
-    if [ -z "$PF_1" ] || [ -z "$PF_2" ]; then
-        echo "Error: PF_1 (primary port) or PF_2 (redundant port) is not set."
-        echo "Please use dpdk-devbind.py -s to check the available devices."
-        echo "For example, if you see a device like 0000:b1:01.2, set PF_1=b1:01."
-        exit 1
-    fi
     init_test
+    export GST_DEBUG=WARN
+    export GST_PLUGIN_PATH=$GSTREAMER_PLUGINS_PATH
+    function_test_bare_metal $VFIO_PORT_1   $IP_PORT_2 $VFIO_PORT_2_2 $IP_PORT_1 ${LOG_FILE}_1 &
+    # function_test_bare_metal $VFIO_PORT_3   $IP_PORT_4 $VFIO_PORT_4_2 $IP_PORT_3 ${LOG_FILE}_2 &
+    # function_test_bare_metal $VFIO_PORT_5   $IP_PORT_6 $VFIO_PORT_6_2 $IP_PORT_5 ${LOG_FILE}_3 &
+    wait
 
-    #/home/labrat/SVT-AV1/Bin/Release/SvtAv1EncApp -i $INPUT --qp 31 --preset 0 --lp 1 &
-
-    if [ "$0" = "docker" ]; then
-        echo "docker"
-    else
-        export GST_DEBUG=WARN
-        export GST_PLUGIN_PATH=$GSTREAMER_PLUGINS_PATH
-        function_test_bare_metal $VFIO_PORT_1   $IP_PORT_2 $VFIO_PORT_2_2 $IP_PORT_1 ${LOG_FILE}_1 &
-        function_test_bare_metal $VFIO_PORT_3   $IP_PORT_4 $VFIO_PORT_4_2 $IP_PORT_3 ${LOG_FILE}_2 &
-        # function_test_bare_metal $VFIO_PORT_5   $IP_PORT_6 $VFIO_PORT_6_2 $IP_PORT_5 ${LOG_FILE}_3 &
-        wait
-    fi
     #function_test_bare_metal $VFIO_PORT_1_2 $IP_PORT_2 $VFIO_PORT_2   $IP_PORT_1 ${LOG_FILE}_4 &
     #function_test_bare_metal $VFIO_PORT_3_2 $IP_PORT_4 $VFIO_PORT_4   $IP_PORT_3 ${LOG_FILE}_5 &
     #function_test_bare_metal $VFIO_PORT_5_2 $IP_PORT_6 $VFIO_PORT_6   $IP_PORT_5 ${LOG_FILE}_6 &

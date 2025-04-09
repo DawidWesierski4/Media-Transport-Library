@@ -259,6 +259,24 @@ static uint64_t tx_audio_pacing_required_tai(struct st_tx_audio_session_impl* s,
 
   return required_tai;
 }
+#define NS_PER_SEC 1000000000
+static void inline handle_epoch_mismatch(uint64_t ptp_time, double to_epoch, int idx) {
+  char ptp_time_str[120];
+
+    uint64_t seconds = ptp_time / NS_PER_SEC;
+    uint32_t nanoseconds = ptp_time % NS_PER_SEC;
+
+    time_t epoch_time = (time_t)seconds;
+
+    struct tm *time_info = localtime(&epoch_time);
+
+    strftime(ptp_time_str, sizeof(ptp_time_str), "%Y-%m-%d %H:%M:%S", time_info);
+
+    snprintf(ptp_time_str + strlen(ptp_time_str), sizeof(ptp_time_str) - strlen(ptp_time_str), ".%09u", nanoseconds);
+
+    info("%s(%d), epoch mismatch %fus %" PRIu64 " (real time: %s)\n", __func__, idx, to_epoch / NS_PER_US, ptp_time / NS_PER_US, ptp_time_str);
+
+}
 
 static int tx_audio_session_sync_pacing(struct mtl_main_impl* impl,
                                         struct st_tx_audio_session_impl* s, bool sync,
@@ -269,7 +287,7 @@ static int tx_audio_session_sync_pacing(struct mtl_main_impl* impl,
   uint64_t ptp_time = mt_get_ptp_time(impl, MTL_PORT_P);
   uint64_t next_epochs = pacing->cur_epochs + 1;
   uint64_t epochs;
-  double to_epoch;
+  double to_epoch, pacing_time;
 
   if (required_tai) {
     uint64_t ptp_epochs = ptp_time / pkt_time;
@@ -298,10 +316,15 @@ static int tx_audio_session_sync_pacing(struct mtl_main_impl* impl,
     }
   }
 
-  to_epoch = tx_audio_pacing_time(pacing, epochs) - ptp_time;
+  pacing_time = tx_audio_pacing_time(pacing, epochs);
+  to_epoch = pacing_time - ptp_time;
   if (to_epoch < 0) {
     /* time bigger than the assigned epoch time */
     s->stat_epoch_mismatch++;
+    if(s->stat_epoch_mismatch % 10 == 0)
+    {
+      handle_epoch_mismatch(ptp_time, to_epoch, s->idx);
+    }
     to_epoch = 0; /* send asap */
   }
 
