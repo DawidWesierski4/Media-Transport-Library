@@ -24,7 +24,7 @@ IP_PORT_4=192.168.12.184
 IP_PORT_5=192.168.12.185
 IP_PORT_6=192.168.12.186
 
-IS_LIVE_AUDIO=true
+IS_LIVE_AUDIO=false
 
 function_test_docker() {
     docker run --rm \
@@ -64,6 +64,21 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
     fi
 
     . repro_bare_metal.sh
+
+    for arg in "$@"; do
+        if [[ "$arg" == "is-live" ]]; then
+            IS_LIVE_AUDIO=true
+            echo "ENABLING IS LIVE FROM ARUGMNET" | tee -a $LOG_FILE
+            break
+        fi
+    done
+
+    for arg in "$@"; do
+        if [[ "$arg" == "build" ]]; then
+            docker build -t mtl_rockod_gstreamer:latest -f docker/rockos_gstreamer.dockerfile --build-arg HTTP_PROXY=$http_proxy --build-arg HTTPS_PROXY=$https_proxy .
+            break
+        fi
+    done
 
     init_test
 
