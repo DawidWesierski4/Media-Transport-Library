@@ -24,7 +24,7 @@ IP_PORT_4=192.168.12.184
 IP_PORT_5=192.168.12.185
 IP_PORT_6=192.168.12.186
 
-
+IS_LIVE_AUDIO=true
 
 function_test_docker() {
     docker run --rm \
@@ -38,6 +38,7 @@ function_test_docker() {
         --cap-add IPC_LOCK \
         -e GSTREAMER_PLUGINS_PATH=$GSTREAMER_PLUGINS_PATH \
         -e GST_PLUGIN_PATH=$GSTREAMER_PLUGINS_PATH \
+        -e IS_LIVE_AUDIO=$IS_LIVE_AUDIO \
         -e INPUT=$INPUT \
         -e BLOCKSIZE=$BLOCKSIZE \
         -e FORMAT=$FORMAT \
