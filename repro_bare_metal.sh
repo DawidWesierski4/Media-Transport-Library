@@ -45,7 +45,7 @@ IP_PORT_4=192.168.12.184
 IP_PORT_5=192.168.12.185
 IP_PORT_6=192.168.12.186
 
-AUDIO_FB_CNT=100
+AUDIO_FB_CNT=10
 
 
 init_test() {
@@ -263,14 +263,14 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
     function_test_bare_metal $VFIO_PORT_1   $IP_PORT_2 $VFIO_PORT_2_2 $IP_PORT_1 ${LOG_FILE}_1 &
     function_test_bare_metal $VFIO_PORT_3   $IP_PORT_4 $VFIO_PORT_4_2 $IP_PORT_3 ${LOG_FILE}_2 &
     function_test_bare_metal $VFIO_PORT_5   $IP_PORT_6 $VFIO_PORT_6_2 $IP_PORT_5 ${LOG_FILE}_3 &
-    wait
+
 
     for i in {1..40}; do
         # echo "Starting instance $i on 8-27,66-83"
         #sudo taskset -c 8-27,64-83 /home/labrat/SVT-AV1/Bin/Release/SvtAv1EncApp -i $INPUT --qp 30 --preset 0 --lp 1 &
-        sudo taskset -c 10-55,66-111 stress -c 10 --vm 1  --vm-stride 256 &
+        sudo taskset -c 13-55,69-111 stress -c 12 --vm 1  --vm-stride 256 &
     done
-
+    wait
     #function_test_bare_metal $VFIO_PORT_1_2 $IP_PORT_2 $VFIO_PORT_2   $IP_PORT_1 ${LOG_FILE}_4 &
     #function_test_bare_metal $VFIO_PORT_3_2 $IP_PORT_4 $VFIO_PORT_4   $IP_PORT_3 ${LOG_FILE}_5 &
     #function_test_bare_metal $VFIO_PORT_5_2 $IP_PORT_6 $VFIO_PORT_6   $IP_PORT_5 ${LOG_FILE}_6 &
