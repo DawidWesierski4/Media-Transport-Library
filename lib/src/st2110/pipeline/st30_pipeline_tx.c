@@ -82,7 +82,7 @@ static int tx_st30p_next_frame(void* priv, uint16_t* next_frame_idx,
   
   /* not any converted frame */
   if (!framebuff) {
-    info("\n%s(%d), framebuff READY -------------------------------- next-> %d",__func__, ctx->idx, next_frame_idx);
+    info("\n%s(%d), framebuff READY -------------------------------- next-> %hu",__func__, ctx->idx, *next_frame_idx);
 
     char time_str[120];
 
@@ -291,6 +291,7 @@ static int tx_st30p_get_block_wait(struct st30p_tx_ctx* ctx) {
 
 static int tx_st30p_usdt_dump_close(struct st30p_tx_ctx* ctx) {
   int idx = ctx->idx;
+  MTL_MAY_UNUSED(idx);
 
   if (ctx->usdt_dump_fd >= 0) {
     dbg("%s(%d), close fd %d, dumped frames %d\n", __func__, idx, ctx->usdt_dump_fd,

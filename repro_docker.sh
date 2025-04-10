@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+. repro_bare_metal.sh
 cd $(dirname $0)
 SVT_PATH=/home/labrat/SVT-AV1/Bin/Release
 VIDEO_UDP_PORT=20000
@@ -62,8 +63,6 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
         echo "This script must be run as root" 
         exit 1
     fi
-
-    . repro_bare_metal.sh
 
     for arg in "$@"; do
         if [[ "$arg" == "is-live" ]]; then
