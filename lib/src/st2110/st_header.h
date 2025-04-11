@@ -20,7 +20,7 @@
 #define ST_PLUGIN_MAX_PATH_LEN (128)
 
 /* max 12 1080p tx session per sch lcore */
-#define ST_QUOTA_TX1080P_PER_SCH (12)
+#define ST_QUOTA_TX1080P_PER_SCH (3)
 /* max 8 1080p rtp tx session per sch lcore */
 #define ST_QUOTA_TX1080P_RTP_PER_SCH (8)
 /* max 12 1080p rx session per sch lcore */
