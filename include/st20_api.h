@@ -21,7 +21,7 @@ extern "C" {
 /**
  * Max allowed number of video(st20) frame buffers
  */
-#define ST20_FB_MAX_COUNT (8)
+#define ST20_FB_MAX_COUNT (80)
 
 /**
  * Max allowed number of video(st22) frame buffers

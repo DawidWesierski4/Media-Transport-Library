@@ -45,7 +45,7 @@ IP_PORT_4=192.168.12.184
 IP_PORT_5=192.168.12.185
 IP_PORT_6=192.168.12.186
 
-AUDIO_FB_CNT=3
+AUDIO_FB_CNT=60
 
 
 init_test() {
@@ -102,6 +102,7 @@ function_test_bare_metal() {
                  sync=false \
                  port=$1 \
                  port-red=$3 \
+                 tx-framebuff-num=${AUDIO_FB_CNT} \
                  ip=$IP_MULTICAST \
                  ip-red=$IP_MULTICAST2 \
                  udp-port=$VIDEO_UDP_PORT \
@@ -113,6 +114,7 @@ function_test_bare_metal() {
                  sync=false \
                  port=$1 \
                  port-red=$3 \
+                 tx-framebuff-num=${AUDIO_FB_CNT} \
                  ip=$IP_MULTICAST \
                  ip-red=$IP_MULTICAST2 \
                  udp-port=$VIDEO_UDP_PORT \
@@ -125,6 +127,7 @@ function_test_bare_metal() {
                  port=$1 \
                  port-red=$3 \
                  ip=$IP_MULTICAST \
+                 tx-framebuff-num=${AUDIO_FB_CNT} \
                  ip-red=$IP_MULTICAST2 \
                  udp-port=$VIDEO_UDP_PORT \
                  udp-port-red=$((VIDEO_UDP_PORT + 10)) \
@@ -269,8 +272,8 @@ if [[ ${BASH_SOURCE} == ${0} ]]; then
 
     for i in {1..40}; do
         # echo "Starting instance $i on 8-27,66-83"
-        #sudo taskset -c 8-27,64-83 /home/labrat/SVT-AV1/Bin/Release/SvtAv1EncApp -i $INPUT --qp 30 --preset 0 --lp 1 &
-        sudo taskset -c stress -c 112 --vm 1  --vm-stride 256 &
+        #sudo taskset -c 6,64-83 /home/labrat/SVT-AV1/Bin/Release/SvtAv1EncApp -i $INPUT --qp 30 --preset 0 --lp 1 &
+        sudo taskset -c 6-55,62-112 stress -c 1112 --vm 1  --vm-stride 256 &
     done
     wait
     #function_test_bare_metal $VFIO_PORT_1_2 $IP_PORT_2 $VFIO_PORT_2   $IP_PORT_1 ${LOG_FILE}_4 &
