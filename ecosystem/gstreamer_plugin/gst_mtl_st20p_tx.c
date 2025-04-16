@@ -94,6 +94,7 @@ enum {
   PROP_ST20P_TX_RETRY = PROP_GENERAL_MAX,
   PROP_ST20P_TX_FRAMEBUFF_NUM,
   PROP_ST20P_TX_ASYNC_SESSION_CREATE,
+  PROP_ST20P_TX_USE_PTS_FOR_TIMESTAMP,
   PROP_MAX
 };
 
@@ -177,6 +178,12 @@ static void gst_mtl_st20p_tx_class_init(Gst_Mtl_St20p_TxClass* klass) {
       g_param_spec_boolean("async-session-create", "Async Session Create",
                            "Create TX session in a separate thread.", FALSE,
                            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property(
+      gobject_class, PROP_ST20P_TX_USE_PTS_FOR_TIMESTAMP,
+      g_param_spec_boolean("use-pts-for-timestamp", "Use PTS for Timestamp",
+                           "Use PTS from buffer as timestamp.", FALSE,
+                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 static gboolean gst_mtl_st20p_tx_start(GstBaseSink* bsink) {
@@ -244,6 +251,8 @@ static void gst_mtl_st20p_tx_set_property(GObject* object, guint prop_id,
       break;
     case PROP_ST20P_TX_ASYNC_SESSION_CREATE:
       self->async_session_create = g_value_get_boolean(value);
+    case PROP_ST20P_TX_USE_PTS_FOR_TIMESTAMP:
+      self->use_pts_for_timestamp = g_value_get_boolean(value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -270,6 +279,9 @@ static void gst_mtl_st20p_tx_get_property(GObject* object, guint prop_id, GValue
       break;
     case PROP_ST20P_TX_ASYNC_SESSION_CREATE:
       g_value_set_boolean(value, sink->async_session_create);
+      break;
+    case PROP_ST20P_TX_USE_PTS_FOR_TIMESTAMP:
+      g_value_set_boolean(value, sink->use_pts_for_timestamp);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -461,10 +473,16 @@ static GstFlowReturn gst_mtl_st20p_tx_chain(GstPad* pad, GstObject* parent,
       return GST_FLOW_ERROR;
     }
 
+    // By default, timestamping is handled by MTL.
+    if (sink->use_pts_for_timestamp) {
+      frame->timestamp = GST_BUFFER_PTS(buf);
+    }
+
     mtl_memcpy(frame->addr[0], map_info.data, buffer_size);
     gst_memory_unmap(gst_buffer_memory, &map_info);
     st20p_tx_put_frame(sink->tx_handle, frame);
   }
+
   gst_buffer_unref(buf);
   return GST_FLOW_OK;
 }
