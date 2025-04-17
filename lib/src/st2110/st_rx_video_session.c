@@ -1321,6 +1321,8 @@ static int rv_start_pcap(struct st_rx_video_session_impl* s, enum mtl_session_po
   enum mtl_port port = mt_port_logic2phy(s->port_maps, s_port);
   struct mt_rx_pcap* pcap = &s->pcap[s_port];
 
+  info("%s(%d,%d), start pcap dump, max_dump_packets %u\n", __func__, idx, s_port,
+       max_dump_packets);
   if (pcap->pcap) {
     err("%s(%d,%d), pcap dump already started\n", __func__, idx, s_port);
     return -EIO;
@@ -2749,6 +2751,7 @@ static int rv_pkt_rx_tasklet(struct st_rx_video_session_impl* s) {
     if (!s->rxq[s_port]) continue;
 
     struct mt_rx_pcap* pcap = &s->pcap[s_port];
+
     /* if any pcap progress */
     if (MT_USDT_ST20_RX_PCAP_DUMP_ENABLED()) {
       if (!pcap->usdt_dump) {
