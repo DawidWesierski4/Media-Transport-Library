@@ -334,7 +334,7 @@ void gst_mtl_common_set_general_arguments(GObject* object, guint prop_id,
       portArgs->udp_port[MTL_PORT_P] = g_value_get_uint(value);
       break;
     case PROP_GENERAL_PORT_UDP_PORT_R:
-      portArgs->udp_port[MTL_PORT_FLAG_FORCE_NUMA] = g_value_get_uint(value);
+      portArgs->udp_port[MTL_PORT_R] = g_value_get_uint(value);
       break;
     case PROP_GENERAL_PORT_PAYLOAD_TYPE:
       portArgs->payload_type = g_value_get_uint(value);
