@@ -1761,7 +1761,8 @@ static int tv_tasklet_frame(struct mtl_main_impl* impl,
           (frame->tv_meta.tfmt == ST10_TIMESTAMP_FMT_MEDIA_CLK)) {
         pacing->rtp_time_stamp = st10_get_media_clk(meta.tfmt, meta.timestamp, 90 * 1000);
       }
-      dbg("%s(%d), rtp time stamp %u\n", __func__, idx, pacing->rtp_time_stamp);
+
+      // info("%s(%d), rtp time stamp %u\n", __func__, idx, pacing->rtp_time_stamp);
       frame->tv_meta.tfmt = ST10_TIMESTAMP_FMT_TAI;
       frame->tv_meta.timestamp = pacing->cur_epoch_time;
       frame->tv_meta.rtp_timestamp = pacing->rtp_time_stamp;
@@ -1847,6 +1848,7 @@ static int tv_tasklet_frame(struct mtl_main_impl* impl,
     }
   }
 
+
   for (unsigned int i = 0; i < bulk; i++) {
     st_tx_mbuf_set_priv(pkts[i], &s->st20_frames[s->st20_frame_idx]);
     if (s->st20_pkt_idx >= s->st20_total_pkts) {
@@ -1885,6 +1887,7 @@ static int tv_tasklet_frame(struct mtl_main_impl* impl,
   }
 
   bool done = false;
+
   n = rte_ring_sp_enqueue_bulk(ring_p, (void**)&pkts[0], bulk, NULL);
   if (n == 0) {
     for (unsigned int i = 0; i < bulk; i++) s->inflight[MTL_SESSION_PORT_P][i] = pkts[i];

@@ -310,6 +310,10 @@ static gboolean gst_mtl_st20p_tx_session_create(Gst_Mtl_St20p_Tx* sink, GstCaps*
   ops_tx.transport_fmt = ST20_FMT_YUV_422_10BIT;
   ops_tx.flags |= ST20P_TX_FLAG_BLOCK_GET;
 
+  if (sink->use_pts_for_timestamp) {
+    ops_tx.flags |= ST20P_TX_FLAG_USER_TIMESTAMP;
+  }
+
   if (sink->framebuffer_num) {
     ops_tx.framebuff_cnt = sink->framebuffer_num;
   } else {
@@ -422,6 +426,7 @@ static gboolean gst_mtl_st20p_tx_sink_event(GstPad* pad, GstObject* parent,
   return ret;
 }
 
+guint fps_cnter = 0;
 /*
  * Takes the buffer from the source pad and sends it to the mtl library via
  * frame buffers, supports incomplete frames. But buffers needs to add up to the
@@ -476,6 +481,12 @@ static GstFlowReturn gst_mtl_st20p_tx_chain(GstPad* pad, GstObject* parent,
     // By default, timestamping is handled by MTL.
     if (sink->use_pts_for_timestamp) {
       frame->timestamp = GST_BUFFER_PTS(buf);
+      frame->tfmt = ST10_TIMESTAMP_FMT_MEDIA_CLK;
+      fps_cnter++;
+
+      if (fps_cnter == 24) {
+        GST_ERROR()
+      }
     }
 
     mtl_memcpy(frame->addr[0], map_info.data, buffer_size);

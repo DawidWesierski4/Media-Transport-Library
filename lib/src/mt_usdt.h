@@ -161,7 +161,7 @@
 #define MT_USDT_ST20_RX_FRAME_DUMP_ENABLED() ST20_RX_FRAME_DUMP_ENABLED()
 #define MT_USDT_ST20_RX_PCAP_DUMP(m_idx, s_idx, s_port, file, pkts) \
   MT_DTRACE_PROBE5(st20, rx_pcap_dump, m_idx, s_idx, s_port, file, pkts)
-#define MT_USDT_ST20_RX_PCAP_DUMP_ENABLED() ST20_RX_PCAP_DUMP_ENABLED()
+#define MT_USDT_ST20_RX_PCAP_DUMP_ENABLED() 1
 #define MT_USDT_ST20_RX_FRAME_INCOMPLETE(m_idx, s_idx, f_idx, tmstamp, data_size,      \
                                          expect_size)                                  \
   MT_DTRACE_PROBE6(st20, rx_frame_incomplete, m_idx, s_idx, f_idx, tmstamp, data_size, \
