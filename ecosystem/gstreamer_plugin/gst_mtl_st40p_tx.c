@@ -613,6 +613,7 @@ static GstFlowReturn st40p_tx_parse_8331_meta(struct st40_frame* frame,
   frame->meta[anc_idx].sdid = meta.sdid;
   frame->meta[anc_idx].udw_size = meta.data_count;
   frame->meta[anc_idx].udw_offset = udw_offset;
+  frame->meta_num = anc_idx + 1;
 
   return GST_FLOW_OK;
 }
@@ -679,11 +680,6 @@ static GstFlowReturn st40p_tx_parse_8331_gstbuffer(Gst_Mtl_St40p_Tx* sink,
     if (bytes_to_hold_udw > *bytes_left_to_process) {
       GST_ERROR("Buffer size (%u) is too small to contain rfc8331 payload (%u)",
                 *bytes_left_to_process, bytes_to_hold_udw);
-      return GST_FLOW_ERROR;
-    }
-
-    if (st40p_tx_parse_8331_meta(frame_info->anc_frame, rfc8331_meta, i, payload_cursor, 0)) {
-      GST_ERROR("Failed to fill RFC 8331 meta");
       return GST_FLOW_ERROR;
     }
 
