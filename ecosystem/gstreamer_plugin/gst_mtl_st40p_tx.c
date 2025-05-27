@@ -657,7 +657,7 @@ static GstFlowReturn st40p_tx_parse_8331_gstbuffer(Gst_Mtl_St40p_Tx* sink,
 
     /* Get the ANC 8331 header and move the goalpost variables */
     payload_cursor = map_info.data + (buffer_size - *bytes_left_to_process);
-    memcpy(&rfc8331_meta.hdr, payload_cursor, sizeof(struct gst_st40_rfc8331_hdr1_le));
+    memcpy(&rfc8331_meta.hdr, payload_cursor, sizeof(struct gst_st40_rfc8331_payload_first_word));
 
     ST40P_TX_SHIFT_BUFFER(payload_cursor, *bytes_left_to_process, RFC_8331_WORD_BYTE_SIZE);
     /*TODO add support for parity bit checking we are ignoring the parity bits  */

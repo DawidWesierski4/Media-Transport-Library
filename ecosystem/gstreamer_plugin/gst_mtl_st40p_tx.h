@@ -86,7 +86,8 @@ struct _Gst_Mtl_St40p_Tx {
 };
 
 
-struct gst_st40_rfc8331_hdr1_le {
+#ifdef MTL_LITTLE_ENDIAN
+struct gst_st40_rfc8331_payload_first_word {
   union {
     struct {
       /** the ANC data uses luma (Y) data channel */
@@ -103,10 +104,29 @@ struct gst_st40_rfc8331_hdr1_le {
     uint32_t handle;
   };
 };
+#else
+struct gst_st40_rfc8331_payload_first_word {
+  union {
+    struct {
+      /** whether the data stream number of a multi-stream data mapping */
+      uint32_t s : 1;
+      /** the source data stream number of the ANC data packet */
+      uint32_t stream_num : 7;
+      /** the location of the ANC data packet in the SDI raster */
+      uint32_t horizontal_offset : 12;
+      /** line number corresponds to the location (vertical) of the ANC data packet */
+      uint32_t line_number : 11;
+      /** the ANC data uses luma (Y) data channel */
+      uint32_t c : 1;
+    } header;
+    uint32_t handle;
+  };
+};
+#endif
 
 
 struct gst_st40_rfc8331_meta {
-  struct gst_st40_rfc8331_hdr1_le hdr;
+  struct gst_st40_rfc8331_payload_first_word hdr;
   /** Data Count */
   guint16 data_count;
   /** Secondary Data Identification Word */
