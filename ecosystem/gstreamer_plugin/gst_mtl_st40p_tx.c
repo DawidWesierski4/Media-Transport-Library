@@ -95,7 +95,7 @@ GST_DEBUG_CATEGORY_STATIC(gst_mtl_st40p_tx_debug);
 /* Maximum size for single User Data Words */
 #define DEFAULT_MAX_UDW_SIZE (ST40_RFC8331_PAYLOAD_MAX_ANCILLARY_COUNT * 255)
 /* rfc8331 header consist of rows 3 * 10 bits + 2 bits  */
-#define RFC_8331_WORD_BYTE_SIZE ((3 * 10 + 2) / 8)
+#define RFC_8331_WORD_BYTE_SIZE (4)
 #define RFC_8331_PAYLOAD_HEADER_SIZE 8
 
 #define ST40P_TX_SHIFT_BUFFER(buffer_ptr, bytes_left_to_process, shift) \
@@ -237,7 +237,7 @@ static void gst_mtl_st40p_tx_class_init(Gst_Mtl_St40p_TxClass* klass) {
   g_object_class_install_property(
       gobject_class, PROP_ST40P_TX_PARSE_8331_META,
       g_param_spec_boolean("parse-8331-meta", "Parse 8331 meta",
-                           "Parse 8331 meta data from the ancillary data, requires you "
+                           "Parse 8331 meta data from the ancillary data, requires you   "
                            "to send the whole 8331 header in the buffer",
                            FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
@@ -697,7 +697,7 @@ static GstFlowReturn st40p_tx_parse_8331_gstbuffer(Gst_Mtl_St40p_Tx* sink,
     */
     for (int j = 0; j < rfc8331_meta.data_count; j++) {
       udw = st40_get_udw((j + 3), payload_cursor);
-      st40_set_udw(j ,udw, udw_cursor);
+      
     }
 
     if (sink->use_pts_for_pacing) {
