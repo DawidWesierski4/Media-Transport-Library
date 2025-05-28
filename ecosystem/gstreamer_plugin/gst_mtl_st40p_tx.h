@@ -47,6 +47,13 @@
 #ifndef __GST_MTL_ST40P_TX_H__
 #define __GST_MTL_ST40P_TX_H__
 
+#define ST40_RFC8331_PAYLOAD_MAX_ANCILLARY_COUNT 20
+/* Maximum size for single User Data Words */
+#define DEFAULT_MAX_UDW_SIZE (ST40_RFC8331_PAYLOAD_MAX_ANCILLARY_COUNT * 255)
+/* rfc8331 header consist of rows 3 * 10 bits + 2 bits  */
+#define RFC_8331_WORD_BYTE_SIZE (4)
+#define RFC_8331_PAYLOAD_HEADER_SIZE 8
+
 #include <experimental/st40_pipeline_api.h>
 
 #include "gst_mtl_common.h"
@@ -80,60 +87,15 @@ struct _Gst_Mtl_St40p_Tx {
   guint sdid;
   gboolean use_pts_for_pacing;
   guint pts_for_pacing_offset;
-  gboolean parse_8331_meta_from_gstbuffer;
+  gboolean parse_rfc8331_input;
   guint parse_8331_meta_endianness;
   guint max_combined_udw_size;
 };
 
 
-#ifdef MTL_LITTLE_ENDIAN
-struct gst_st40_rfc8331_payload_first_word {
-  union {
-    struct {
-      /** the ANC data uses luma (Y) data channel */
-      uint32_t c : 1;
-      /** line number corresponds to the location (vertical) of the ANC data packet */
-      uint32_t line_number : 11;
-      /** the location of the ANC data packet in the SDI raster */
-      uint32_t horizontal_offset : 12;
-      /** whether the data stream number of a multi-stream data mapping */
-      uint32_t s : 1;
-      /** the source data stream number of the ANC data packet */
-      uint32_t stream_num : 7;
-    } header;
-    uint32_t handle;
-  };
-};
-#else
-struct gst_st40_rfc8331_payload_first_word {
-  union {
-    struct {
-      /** whether the data stream number of a multi-stream data mapping */
-      uint32_t s : 1;
-      /** the source data stream number of the ANC data packet */
-      uint32_t stream_num : 7;
-      /** the location of the ANC data packet in the SDI raster */
-      uint32_t horizontal_offset : 12;
-      /** line number corresponds to the location (vertical) of the ANC data packet */
-      uint32_t line_number : 11;
-      /** the ANC data uses luma (Y) data channel */
-      uint32_t c : 1;
-    } header;
-    uint32_t handle;
-  };
-};
-#endif
-
-
 struct gst_st40_rfc8331_meta {
-  struct gst_st40_rfc8331_payload_first_word hdr;
-  /** Data Count */
-  guint16 data_count;
-  /** Secondary Data Identification Word */
-  guint16 sdid;
-  /** Data Identification Word */
-  guint16 did;
-  guint16 size;
+  struct st40_rfc8331_payload_hdr_common *header_common;
+  struct st40_rfc8331_payload_hdr *headers[ST40_RFC8331_PAYLOAD_MAX_ANCILLARY_COUNT];
 };
 
 G_END_DECLS
