@@ -627,8 +627,11 @@ static GstFlowReturn st40p_tx_parse_8331_anc_words(
       }
 
       frame_info->anc_frame->data[frame_info->anc_frame->data_size++] = udw & 0xff;
+      printf("%02x\n", udw & 0xff);
     }
-    
+
+    printf("\n");
+    bytes_left_to_process -= udw_byte_size;
 
     /* Get checksum and promptly ignore it */
     udw = st40_get_udw((data_count + 3), payload_cursor);
@@ -790,7 +793,11 @@ static GstFlowReturn gst_mtl_st40p_tx_chain(GstPad* pad, GstObject* parent,
       gst_buffer_unref(buf);
       return ret;
     }
+
+    /* Unmap memory after processing */
+    gst_memory_unmap(gst_buffer_memory, &map_info);
   }
+
 
   gst_buffer_unref(buf);
   return GST_FLOW_OK;
