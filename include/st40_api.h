@@ -122,19 +122,28 @@ MTL_PACK(struct st40_rfc8331_rtp_hdr {
 });
 #endif
 
-
 /* This structure is too hold the */
 #ifdef MTL_LITTLE_ENDIAN
 MTL_PACK(struct st40_rfc8331_payload_hdr_common {
-  uint32_t reserved : 22;
-  uint32_t f : 2;
-  uint32_t anc_count : 8;
+  union{
+    struct {
+    uint32_t reserved : 22;
+    uint32_t f : 2;
+    uint32_t anc_count : 8;
+    } first_hdr_chunk;
+    uint32_t swapped_handle;
+  };
 });
 #else
 MTL_PACK(struct st40_rfc8331_payload_hdr_common {
-  uint32_t anc_count : 8;
-  uint32_t f : 2;
-  uint32_t reserved : 22;
+  union{
+    struct {
+      uint32_t anc_count : 8;
+      uint32_t f : 2;
+      uint32_t reserved : 22;
+    } first_hdr_chunk;
+    uint32_t swapped_handle;
+  };
 });
 #endif
 

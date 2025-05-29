@@ -400,7 +400,7 @@ static GstFlowReturn gst_mtl_st40_rx_fill_buffer(Gst_Mtl_St40_Rx* src, GstBuffer
     }
 
     src->udw_size = udw_size;
-    src->anc_data = (char*)malloc((((udw_size) * 10) + 7) / 8);
+    src->anc_data = (char*)malloc((((udw_size)*10) + 7) / 8);
   }
 
   *buffer = gst_buffer_new_allocate(NULL, src->udw_size, NULL);
