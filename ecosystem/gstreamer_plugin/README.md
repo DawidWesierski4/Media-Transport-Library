@@ -401,8 +401,9 @@ The `mtl_st40p_tx` plugin supports all pad capabilities (the data is not checked
 | tx-fps                | uint     | Framerate of the video to which the ancillary data is synchronized.| [Supported vid eo fps fractions](#231-supported-video-fps-fractions) | 25/1 |
 | tx-did                | uint     | Data ID for the ancillary data.                                    | 0 to 255       | 0             |
 | tx-sdid               | uint     | Secondary Data ID for the ancillary data.                          | 0 to 255       | 0             |
-| use-pts-for-pacing    | gboolean | [User controlled timestamping offset](#233-pts-controlled-pacing)  | 0 to G_MAXUINT | 0             |
+| use-pts-for-pacing    | gboolean | [User controlled timestamping offset](#233-pts-controlled-pacing)  | TRUE/FALSE     | FALSE         |
 | pts-pacing-offset     | uint     | [User controlled timestamping offset](#233-pts-controlled-pacing)  | 0 to G_MAXUINT | 0             |
+| parse-8331-meta       | gboolean | Treat the input as rfc8331 payload data                            | TRUE/FALSE     | FALSE         |
 | max-combined-udw-size | uint     | Maximum combined size of all user data words to send in one buffer | 0 to G_MAXUINT | 20 * 255      |
 
 #### 5.1.2. Example GStreamer Pipeline for Transmission

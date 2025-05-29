@@ -105,7 +105,6 @@ enum {
   PROP_ST40P_TX_USE_PTS_FOR_PACING,
   PROP_ST40P_TX_PTS_PACING_OFFSET,
   PROP_ST40P_TX_PARSE_8331_META,
-  PROP_ST40P_TX_PARSE_8331_META_ENDIANNESS,
   PROP_ST40P_TX_MAX_UDW_SIZE,
   PROP_MAX
 };
@@ -147,7 +146,7 @@ static GstFlowReturn gst_mtl_st40p_tx_parse_8331_memory_block(Gst_Mtl_St40p_Tx* 
 static void st40p_tx_fill_meta(struct st40_frame* frame, void* data, guint32 data_size,
                                guint did, guint sdid);
 
-static GstFlowReturn st40p_tx_parse_8331_meta(struct st40_frame* frame,
+static GstFlowReturn st40p_tx_parse_8331_meta(struct st40_frame_info *frame_info,
                                               struct st40_rfc8331_payload_hdr payload_header,
                                               guint anc_idx,
                                               guint data_offset);
@@ -309,9 +308,6 @@ static void gst_mtl_st40p_tx_set_property(GObject* object, guint prop_id,
     case PROP_ST40P_TX_PARSE_8331_META:
       self->parse_rfc8331_input = g_value_get_boolean(value);
       break;
-    case PROP_ST40P_TX_PARSE_8331_META_ENDIANNESS:
-      self->parse_8331_meta_endianness = g_value_get_uint(value);
-      break;
     case PROP_ST40P_TX_MAX_UDW_SIZE:
       self->max_combined_udw_size = g_value_get_uint(value);
       break;
@@ -352,9 +348,6 @@ static void gst_mtl_st40p_tx_get_property(GObject* object, guint prop_id, GValue
       break;
     case PROP_ST40P_TX_PARSE_8331_META:
       g_value_set_boolean(value, sink->parse_rfc8331_input);
-      break;
-    case PROP_ST40P_TX_PARSE_8331_META_ENDIANNESS:
-      g_value_set_uint(value, sink->parse_8331_meta_endianness);
       break;
     case PROP_ST40P_TX_MAX_UDW_SIZE:
       g_value_set_uint(value, sink->max_combined_udw_size);
@@ -513,12 +506,12 @@ static void st40p_tx_fill_meta(struct st40_frame* frame, void* data, guint32 dat
 }
 
 /* we dont' really check the data here we let the st40 ancillary data to do so */
-static GstFlowReturn st40p_tx_parse_8331_meta(struct st40_frame* frame,
+static GstFlowReturn st40p_tx_parse_8331_meta(struct st40_frame_info *frame_info,
                                               struct st40_rfc8331_payload_hdr payload_header,
                                               guint anc_idx,
                                               guint udw_offset) {
-  if (!frame) {
-    GST_ERROR("Invalid parameters for parsing 8331 meta");
+  if (!frame_info || !frame_info->meta) {
+    GST_ERROR("Failed to parse rfc8331 payload meta Null frame_info pointer");
     return GST_FLOW_ERROR;
   }
 
@@ -527,17 +520,17 @@ static GstFlowReturn st40p_tx_parse_8331_meta(struct st40_frame* frame,
     return GST_FLOW_ERROR;
   }
 
-  frame->meta[anc_idx].c = payload_header.first_hdr_chunk.c;
-  frame->meta[anc_idx].line_number = payload_header.first_hdr_chunk.line_number;
-  frame->meta[anc_idx].hori_offset =
+  frame_info->meta[anc_idx].c = payload_header.first_hdr_chunk.c;
+  frame_info->meta[anc_idx].line_number = payload_header.first_hdr_chunk.line_number;
+  frame_info->meta[anc_idx].hori_offset =
       payload_header.first_hdr_chunk.horizontal_offset;
-  frame->meta[anc_idx].s = payload_header.first_hdr_chunk.s;
-  frame->meta[anc_idx].stream_num = payload_header.first_hdr_chunk.stream_num;
-  frame->meta[anc_idx].did = payload_header.second_hdr_chunk.did & 0xff;
-  frame->meta[anc_idx].sdid = payload_header.second_hdr_chunk.sdid & 0xff;
-  frame->meta[anc_idx].udw_size = payload_header.second_hdr_chunk.data_count & 0xff;
-  frame->meta[anc_idx].udw_offset = udw_offset;
-  frame->meta_num = anc_idx + 1;
+  frame_info->meta[anc_idx].s = payload_header.first_hdr_chunk.s;
+  frame_info->meta[anc_idx].stream_num = payload_header.first_hdr_chunk.stream_num;
+  frame_info->meta[anc_idx].did = payload_header.second_hdr_chunk.did & 0xff;
+  frame_info->meta[anc_idx].sdid = payload_header.second_hdr_chunk.sdid & 0xff;
+  frame_info->meta[anc_idx].udw_size = payload_header.second_hdr_chunk.data_count & 0xff;
+  frame_info->meta[anc_idx].udw_offset = udw_offset;
+  frame_info->meta_num = anc_idx + 1;
 
   return GST_FLOW_OK;
 }
@@ -562,9 +555,6 @@ static GstFlowReturn st40p_tx_parse_8331_anc_words(
     GST_ERROR("Failed to get frame");
     return GST_FLOW_ERROR;
   }
-
-  /* Set the anc_frame data to the correct frame*/
-  frame_info->anc_frame->data = frame_info->udw_buff_addr;
 
   for (int i = 0; i < anc_count; i++) {
     /* Processing of the input 8331 header */
@@ -598,7 +588,7 @@ static GstFlowReturn st40p_tx_parse_8331_anc_words(
     /* we can use data_size for offset here as the data size is increased with every processed
     udw so it shows the offset */
     if (st40p_tx_parse_8331_meta(
-            frame_info->anc_frame, payload_header, i,frame_info->anc_frame->data_size)) {
+            frame_info, payload_header, i,frame_info->anc_frame->data_size)) {
       GST_ERROR("Failed to parse 8331 meta");
       return GST_FLOW_ERROR;
     }
@@ -617,7 +607,7 @@ static GstFlowReturn st40p_tx_parse_8331_anc_words(
         return GST_FLOW_ERROR;
       }
 
-      frame_info->anc_frame->data[frame_info->anc_frame->data_size++] = udw & 0xff;
+      frame_info->udw_buff_addr[frame_info->udw_buffer_fill++] = udw & 0xff;
     }
 
     bytes_left_to_process -= udw_byte_size;
