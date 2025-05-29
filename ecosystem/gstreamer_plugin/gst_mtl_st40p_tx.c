@@ -229,15 +229,6 @@ static void gst_mtl_st40p_tx_class_init(Gst_Mtl_St40p_TxClass* klass) {
                            FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   g_object_class_install_property(
-      gobject_class, PROP_ST40P_TX_PARSE_8331_META_ENDIANNESS,
-      g_param_spec_uint("parse-8331-meta-endianness", "Parse 8331 meta endianness",
-                        "Parse 8331 meta data endianness, "
-                        "0 - system endianness, 1 - big endian, 2 - little endian",
-                        0, ST40_RFC8331_PAYLOAD_ENDIAN_MAX - 1,
-                        ST40_RFC8331_PAYLOAD_ENDIAN_SYSTEM,
-                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
-  g_object_class_install_property(
       gobject_class, PROP_ST40P_TX_MAX_UDW_SIZE,
       g_param_spec_uint("max-combined-udw-size", "Max combined UDW size",
                         "Maximum combined size of all user data words to send in "
@@ -627,10 +618,8 @@ static GstFlowReturn st40p_tx_parse_8331_anc_words(
       }
 
       frame_info->anc_frame->data[frame_info->anc_frame->data_size++] = udw & 0xff;
-      printf("%02x\n", udw & 0xff);
     }
 
-    printf("\n");
     bytes_left_to_process -= udw_byte_size;
 
     /* Get checksum and promptly ignore it */
@@ -735,7 +724,7 @@ static GstFlowReturn gst_mtl_st40p_tx_parse_memory_block(Gst_Mtl_St40p_Tx* sink,
                                     ? sink->frame_size
                                     : bytes_left_to_process;
 
-    mtl_memcpy(frame_info->udw_buff_addr, cur_addr_buf, bytes_left_to_process_cur);
+    memcpy(frame_info->udw_buff_addr, cur_addr_buf, bytes_left_to_process_cur);
 
     st40p_tx_fill_meta(frame_info->anc_frame, frame_info->udw_buff_addr,
                        bytes_left_to_process_cur, sink->did, sink->sdid);

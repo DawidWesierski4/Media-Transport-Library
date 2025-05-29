@@ -88,7 +88,6 @@ struct _Gst_Mtl_St40p_Tx {
   gboolean use_pts_for_pacing;
   guint pts_for_pacing_offset;
   gboolean parse_rfc8331_input;
-  guint parse_8331_meta_endianness;
   guint max_combined_udw_size;
 };
 

@@ -420,9 +420,7 @@ static GstFlowReturn gst_mtl_st40_rx_fill_buffer(Gst_Mtl_St40_Rx* src, GstBuffer
       return GST_FLOW_ERROR;
     }
     src->anc_data[i] = data & 0xff;
-    printf("%02x\n", data & 0xff);
   }
-  printf("\n");
 
   fill_size = gst_buffer_fill(*buffer, 0, src->anc_data, udw_size);
   gst_buffer_unmap(*buffer, &dest_info);
