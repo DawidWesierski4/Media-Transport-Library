@@ -409,6 +409,10 @@ enum st22p_tx_flag {
   /** Enable the st22p_tx_get_frame block behavior to wait until a frame becomes
    available or timeout(default: 1s, use st22p_tx_set_block_timeout to customize) */
   ST22P_TX_FLAG_BLOCK_GET = (MTL_BIT32(15)),
+  /**
+   ** Enable verbose reporting of framebuffer statuses in statistics output
+   */
+  ST22P_TX_FLAG_ACCURATE_FRAMEBUFF_STATISTICS = (MTL_BIT32(25)),
 };
 
 /** Bit define for flags of struct st20p_tx_ops. */
@@ -468,6 +472,10 @@ enum st20p_tx_flag {
   /** Enable the st20p_tx_get_frame block behavior to wait until a frame becomes
      available or (default: 1s, use st20p_tx_set_block_timeout to customize) */
   ST20P_TX_FLAG_BLOCK_GET = (MTL_BIT32(15)),
+  /**
+   ** Enable verbose reporting of framebuffer statuses in statistics output
+   */
+  ST20P_TX_FLAG_ACCURATE_FRAMEBUFF_STATISTICS = (MTL_BIT32(25)),
 };
 
 /** Bit define for flags of struct st22p_rx_ops. */
@@ -506,6 +514,10 @@ enum st22p_rx_flag {
    * User can check st_frame_status data for the frame integrity
    */
   ST22P_RX_FLAG_RECEIVE_INCOMPLETE_FRAME = (MTL_BIT32(16)),
+  /**
+   ** Enable verbose reporting of framebuffer statuses in statistics output
+   */
+  ST22P_RX_FLAG_ACCURATE_FRAMEBUFF_STATISTICS = (MTL_BIT32(25)),
 };
 
 /** Bit define for flags of struct st20p_rx_ops. */
@@ -592,6 +604,10 @@ enum st20p_rx_flag {
    * Use gpu_direct vram for framebuffers
    */
   ST20P_RX_FLAG_USE_GPU_DIRECT_FRAMEBUFFERS = (MTL_BIT32(24)),
+  /**
+   ** Enable verbose reporting of framebuffer statuses in statistics output
+   */
+  ST20P_RX_FLAG_ACCURATE_FRAMEBUFF_STATISTICS = (MTL_BIT32(25)),
 };
 
 /** Bit define for flag_resp of struct st22_decoder_create_req. */

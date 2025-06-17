@@ -194,14 +194,32 @@ static int rx_st30p_init_fbs(struct st30p_rx_ctx* ctx, struct st30p_rx_ops* ops)
 static int rx_st30p_stat(void* priv) {
   struct st30p_rx_ctx* ctx = priv;
   struct st30p_rx_frame* framebuff = ctx->framebuffs;
+  uint16_t status_counts[ST30P_RX_FRAME_STATUS_MAX] = {0};
+  enum st30p_rx_frame_status stat;
 
   if (!ctx->ready) return -EBUSY; /* not ready */
 
   uint16_t producer_idx = ctx->framebuff_producer_idx;
   uint16_t consumer_idx = ctx->framebuff_consumer_idx;
-  notice("RX_st30p(%d,%s), p(%d:%s) c(%d:%s)\n", ctx->idx, ctx->ops_name, producer_idx,
-         rx_st30p_stat_name(framebuff[producer_idx].stat), consumer_idx,
-         rx_st30p_stat_name(framebuff[consumer_idx].stat));
+
+  if (ctx->stat_enable_verbose_framebuffers_status) {
+    for (uint16_t j = 0; j < ctx->framebuff_cnt; j++) {
+      stat = framebuff[j].stat;
+
+      if (stat < ST30P_RX_FRAME_STATUS_MAX) {
+        status_counts[stat]++;
+      }
+    }
+
+    for (uint16_t i = 0; i < ST30P_RX_FRAME_STATUS_MAX; i++) {
+      notice("RX_st30p(%d,%s), framebuffer queue %s: %u\n", ctx->idx, ctx->ops_name,
+             rx_st30p_stat_name(i), status_counts[i]);
+    }
+  } else {
+    notice("RX_st30p(%d,%s), p(%d:%s) c(%d:%s)\n", ctx->idx, ctx->ops_name, producer_idx,
+          rx_st30p_stat_name(framebuff[producer_idx].stat), consumer_idx,
+          rx_st30p_stat_name(framebuff[consumer_idx].stat));
+  }
 
   notice("RX_st30p(%d), frame get try %d succ %d, put %d\n", ctx->idx,
          ctx->stat_get_frame_try, ctx->stat_get_frame_succ, ctx->stat_put_frame);

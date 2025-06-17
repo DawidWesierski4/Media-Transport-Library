@@ -94,10 +94,16 @@ static int tx_st20p_next_frame(void* priv, uint16_t* next_frame_idx,
     meta->tfmt = frame->tfmt;
     meta->timestamp = frame->timestamp;
   }
+
   if (framebuff->user_meta_data_size) {
     meta->user_meta = framebuff->user_meta;
     meta->user_meta_size = framebuff->user_meta_data_size;
   }
+
+  if (ctx->ops.flags & (ST20P_TX_FLAG_ACCURATE_FRAMEBUFF_STATISTICS)) {
+    ctx->stat_enable_verbose_framebuffers_status = true;
+  }
+
   /* point to next */
   ctx->framebuff_consumer_idx = tx_st20p_next_idx(ctx, framebuff->idx);
   mt_pthread_mutex_unlock(&ctx->lock);
@@ -489,14 +495,32 @@ static int tx_st20p_get_converter(struct mtl_main_impl* impl, struct st20p_tx_ct
 static int tx_st20p_stat(void* priv) {
   struct st20p_tx_ctx* ctx = priv;
   struct st20p_tx_frame* framebuff = ctx->framebuffs;
+  uint16_t status_counts[ST20P_TX_FRAME_STATUS_MAX] = {0};
+  enum st20p_tx_frame_status stat;
 
   if (!ctx->ready) return -EBUSY; /* not ready */
 
   uint16_t producer_idx = ctx->framebuff_producer_idx;
   uint16_t consumer_idx = ctx->framebuff_consumer_idx;
-  notice("TX_st20p(%d,%s), p(%d:%s) c(%d:%s)\n", ctx->idx, ctx->ops_name, producer_idx,
-         tx_st20p_stat_name(framebuff[producer_idx].stat), consumer_idx,
-         tx_st20p_stat_name(framebuff[consumer_idx].stat));
+
+  if (ctx->stat_enable_verbose_framebuffers_status) {
+    for (uint16_t j = 0; j < ctx->framebuff_cnt; j++) {
+      stat = framebuff[j].stat;
+
+      if (stat < ST20P_TX_FRAME_STATUS_MAX) {
+        status_counts[stat]++;
+      }
+    }
+
+    for (uint16_t i = 0; i < ST20P_TX_FRAME_STATUS_MAX; i++) {
+      notice("TX_st20p(%d,%s), framebuffer queue %s: %u\n", ctx->idx, ctx->ops_name,
+             tx_st20p_stat_name(i), status_counts[i]);
+    }
+  } else {
+    notice("TX_st20p(%d,%s), p(%d:%s) c(%d:%s)\n", ctx->idx, ctx->ops_name, producer_idx,
+          tx_st20p_stat_name(framebuff[producer_idx].stat), consumer_idx,
+          tx_st20p_stat_name(framebuff[consumer_idx].stat));
+  }
 
   notice("TX_st20p(%d), frame get try %d succ %d, put %d\n", ctx->idx,
          ctx->stat_get_frame_try, ctx->stat_get_frame_succ, ctx->stat_put_frame);

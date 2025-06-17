@@ -67,6 +67,7 @@ struct st22p_rx_ctx {
   rte_atomic32_t stat_decode_fail;
   rte_atomic32_t stat_busy;
   /* get frame stat */
+  bool stat_enable_verbose_framebuffers_status;
   int stat_get_frame_try;
   int stat_get_frame_succ;
   int stat_put_frame;

@@ -52,6 +52,10 @@ enum st30p_tx_flag {
   /** Enable the st30p_tx_get_frame block behavior to wait until a frame becomes
    available or timeout(default: 1s, use st30p_tx_set_block_timeout to customize)*/
   ST30P_TX_FLAG_BLOCK_GET = (MTL_BIT32(15)),
+  /**
+   ** Enable verbose reporting of framebuffer statuses in statistics output
+   */
+  ST30P_TX_FLAG_ACCURATE_FRAMEBUFF_STATISTICS = (MTL_BIT32(25)),
 };
 
 /** The structure info for st30 frame meta. */
@@ -189,6 +193,10 @@ enum st30p_rx_flag {
   /** Enable the st30p_rx_get_frame block behavior to wait until a frame becomes
    available or timeout(default: 1s, use st30p_rx_set_block_timeout to customize) */
   ST30P_RX_FLAG_BLOCK_GET = (MTL_BIT32(15)),
+  /**
+   ** Enable verbose reporting of framebuffer statuses in statistics output
+   */
+  ST30P_RX_FLAG_ACCURATE_FRAMEBUFF_STATISTICS = (MTL_BIT32(25)),
 };
 
 /**

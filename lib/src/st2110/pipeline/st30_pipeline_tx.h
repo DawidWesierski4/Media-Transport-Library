@@ -52,6 +52,7 @@ struct st30p_tx_ctx {
   uint64_t block_timeout_ns;
 
   /* get frame stat */
+  bool stat_enable_verbose_framebuffers_status;
   int stat_get_frame_try;
   int stat_get_frame_succ;
   int stat_put_frame;
