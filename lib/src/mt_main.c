@@ -259,6 +259,12 @@ bool mt_sessions_time_measure(struct mtl_main_impl* impl) {
   return enabled;
 }
 
+bool mt_sessions_tasklet_time_out_of_bounds_measure(struct mtl_main_impl* impl) {
+  bool enabled = mt_user_tasklet_time_measure(impl);
+  if (MT_USDT_SYS_TASKLET_TIME_OUT_OF_BOUNDS_MEASURE_ENABLED()) enabled = true;
+  return enabled;
+}
+
 static int mt_user_params_check(struct mtl_init_params* p) {
   int num_ports = p->num_ports, ret;
   uint8_t* ip = NULL;

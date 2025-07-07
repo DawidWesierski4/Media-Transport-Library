@@ -9,9 +9,9 @@ provider sys {
   probe log_msg(int level, char* msg);
   /* attach to enable the tasklet_time_measure at runtime */
   probe tasklet_time_measure();
-  probe tasklet_time_out_of_bounds_measure();
+  probe tasklet_time_out_of_bounds_measure(int level, char* msg);
   /* attach to enable the sessions_time_measure at runtime */
-  probe sessions_time_measure();
+  probe sessions_time_measure(int level, char* msg);
   /* attach to enable the pcap dump for cni rx queue */
   probe cni_pcap_dump(int port, char* dump_file, uint32_t pkts);
 }
