@@ -562,12 +562,8 @@ static GstFlowReturn gst_mtl_st20p_tx_zero_copy(Gst_Mtl_St20p_Tx* sink, GstBuffe
   GstSt20pTxExternalDataParent* parent;
   struct st_frame* frame;
   struct st_ext_frame ext_frame;
-  GstVideoMeta* video_meta = gst_buffer_get_video_meta(buf);
+  GstVideoMeta* video_meta = NULL;
   gint buffer_n = gst_buffer_n_memory(buf);
-  if (!video_meta) {
-    g_print("Failed to get video meta from buffer\n");
-    return GST_FLOW_ERROR;
-  }
 
   parent = malloc(sizeof(GstSt20pTxExternalDataParent));
   if (!parent) {
@@ -615,14 +611,36 @@ static GstFlowReturn gst_mtl_st20p_tx_zero_copy(Gst_Mtl_St20p_Tx* sink, GstBuffe
       frame->tfmt = ST10_TIMESTAMP_FMT_TAI;
     }
 
-    for (int i = 0; i < video_meta->n_planes; i++) {
-      ext_frame.addr[i] = child->map_info.data + video_meta->offset[i];
-      ext_frame.linesize[i] = video_meta->stride[i];
-      ext_frame.iova[i] = 0;
+    video_meta = gst_buffer_get_video_meta(buf);
+    if (video_meta) {
+      for (int i = 0; i < video_meta->n_planes; i++) {
+        ext_frame.addr[i] = child->map_info.data + video_meta->offset[i];
+        ext_frame.linesize[i] = video_meta->stride[i];
+        ext_frame.iova[i] = 0;
+      }
+
+    } else {
+      ext_frame.addr[0] = child->map_info.data;
+      ext_frame.iova[0] = 0;
+      ext_frame.linesize[0] = st_frame_least_linesize(frame->fmt, frame->width, 0);
+      guint8 planes = st_frame_fmt_planes(frame->fmt);
+
+       /* Assume video planes are stored contiguously in memory */
+      for (gint plane = 1; plane < planes; plane++) {
+        ext_frame.linesize[plane] =
+            st_frame_least_linesize(frame->fmt, frame->width, plane);
+        ext_frame.addr[plane] = (guint8*)ext_frame.addr[plane - 1] +
+                                ext_frame.linesize[plane - 1] * frame->height;
+        ext_frame.iova[plane] = 0;
+      }
     }
+
     ext_frame.size = child->map_info.size;
     ext_frame.opaque = child;
     frame->opaque = NULL;
+
+
+
 
     st20p_tx_put_ext_frame(sink->tx_handle, frame, &ext_frame);
   }
