@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo BPFTRACE_MAX_STRLEN=2137 bpftrace -e '
+sudo BPFTRACE_MAX_STRLEN=235 bpftrace -e '
 usdt::sys:sessions_time_measure {
   printf("%s", strftime("%H:%M:%S", nsecs));
 }
