@@ -1110,16 +1110,20 @@ static int tx_ancillary_sessions_tasklet_handler(void* priv) {
   uint64_t tsc_s = 0,tsc_d1, tsc_d2 = 0, tsc_d3;
   int idx_stat= 0;
   bool time_measure = mt_sessions_time_measure(impl);
-
+  int sidx = 0, skip_cnt= 0;
   if (time_measure) {
     tsc_d1 = mt_get_tsc(impl);
     tsc_d3 = tsc_d1;
   }
 
 
-  for (int sidx = 0; sidx < mgr->max_idx; sidx++) {
+  for (sidx = 0; sidx < mgr->max_idx; sidx++) {
     s = tx_ancillary_session_try_get(mgr, sidx);
-    if (!s) continue;
+    if (!s) {
+      skip_cnt++;
+      continue;
+    }
+    
     if (time_measure) {
       tsc_s = mt_get_tsc(impl);
 
@@ -1150,11 +1154,25 @@ static int tx_ancillary_sessions_tasklet_handler(void* priv) {
       mt_stat_u64_update(&s->stat_time, delta_ns);
     }
     tx_ancillary_session_put(mgr, sidx);
+
+    if (time_measure) {
+      uint64_t delta_ns = mt_get_tsc(impl) - tsc_s;
+      if (delta_ns > 250000) {
+        critical("%s(%d), tasklet %d idx %d, time %" PRIu64 " us\n", __func__, mgr->idx,
+                tasklet->idx, sidx, delta_ns / NS_PER_US);
+      }
+      mt_stat_u64_update(&tasklet->stat_time_SCH_TASKLET_DEBUG_5, delta_ns);
+    }
   }
 
   if (time_measure) {
-    uint64_t delta_ns = mt_get_tsc(impl) - tsc_s;
-    mt_stat_u64_update(&s->stat_time, delta_ns);
+    uint64_t delta_ns = mt_get_tsc(impl) - tsc_d3;
+
+    if (delta_ns > 450000) {
+      mt_stat_u64_update(&tasklet->stat_time_SCH_TASKLET_DEBUG_6, delta_ns);
+    }
+
+    mt_stat_u64_update(&tasklet->stat_time_SCH_TASKLET_DEBUG_4, delta_ns);
   }
 
   return pending;
@@ -1204,6 +1222,7 @@ static int tx_ancillary_sessions_mgr_init_hw(struct mtl_main_impl* impl,
     tx_ancillary_sessions_mgr_uinit_hw(mgr, port);
     return -ENOMEM;
   }
+
   mgr->ring[port] = ring;
   info("%s(%d,%d), succ, queue %d\n", __func__, mgr_idx, port,
        mt_txq_queue_id(mgr->queue[port]));

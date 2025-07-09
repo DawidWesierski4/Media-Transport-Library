@@ -456,6 +456,14 @@ static int sch_stat(void* priv) {
       mt_stat_u64_init(stat_time);
     }
 
+    stat_time = &tasklet->stat_time_SCH_TASKLET_DEBUG_2;
+    if (stat_time->cnt) {
+      double avg_ns = stat_time->sum / stat_time->cnt;
+      critical("SCH(%d,%d): DEBUG 2 jumps between %s, avg %.2f max %" PRIu64 " min %" PRIu64 "\n", idx, i,
+             tasklet->name, avg_ns, stat_time->max, stat_time->min);
+      mt_stat_u64_init(stat_time);
+    }
+
     stat_time = &tasklet->stat_time_SCH_TASKLET_DEBUG_3;
     if (stat_time->cnt) {
       uint64_t avg_ns = stat_time->sum / stat_time->cnt;
@@ -465,21 +473,30 @@ static int sch_stat(void* priv) {
       mt_stat_u64_init(stat_time);
     }
 
-
-
-    stat_time = &tasklet->stat_time_SCH_TASKLET_DEBUG_2;
+    stat_time = &tasklet->stat_time_SCH_TASKLET_DEBUG_4;
     if (stat_time->cnt) {
-      double avg_ns = stat_time->sum / stat_time->cnt;
-      critical("SCH(%d,%d): DEBUG 2 jumps between %s, avg %.2f max %" PRIu64 " min %" PRIu64 "\n", idx, i,
-             tasklet->name, avg_ns, stat_time->max, stat_time->min);
+      uint64_t avg_ns = stat_time->sum / stat_time->cnt;
+      critical("SCH(%d,%d): DEBUG_4 cnt (%lu) whole tasklet time %s, avg %.2fus max %.2fus min %.2fus\n", idx, i,
+             stat_time->cnt, tasklet->name, (float)avg_ns / NS_PER_US, (float)stat_time->max / NS_PER_US,
+             (float)stat_time->min / NS_PER_US);
       mt_stat_u64_init(stat_time);
     }
 
-    stat_time = &tasklet->stat_time_SCH_TASKLET_DEBUG_4;
+    stat_time = &tasklet->stat_time_SCH_TASKLET_DEBUG_5;
     if (stat_time->cnt) {
-      double avg_ns = stat_time->sum / stat_time->cnt;
-      critical("SCH(%d,%d): DEBUG 4 how many  %s, avg %.2f max %" PRIu64 " min %" PRIu64 "\n", idx, i,
-             tasklet->name, avg_ns, stat_time->max, stat_time->min);
+      uint64_t avg_ns = stat_time->sum / stat_time->cnt;
+      critical("SCH(%d,%d): DEBUG_5 put %s, avg %.2fus max %.2fus min %.2fus\n", idx, i,
+             tasklet->name, (float)avg_ns / NS_PER_US, (float)stat_time->max / NS_PER_US,
+             (float)stat_time->min / NS_PER_US);
+      mt_stat_u64_init(stat_time);
+    }
+
+    stat_time = &tasklet->stat_time_SCH_TASKLET_DEBUG_6;
+    if (stat_time->cnt) {
+      uint64_t avg_ns = stat_time->sum / stat_time->cnt;
+      critical("SCH(%d,%d): DEBUG_6 cnt (%lu) %s, avg %.2fus max %.2fus min %.2fus\n", idx, i,
+             stat_time->cnt, tasklet->name, (float)avg_ns / NS_PER_US, (float)stat_time->max / NS_PER_US,
+             (float)stat_time->min / NS_PER_US);
       mt_stat_u64_init(stat_time);
     }
   }
