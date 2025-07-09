@@ -1127,6 +1127,12 @@ struct st_tx_ancillary_session_impl {
   uint32_t stat_max_notify_frame_us;
   /* for tasklet session time measure */
   struct mt_stat_u64 stat_time;
+  struct mt_stat_u64 stat_time_debug;
+  struct mt_stat_u64 stat_time_debug1;
+  struct mt_stat_u64 stat_time_debug2;
+  struct mt_stat_u64 stat_time_debug3;
+  struct mt_stat_u64 stat_time_debug4;
+  struct mt_stat_u64 stat_time_debug5;
   /* interlace */
   uint32_t stat_interlace_first_field;
   uint32_t stat_interlace_second_field;

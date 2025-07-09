@@ -717,6 +717,12 @@ static int tx_ancillary_session_tasklet_frame(struct mtl_main_impl* impl,
   struct rte_mempool* hdr_pool_r = NULL;
   struct rte_mempool* chain_pool = s->mbuf_mempool_chain;
   struct rte_ring* ring_p = mgr->ring[port_p];
+  bool time_measure = mt_sessions_time_measure(impl);
+  uint64_t time_1, time_2;
+
+  if (time_measure) {
+    time_1 = mt_get_tsc(impl);
+  }
 
   if (ring_p && rte_ring_full(ring_p)) {
     s->stat_build_ret_code = -STI_FRAME_RING_FULL;
@@ -751,6 +757,12 @@ static int tx_ancillary_session_tasklet_frame(struct mtl_main_impl* impl,
     }
   }
 
+  if (time_measure) {
+    time_2 = mt_get_tsc(impl);
+    mt_stat_u64_update(&(s->stat_time_debug1), time_2 - time_1);
+    time_1 = time_2;
+  }
+
   if (ST40_TX_STAT_WAIT_FRAME == s->st40_frame_stat) {
     uint16_t next_frame_idx;
     int total_udw = 0;
@@ -769,8 +781,13 @@ static int tx_ancillary_session_tasklet_frame(struct mtl_main_impl* impl,
 
     tx_ancillary_session_init_next_meta(s, &meta);
     /* Query next frame buffer idx */
+    if (time_measure) {
+      time_2 = mt_get_tsc(impl);
+      mt_stat_u64_update(&(s->stat_time_debug2), time_2 - time_1);
+      time_1 = time_2;
+    }
+
     uint64_t tsc_start = 0;
-    bool time_measure = mt_sessions_time_measure(impl);
     if (time_measure) tsc_start = mt_get_tsc(impl);
     ret = ops->get_next_frame(ops->priv, &next_frame_idx, &meta);
     if (time_measure) {
@@ -813,6 +830,12 @@ static int tx_ancillary_session_tasklet_frame(struct mtl_main_impl* impl,
 
     MT_USDT_ST40_TX_FRAME_NEXT(s->mgr->idx, s->idx, next_frame_idx, frame->addr,
                                src->meta_num, total_udw);
+
+    if (time_measure) {
+      time_2 = mt_get_tsc(impl);
+      mt_stat_u64_update(&(s->stat_time_debug3), time_2 - time_1);
+      time_1 = time_2;
+    }
   }
 
   /* sync pacing */
@@ -861,6 +884,12 @@ static int tx_ancillary_session_tasklet_frame(struct mtl_main_impl* impl,
     err("%s(%d), rte_pktmbuf_alloc fail\n", __func__, idx);
     s->stat_build_ret_code = -STI_FRAME_PKT_ALLOC_FAIL;
     return MTL_TASKLET_ALL_DONE;
+  }
+
+  if (time_measure) {
+    time_2 = mt_get_tsc(impl);
+    mt_stat_u64_update(&(s->stat_time_debug4), time_2 - time_1);
+    time_1 = time_2;
   }
 
   if (!s->tx_no_chain) {
@@ -953,6 +982,12 @@ static int tx_ancillary_session_tasklet_frame(struct mtl_main_impl* impl,
 
     MT_USDT_ST40_TX_FRAME_DONE(s->mgr->idx, s->idx, s->st40_frame_idx,
                                tc_meta->rtp_timestamp);
+  }
+
+  if (time_measure) {
+    time_2 = mt_get_tsc(impl);
+    mt_stat_u64_update(&(s->stat_time_debug5), time_2 - time_1);
+    time_1 = time_2;
   }
 
   return done ? MTL_TASKLET_ALL_DONE : MTL_TASKLET_HAS_PENDING;
@@ -1111,11 +1146,13 @@ static int tx_ancillary_sessions_tasklet_handler(void* priv) {
 
   for (int sidx = 0; sidx < mgr->max_idx; sidx++) {
     s = tx_ancillary_session_try_get(mgr, sidx);
-    if (!s) continue;
     if (time_measure) tsc_s = mt_get_tsc(impl);
+    if (!s) {
+      continue;
+    }
 
     s->stat_build_ret_code = 0;
-    if (s->ops.type == ST40_TYPE_FRAME_LEVEL)
+    if (s->ops.type == ST40_TYPE_FRAME_LEVEL) 
       pending += tx_ancillary_session_tasklet_frame(impl, mgr, s);
     else
       pending += tx_ancillary_session_tasklet_rtp(impl, mgr, s);
@@ -1124,6 +1161,7 @@ static int tx_ancillary_sessions_tasklet_handler(void* priv) {
       uint64_t delta_ns = mt_get_tsc(impl) - tsc_s;
       mt_stat_u64_update(&s->stat_time, delta_ns);
     }
+
     tx_ancillary_session_put(mgr, sidx);
   }
 
@@ -1539,8 +1577,12 @@ static int tx_ancillary_session_attach(struct mtl_main_impl* impl,
   s->st40_frame_idx = 0;
   rte_atomic32_set(&s->st40_stat_frame_cnt, 0);
   s->stat_last_time = mt_get_monotonic_time();
-  mt_stat_u64_init(&s->stat_time);
-
+  mt_stat_u64_init(&)s->stat_time;
+  mt_stat_u64_init(&s->stat_time_debug1);
+  mt_stat_u64_init(&s->stat_time_debug2);
+  mt_stat_u64_init(&s->stat_time_debug3);
+  mt_stat_u64_init(&s->stat_time_debug4);
+  mt_stat_u64_init(&s->stat_time_debug5);
   for (int i = 0; i < num_port; i++) {
     s->inflight[i] = NULL;
     s->inflight_cnt[i] = 0;
@@ -1641,7 +1683,7 @@ static void tx_ancillary_session_stat(struct st_tx_ancillary_session_impl* s) {
   struct mt_stat_u64* stat_time = &s->stat_time;
   if (stat_time->cnt) {
     uint64_t avg_ns = stat_time->sum / stat_time->cnt;
-    notice("TX_ANC_SESSION(%d): tasklet time avg %.2fus max %.2fus min %.2fus\n", idx,
+    critical("TX_ANC_SESSION(%d): tasklet time avg %.2fus max %.2fus min %.2fus\n", idx,
            (float)avg_ns / NS_PER_US, (float)stat_time->max / NS_PER_US,
            (float)stat_time->min / NS_PER_US);
     mt_stat_u64_init(stat_time);

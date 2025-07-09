@@ -420,18 +420,19 @@ static int sch_stat(void* priv) {
 
   if (!mt_sch_is_active(sch)) return 0;
 
-  notice("SCH(%d:%s): tasklets %d, lcore %u(t_pid: %d), avg loop %" PRIu64 " ns\n", idx,
+  critical("SCH(%d:%s): tasklets %d, lcore %u(t_pid: %d), avg loop %" PRIu64 " ns\n", idx,
          sch->name, num_tasklet, sch->lcore, sch->t_pid, mt_sch_avg_ns_loop(sch));
 
   /* print the stat time info */
   struct mt_stat_u64* stat_time = &sch->stat_time;
   if (stat_time->cnt) {
     uint64_t avg_ns = stat_time->sum / stat_time->cnt;
-    notice("SCH(%d): time avg %.2fus max %.2fus min %.2fus\n", idx,
+    critical("SCH(%d): time avg %.2fus max %.2fus min %.2fus\n", idx,
            (float)avg_ns / NS_PER_US, (float)stat_time->max / NS_PER_US,
            (float)stat_time->min / NS_PER_US);
     mt_stat_u64_init(stat_time);
   }
+
   for (int i = 0; i < num_tasklet; i++) {
     tasklet = sch->tasklet[i];
     if (!tasklet) continue;
@@ -440,7 +441,7 @@ static int sch_stat(void* priv) {
     stat_time = &tasklet->stat_time;
     if (stat_time->cnt) {
       uint64_t avg_ns = stat_time->sum / stat_time->cnt;
-      notice("SCH(%d,%d): tasklet %s, avg %.2fus max %.2fus min %.2fus\n", idx, i,
+      critical("SCH(%d,%d): tasklet %s, avg %.2fus max %.2fus min %.2fus\n", idx, i,
              tasklet->name, (float)avg_ns / NS_PER_US, (float)stat_time->max / NS_PER_US,
              (float)stat_time->min / NS_PER_US);
       mt_stat_u64_init(stat_time);

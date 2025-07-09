@@ -31,4 +31,4 @@ git am ../*.patch
 
 # build now
 meson build
-ninja -C build
+ninja -C build -j$(nproc)

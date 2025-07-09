@@ -3419,7 +3419,7 @@ static void tv_stat(struct st_tx_video_sessions_mgr* mgr,
   struct mt_stat_u64* stat_time = &s->stat_time;
   if (stat_time->cnt) {
     uint64_t avg_ns = stat_time->sum / stat_time->cnt;
-    notice("TX_VIDEO_SESSION(%d,%d): tasklet time avg %.2fus max %.2fus min %.2fus\n",
+    critical("TX_VIDEO_SESSION(%d,%d): tasklet time avg %.2fus max %.2fus min %.2fus\n",
            m_idx, idx, (float)avg_ns / NS_PER_US, (float)stat_time->max / NS_PER_US,
            (float)stat_time->min / NS_PER_US);
     mt_stat_u64_init(stat_time);

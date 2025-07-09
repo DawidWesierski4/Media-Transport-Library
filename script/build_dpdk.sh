@@ -41,7 +41,7 @@ if [ "$sourced" -eq 0 ]; then
 
 	# build and install dpdk now
 	meson build
-	ninja -C build
+	ninja -C build -j$(nproc)
 	cd build
 	sudo ninja install
 fi

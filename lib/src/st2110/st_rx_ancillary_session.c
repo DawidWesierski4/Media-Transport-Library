@@ -486,7 +486,7 @@ static void rx_ancillary_session_stat(struct st_rx_ancillary_session_impl* s) {
   struct mt_stat_u64* stat_time = &s->stat_time;
   if (stat_time->cnt) {
     uint64_t avg_ns = stat_time->sum / stat_time->cnt;
-    notice("RX_ANC_SESSION(%d): tasklet time avg %.2fus max %.2fus min %.2fus\n", idx,
+    critical("RX_ANC_SESSION(%d): tasklet time avg %.2fus max %.2fus min %.2fus\n", idx,
            (float)avg_ns / NS_PER_US, (float)stat_time->max / NS_PER_US,
            (float)stat_time->min / NS_PER_US);
     mt_stat_u64_init(stat_time);
