@@ -480,6 +480,12 @@ struct mt_sch_tasklet_impl {
 
   /* for time measure */
   struct mt_stat_u64 stat_time;
+  struct mt_stat_u64 stat_time_SCH_TASKLET_DEBUG_1;
+  struct mt_stat_u64 stat_time_SCH_TASKLET_DEBUG_2;
+  struct mt_stat_u64 stat_time_SCH_TASKLET_DEBUG_3;
+  struct mt_stat_u64 stat_time_SCH_TASKLET_DEBUG_4;
+  struct mt_stat_u64 stat_time_SCH_TASKLET_DEBUG_5;
+  struct mt_stat_u64 stat_time_SCH_TASKLET_DEBUG_6;
 };
 
 enum mt_sch_type {
