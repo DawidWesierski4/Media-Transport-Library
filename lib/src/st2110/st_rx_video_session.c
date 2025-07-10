@@ -1456,7 +1456,7 @@ static inline void rv_tp_pkt_handle(struct st_rx_video_session_impl* s,
 }
 
 static inline void* rv_frame_memcpy(void* dst, const void* src, size_t n) {
-  /* not use rte_memcpy since it find performance issue on writing frame */
+  /* not use memcpy since it find performance issue on writing frame */
   return memcpy(dst, src, n);
 }
 
@@ -1541,7 +1541,7 @@ static int rv_handle_frame_pkt(struct st_rx_video_session_impl* s, struct rte_mb
     line1_length &= ~ST20_LEN_USER_META;
     dbg("%s(%d,%d): ST20_LEN_USER_META %u\n", __func__, s->idx, s_port, line1_length);
     if (line1_length <= slot->frame->user_meta_buffer_size) {
-      rte_memcpy(slot->frame->user_meta, payload, line1_length);
+      memcpy(slot->frame->user_meta, payload, line1_length);
       slot->frame->user_meta_data_size = line1_length;
     } else {
       s->stat_pkts_user_meta_err++;
@@ -2829,11 +2829,11 @@ static int rv_init_hw(struct mtl_main_impl* impl, struct st_rx_video_session_imp
     st20_get_bandwidth_bps(ops->width, ops->height, ops->fmt, ops->fps, ops->interlaced,
                            &bps);
     flow.bytes_per_sec = bps / 8;
-    rte_memcpy(flow.dip_addr, ops->ip_addr[i], MTL_IP_ADDR_LEN);
+    memcpy(flow.dip_addr, ops->ip_addr[i], MTL_IP_ADDR_LEN);
     if (mt_is_multicast_ip(flow.dip_addr))
-      rte_memcpy(flow.sip_addr, ops->mcast_sip_addr[i], MTL_IP_ADDR_LEN);
+      memcpy(flow.sip_addr, ops->mcast_sip_addr[i], MTL_IP_ADDR_LEN);
     else
-      rte_memcpy(flow.sip_addr, mt_sip_addr(impl, port), MTL_IP_ADDR_LEN);
+      memcpy(flow.sip_addr, mt_sip_addr(impl, port), MTL_IP_ADDR_LEN);
     flow.dst_port = s->st20_dst_port[i];
     if (rv_is_hdr_split(s)) {
       flow.flags |= MT_RXQ_FLOW_F_HDR_SPLIT;

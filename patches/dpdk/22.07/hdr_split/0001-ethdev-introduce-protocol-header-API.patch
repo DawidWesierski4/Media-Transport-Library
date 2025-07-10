@@ -675,7 +675,7 @@ index bfb3a16ae2..458548898a 100644
 +
 +	rxq->rxseg_nb = n_seg;
 +	if (n_seg > 1) {
-+		rte_memcpy(rxq->rxseg, rx_conf->rx_seg,
++		memcpy(rxq->rxseg, rx_conf->rx_seg,
 +			sizeof(struct rte_eth_rxseg_split) * n_seg);
 +		rxq->mp = rxq->rxseg[0].mp;
 +	} else {

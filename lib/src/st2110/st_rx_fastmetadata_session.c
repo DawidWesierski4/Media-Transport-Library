@@ -250,11 +250,11 @@ static int rx_fastmetadata_session_init_hw(struct mtl_main_impl* impl,
     s->priv[i].s_port = i;
 
     memset(&flow, 0, sizeof(flow));
-    rte_memcpy(flow.dip_addr, s->ops.ip_addr[i], MTL_IP_ADDR_LEN);
+    memcpy(flow.dip_addr, s->ops.ip_addr[i], MTL_IP_ADDR_LEN);
     if (mt_is_multicast_ip(flow.dip_addr))
-      rte_memcpy(flow.sip_addr, s->ops.mcast_sip_addr[i], MTL_IP_ADDR_LEN);
+      memcpy(flow.sip_addr, s->ops.mcast_sip_addr[i], MTL_IP_ADDR_LEN);
     else
-      rte_memcpy(flow.sip_addr, mt_sip_addr(impl, port), MTL_IP_ADDR_LEN);
+      memcpy(flow.sip_addr, mt_sip_addr(impl, port), MTL_IP_ADDR_LEN);
     flow.dst_port = s->st41_dst_port[i];
     if (mt_has_cni_rx(impl, port)) flow.flags |= MT_RXQ_FLOW_F_FORCE_CNI;
 

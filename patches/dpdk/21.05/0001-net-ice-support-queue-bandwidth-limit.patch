@@ -459,7 +459,7 @@ index 000000000..013e12535
 +	if (!shaper_profile)
 +		return -ENOMEM;
 +	shaper_profile->shaper_profile_id = shaper_profile_id;
-+	rte_memcpy(&shaper_profile->profile, profile,
++	memcpy(&shaper_profile->profile, profile,
 +			 sizeof(struct rte_tm_shaper_params));
 +	TAILQ_INSERT_TAIL(&pf->tm_conf.shaper_profile_list,
 +			  shaper_profile, node);
@@ -574,7 +574,7 @@ index 000000000..013e12535
 +		tm_node->id = node_id;
 +		tm_node->parent = NULL;
 +		tm_node->reference_count = 0;
-+		rte_memcpy(&tm_node->params, params,
++		memcpy(&tm_node->params, params,
 +				 sizeof(struct rte_tm_node_params));
 +		pf->tm_conf.root = tm_node;
 +		return 0;
@@ -637,7 +637,7 @@ index 000000000..013e12535
 +	tm_node->reference_count = 0;
 +	tm_node->parent = parent_node;
 +	tm_node->shaper_profile = shaper_profile;
-+	rte_memcpy(&tm_node->params, params,
++	memcpy(&tm_node->params, params,
 +			 sizeof(struct rte_tm_node_params));
 +	if (parent_node_type == ICE_TM_NODE_TYPE_PORT) {
 +		TAILQ_INSERT_TAIL(&pf->tm_conf.tc_list,

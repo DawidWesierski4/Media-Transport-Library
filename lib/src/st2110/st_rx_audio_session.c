@@ -322,7 +322,7 @@ static int rx_audio_session_handle_frame_pkt(struct mtl_main_impl* impl,
     s->st30_stat_pkts_dropped++;
     return -EIO;
   }
-  rte_memcpy(s->st30_cur_frame->addr + offset, payload, s->pkt_len);
+  memcpy(s->st30_cur_frame->addr + offset, payload, s->pkt_len);
   s->frame_recv_size += s->pkt_len;
   s->st30_stat_pkts_received++;
   s->st30_pkt_idx++;
@@ -646,11 +646,11 @@ static int rx_audio_session_init_hw(struct mtl_main_impl* impl,
     s->priv[i].s_port = i;
 
     memset(&flow, 0, sizeof(flow));
-    rte_memcpy(flow.dip_addr, s->ops.ip_addr[i], MTL_IP_ADDR_LEN);
+    memcpy(flow.dip_addr, s->ops.ip_addr[i], MTL_IP_ADDR_LEN);
     if (mt_is_multicast_ip(flow.dip_addr))
-      rte_memcpy(flow.sip_addr, s->ops.mcast_sip_addr[i], MTL_IP_ADDR_LEN);
+      memcpy(flow.sip_addr, s->ops.mcast_sip_addr[i], MTL_IP_ADDR_LEN);
     else
-      rte_memcpy(flow.sip_addr, mt_sip_addr(impl, port), MTL_IP_ADDR_LEN);
+      memcpy(flow.sip_addr, mt_sip_addr(impl, port), MTL_IP_ADDR_LEN);
     flow.dst_port = s->st30_dst_port[i];
     if (mt_has_cni_rx(impl, port)) flow.flags |= MT_RXQ_FLOW_F_FORCE_CNI;
 

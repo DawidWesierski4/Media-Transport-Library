@@ -431,7 +431,7 @@ struct rte_mbuf* mt_build_pad(struct mtl_main_impl* impl, struct rte_mempool* me
   mt_eth_d_addr(eth_hdr)->addr_bytes[1] = 0x80;
   mt_eth_d_addr(eth_hdr)->addr_bytes[2] = 0xC2;
   mt_eth_d_addr(eth_hdr)->addr_bytes[5] = 0x01;
-  rte_memcpy(mt_eth_s_addr(eth_hdr), &src_mac, RTE_ETHER_ADDR_LEN);
+  memcpy(mt_eth_s_addr(eth_hdr), &src_mac, RTE_ETHER_ADDR_LEN);
 
   return pad;
 }

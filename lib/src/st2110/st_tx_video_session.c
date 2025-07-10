@@ -789,10 +789,10 @@ static int tv_init_hdr(struct mtl_main_impl* impl, struct st_tx_video_session_im
 
   /* ether hdr */
   if ((s_port == MTL_SESSION_PORT_P) && (ops->flags & ST20_TX_FLAG_USER_P_MAC)) {
-    rte_memcpy(d_addr->addr_bytes, &ops->tx_dst_mac[s_port][0], RTE_ETHER_ADDR_LEN);
+    memcpy(d_addr->addr_bytes, &ops->tx_dst_mac[s_port][0], RTE_ETHER_ADDR_LEN);
     info("%s, USER_P_TX_MAC\n", __func__);
   } else if ((s_port == MTL_SESSION_PORT_R) && (ops->flags & ST20_TX_FLAG_USER_R_MAC)) {
-    rte_memcpy(d_addr->addr_bytes, &ops->tx_dst_mac[s_port][0], RTE_ETHER_ADDR_LEN);
+    memcpy(d_addr->addr_bytes, &ops->tx_dst_mac[s_port][0], RTE_ETHER_ADDR_LEN);
     info("%s, USER_R_TX_MAC\n", __func__);
   } else {
     ret = mt_dst_ip_mac(impl, dip, d_addr, port, impl->arp_timeout_ms);
@@ -931,7 +931,7 @@ static int tv_build_st20_redundant(struct st_tx_video_session_impl* s,
   struct rte_udp_hdr* udp = &hdr->udp;
 
   /* update the hdr: eth, ip, udp */
-  rte_memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_R], sizeof(*hdr));
+  memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_R], sizeof(*hdr));
   mt_mbuf_init_ipv4(pkt_r);
   pkt_r->data_len = pkt_base->data_len;
   pkt_r->pkt_len = pkt_r->data_len;
@@ -947,7 +947,7 @@ static int tv_build_st20_redundant(struct st_tx_video_session_impl* s,
   void* pd_base = rte_pktmbuf_mtod_offset(pkt_base, void*, hdr_sz);
   void* pd_r = rte_pktmbuf_mtod_offset(pkt_r, void*, hdr_sz);
   size_t pd_len = pkt_base->pkt_len - hdr_sz;
-  rte_memcpy(pd_r, pd_base, pd_len);
+  memcpy(pd_r, pd_base, pd_len);
 
   return 0;
 }
@@ -971,7 +971,7 @@ static int tv_build_st20(struct st_tx_video_session_impl* s, struct rte_mbuf* pk
   udp = &hdr->udp;
 
   /* copy the basic hdrs: eth, ip, udp, rtp */
-  rte_memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_P], sizeof(*hdr));
+  memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_P], sizeof(*hdr));
 
   if (s->multi_src_port) udp->src_port += (s->st20_pkt_idx / 128) % 8;
 
@@ -1073,7 +1073,7 @@ static int tv_build_st20_chain(struct st_tx_video_session_impl* s, struct rte_mb
   udp = &hdr->udp;
 
   /* copy the hdr: eth, ip, udp, rtp */
-  rte_memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_P], sizeof(*hdr));
+  memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_P], sizeof(*hdr));
 
   if (s->multi_src_port) udp->src_port += (s->st20_pkt_idx / 128) % 8;
 
@@ -1185,17 +1185,17 @@ static int tv_build_st20_redundant_chain(struct st_tx_video_session_impl* s,
   rtp = &hdr->rtp;
 
   /* copy the hdr: eth, ip, udp, rtp */
-  rte_memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_R], sizeof(*hdr));
+  memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_R], sizeof(*hdr));
 
   /* update rtp */
   hdr_base = rte_pktmbuf_mtod(pkt_base, struct st_rfc4175_video_hdr*);
   rtp_base = &hdr_base->rtp;
-  rte_memcpy(rtp, rtp_base, sizeof(*rtp));
+  memcpy(rtp, rtp_base, sizeof(*rtp));
 
   /* copy extra if Continuation */
   uint16_t line1_offset = ntohs(rtp->row_offset);
   if (line1_offset & ST20_SRD_OFFSET_CONTINUATION) {
-    rte_memcpy(&rtp[1], &rtp_base[1], sizeof(struct st20_rfc4175_extra_rtp_hdr));
+    memcpy(&rtp[1], &rtp_base[1], sizeof(struct st20_rfc4175_extra_rtp_hdr));
   }
 
   /* update mbuf */
@@ -1234,9 +1234,9 @@ static int tv_build_rtp(struct mtl_main_impl* impl, struct st_tx_video_session_i
       rte_pktmbuf_mtod_offset(pkt, struct st_rfc3550_rtp_hdr*, sizeof(struct mt_udp_hdr));
 
   /* copy the hdr: eth, ip, udp */
-  rte_memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_P].eth, sizeof(hdr->eth));
-  rte_memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_P].ipv4, sizeof(hdr->ipv4));
-  rte_memcpy(udp, &s->s_hdr[MTL_SESSION_PORT_P].udp, sizeof(hdr->udp));
+  memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_P].eth, sizeof(hdr->eth));
+  memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_P].ipv4, sizeof(hdr->ipv4));
+  memcpy(udp, &s->s_hdr[MTL_SESSION_PORT_P].udp, sizeof(hdr->udp));
 
   if (s->multi_src_port) udp->src_port += (s->st20_pkt_idx / 128) % 8;
 
@@ -1290,9 +1290,9 @@ static int tv_build_rtp_chain(struct mtl_main_impl* impl,
   rtp = rte_pktmbuf_mtod(pkt_chain, struct st_rfc3550_rtp_hdr*);
 
   /* copy the hdr: eth, ip, udp */
-  rte_memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_P].eth, sizeof(hdr->eth));
-  rte_memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_P].ipv4, sizeof(hdr->ipv4));
-  rte_memcpy(udp, &s->s_hdr[MTL_SESSION_PORT_P].udp, sizeof(hdr->udp));
+  memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_P].eth, sizeof(hdr->eth));
+  memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_P].ipv4, sizeof(hdr->ipv4));
+  memcpy(udp, &s->s_hdr[MTL_SESSION_PORT_P].udp, sizeof(hdr->udp));
 
   if (s->multi_src_port) udp->src_port += (s->st20_pkt_idx / 128) % 8;
 
@@ -1346,9 +1346,9 @@ static int tv_build_rtp_redundant_chain(struct st_tx_video_session_impl* s,
   ipv4 = &hdr->ipv4;
 
   /* copy the hdr: eth, ip, udp */
-  rte_memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_R].eth, sizeof(hdr->eth));
-  rte_memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_R].ipv4, sizeof(hdr->ipv4));
-  rte_memcpy(&hdr->udp, &s->s_hdr[MTL_SESSION_PORT_R].udp, sizeof(hdr->udp));
+  memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_R].eth, sizeof(hdr->eth));
+  memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_R].ipv4, sizeof(hdr->ipv4));
+  memcpy(&hdr->udp, &s->s_hdr[MTL_SESSION_PORT_R].udp, sizeof(hdr->udp));
 
   /* update mbuf */
   pkt_r->data_len = pkt_base->data_len;
@@ -1385,11 +1385,11 @@ static int tv_build_st22(struct st_tx_video_session_impl* s, struct rte_mbuf* pk
   udp = &hdr->udp;
 
   /* copy the hdr: eth, ip, udp */
-  rte_memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_P].eth, sizeof(hdr->eth));
-  rte_memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_P].ipv4, sizeof(*ipv4));
-  rte_memcpy(udp, &s->s_hdr[MTL_SESSION_PORT_P].udp, sizeof(*udp));
+  memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_P].eth, sizeof(hdr->eth));
+  memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_P].ipv4, sizeof(*ipv4));
+  memcpy(udp, &s->s_hdr[MTL_SESSION_PORT_P].udp, sizeof(*udp));
   /* copy rtp */
-  rte_memcpy(rtp, &st22_info->rtp_hdr[MTL_SESSION_PORT_P], sizeof(*rtp));
+  memcpy(rtp, &st22_info->rtp_hdr[MTL_SESSION_PORT_P], sizeof(*rtp));
 
   /* update rtp */
   if (s->st20_pkt_idx >= (st22_info->st22_total_pkts - 1)) {
@@ -1459,11 +1459,11 @@ static int tv_build_st22_chain(struct st_tx_video_session_impl* s, struct rte_mb
   udp = &hdr->udp;
 
   /* copy the hdr: eth, ip, udp */
-  rte_memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_P].eth, sizeof(hdr->eth));
-  rte_memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_P].ipv4, sizeof(*ipv4));
-  rte_memcpy(udp, &s->s_hdr[MTL_SESSION_PORT_P].udp, sizeof(*udp));
+  memcpy(&hdr->eth, &s->s_hdr[MTL_SESSION_PORT_P].eth, sizeof(hdr->eth));
+  memcpy(ipv4, &s->s_hdr[MTL_SESSION_PORT_P].ipv4, sizeof(*ipv4));
+  memcpy(udp, &s->s_hdr[MTL_SESSION_PORT_P].udp, sizeof(*udp));
   /* copy rtp */
-  rte_memcpy(rtp, &st22_info->rtp_hdr[MTL_SESSION_PORT_P], sizeof(*rtp));
+  memcpy(rtp, &st22_info->rtp_hdr[MTL_SESSION_PORT_P], sizeof(*rtp));
 
   /* update rtp */
   if (s->st20_pkt_idx >= (st22_info->st22_total_pkts - 1)) {
@@ -1545,12 +1545,12 @@ static int tv_build_st22_redundant_chain(struct st_tx_video_session_impl* s,
   rtp = &hdr->rtp;
 
   /* copy the hdr: eth, ip, udp, rtp */
-  rte_memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_R], sizeof(*hdr));
+  memcpy(hdr, &s->s_hdr[MTL_SESSION_PORT_R], sizeof(*hdr));
 
   /* update rtp */
   hdr_base = rte_pktmbuf_mtod(pkt_base, struct st22_rfc9134_video_hdr*);
   rtp_base = &hdr_base->rtp;
-  rte_memcpy(rtp, rtp_base, sizeof(*rtp));
+  memcpy(rtp, rtp_base, sizeof(*rtp));
 
   /* update mbuf */
   pkt_r->data_len = pkt_base->data_len;
@@ -1741,7 +1741,7 @@ static int tv_tasklet_frame(struct mtl_main_impl* impl,
         }
         s->stat_user_meta_cnt++;
         /* copy user meta to frame meta */
-        rte_memcpy(frame->user_meta, meta.user_meta, meta.user_meta_size);
+        memcpy(frame->user_meta, meta.user_meta, meta.user_meta_size);
         frame->user_meta_data_size = meta.user_meta_size;
       }
 
@@ -3936,7 +3936,7 @@ int st20_frame_tx_start(struct mtl_main_impl* impl, struct st_tx_video_session_i
   udp = &hdr->udp;
 
   /* copy the basic hdrs: eth, ip, udp, rtp */
-  rte_memcpy(hdr, &s->s_hdr[s_port], sizeof(*hdr));
+  memcpy(hdr, &s->s_hdr[s_port], sizeof(*hdr));
 
   /* set timestamp */
   rtp->base.tmstamp = htonl(s->pacing.rtp_time_stamp);

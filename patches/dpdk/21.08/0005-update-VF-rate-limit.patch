@@ -240,7 +240,7 @@ index 3c80276ff3..9e188b84b9 100644
  	tm_node->reference_count = 0;
  	tm_node->parent = parent_node;
 +	tm_node->shaper_profile = shaper_profile;
- 	rte_memcpy(&tm_node->params, params,
+ 	memcpy(&tm_node->params, params,
  			 sizeof(struct rte_tm_node_params));
  	if (parent_node_type == IAVF_TM_NODE_TYPE_PORT) {
 @@ -373,6 +418,10 @@ iavf_tm_node_add(struct rte_eth_dev *dev, uint32_t node_id,
@@ -315,7 +315,7 @@ index 3c80276ff3..9e188b84b9 100644
 +	if (!shaper_profile)
 +		return -ENOMEM;
 +	shaper_profile->shaper_profile_id = shaper_profile_id;
-+	rte_memcpy(&shaper_profile->profile, profile,
++	memcpy(&shaper_profile->profile, profile,
 +			 sizeof(struct rte_tm_shaper_params));
 +	TAILQ_INSERT_TAIL(&vf->tm_conf.shaper_profile_list,
 +			  shaper_profile, node);

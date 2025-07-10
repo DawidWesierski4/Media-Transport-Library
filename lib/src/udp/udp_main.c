@@ -157,13 +157,13 @@ static int udp_build_tx_pkt(struct mtl_main_impl* impl, struct mudp_impl* s,
   }
 
   /* copy eth, ip, udp */
-  rte_memcpy(hdr, &s->hdr, sizeof(*hdr));
+  memcpy(hdr, &s->hdr, sizeof(*hdr));
 
   /* eth */
   struct rte_ether_addr* d_addr = mt_eth_d_addr(eth);
   uint8_t* dip = (uint8_t*)&addr_in->sin_addr;
   if (udp_get_flag(s, MUDP_TX_USER_MAC)) {
-    rte_memcpy(d_addr->addr_bytes, s->user_mac, RTE_ETHER_ADDR_LEN);
+    memcpy(d_addr->addr_bytes, s->user_mac, RTE_ETHER_ADDR_LEN);
   } else {
     ret = mt_dst_ip_mac(impl, dip, d_addr, port, arp_timeout_ms);
     if (ret < 0) {
@@ -250,7 +250,7 @@ static int udp_build_tx_msg_pkt(struct mtl_main_impl* impl, struct mudp_impl* s,
   struct rte_ether_addr d_addr;
   uint8_t* dip = (uint8_t*)&addr_in->sin_addr;
   if (udp_get_flag(s, MUDP_TX_USER_MAC)) {
-    rte_memcpy(&d_addr.addr_bytes, s->user_mac, RTE_ETHER_ADDR_LEN);
+    memcpy(&d_addr.addr_bytes, s->user_mac, RTE_ETHER_ADDR_LEN);
   } else {
     ret = mt_dst_ip_mac(impl, dip, &d_addr, port, arp_timeout_ms);
     if (ret < 0) {
@@ -274,9 +274,9 @@ static int udp_build_tx_msg_pkt(struct mtl_main_impl* impl, struct mudp_impl* s,
     struct rte_udp_hdr* udp = &hdr->udp;
 
     /* copy eth, ip, udp */
-    rte_memcpy(hdr, &s->hdr, sizeof(*hdr));
+    memcpy(hdr, &s->hdr, sizeof(*hdr));
     /* update dst mac */
-    rte_memcpy(mt_eth_d_addr(eth), &d_addr, sizeof(d_addr));
+    memcpy(mt_eth_d_addr(eth), &d_addr, sizeof(d_addr));
     /* ip */
     mtl_memcpy(&ipv4->dst_addr, dip, MTL_IP_ADDR_LEN);
     /* udp */
@@ -302,7 +302,7 @@ static int udp_build_tx_msg_pkt(struct mtl_main_impl* impl, struct mudp_impl* s,
         MUDP_ERR_RET(EIO);
       }
       size_t clen = RTE_MIN(pd_len, iov_len);
-      rte_memcpy(pd, iov, clen);
+      memcpy(pd, iov, clen);
       pd += clen;
       iov += clen;
       iov_len -= clen;
@@ -919,7 +919,7 @@ static ssize_t udp_rx_dequeue(struct mudp_impl* s, void* buf, size_t len, int fl
   dbg("%s(%d), payload_len %" PRIu64 " bytes\n", __func__, idx, payload_len);
 
   if (payload_len <= len) {
-    rte_memcpy(buf, payload, payload_len);
+    memcpy(buf, payload, payload_len);
     copied = payload_len;
     s->stat_pkt_deliver++;
 
@@ -933,7 +933,7 @@ static ssize_t udp_rx_dequeue(struct mudp_impl* s, void* buf, size_t len, int fl
       addr_in.sin_addr.s_addr = ipv4->src_addr;
       dbg("%s(%d), dst port %u src port %u\n", __func__, idx, ntohs(udp->dst_port),
           ntohs(udp->src_port));
-      rte_memcpy((void*)src_addr, &addr_in, RTE_MIN(*addrlen, sizeof(addr_in)));
+      memcpy((void*)src_addr, &addr_in, RTE_MIN(*addrlen, sizeof(addr_in)));
     }
   } else {
     err("%s(%d), payload len %" PRIu64 " buf len %" PRIu64 "\n", __func__, idx,
@@ -1018,7 +1018,7 @@ static ssize_t udp_rx_msg_dequeue(struct mudp_impl* s, struct msghdr* msg, int f
     addr_in.sin_addr.s_addr = ipv4->src_addr;
     dbg("%s(%d), dst port %u src port %u\n", __func__, idx, ntohs(udp->dst_port),
         ntohs(udp->src_port));
-    rte_memcpy(msg->msg_name, &addr_in, RTE_MIN(msg->msg_namelen, sizeof(addr_in)));
+    memcpy(msg->msg_name, &addr_in, RTE_MIN(msg->msg_namelen, sizeof(addr_in)));
   }
 
   if (msg->msg_control) { /* Ancillary data */
@@ -1026,13 +1026,13 @@ static ssize_t udp_rx_msg_dequeue(struct mudp_impl* s, struct msghdr* msg, int f
     memset(&chdr, 0, sizeof(chdr));
     chdr.cmsg_len = sizeof(chdr);
     chdr.cmsg_level = ipv4->next_proto_id;
-    rte_memcpy(msg->msg_control, &chdr, RTE_MIN(msg->msg_controllen, sizeof(chdr)));
+    memcpy(msg->msg_control, &chdr, RTE_MIN(msg->msg_controllen, sizeof(chdr)));
   }
 
   if (msg->msg_iov) { /* Vector of data */
     for (int i = 0; i < msg->msg_iovlen; i++) {
       size_t clen = RTE_MIN(msg->msg_iov[i].iov_len, payload_len);
-      rte_memcpy(msg->msg_iov[i].iov_base, payload, clen);
+      memcpy(msg->msg_iov[i].iov_base, payload, clen);
       payload_len -= clen;
       payload += clen;
       copied += clen;
@@ -1718,7 +1718,7 @@ int mudp_set_tx_mac(mudp_handle ut, uint8_t mac[MTL_MAC_ADDR_LEN]) {
     MUDP_ERR_RET(EIO);
   }
 
-  rte_memcpy(s->user_mac, mac, MTL_MAC_ADDR_LEN);
+  memcpy(s->user_mac, mac, MTL_MAC_ADDR_LEN);
   udp_set_flag(s, MUDP_TX_USER_MAC);
   info("%s(%d), mac: %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\n", __func__, idx, mac[0],
        mac[1], mac[2], mac[3], mac[4], mac[5]);

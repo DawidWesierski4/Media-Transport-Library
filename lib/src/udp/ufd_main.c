@@ -404,7 +404,7 @@ static struct ufd_mt_ctx* ufd_create_mt_ctx(void) {
 
   if (init_para) { /* init case selected */
     info("%s, runtime config path\n", __func__);
-    rte_memcpy(&ctx->init_params, init_para, sizeof(ctx->init_params));
+    memcpy(&ctx->init_params, init_para, sizeof(ctx->init_params));
   } else {
     /* get user config from json */
     int ret = ufd_config_init(ctx);
@@ -769,7 +769,7 @@ int mufd_commit_override_params(struct mufd_override_params* p) {
     err("%s, malloc out fail\n", __func__);
     MUDP_ERR_RET(ENOMEM);
   }
-  rte_memcpy(out, p, sizeof(*p));
+  memcpy(out, p, sizeof(*p));
   g_rt_para = out;
   info("%s, succ\n", __func__);
   return 0;
@@ -786,7 +786,7 @@ int mufd_commit_init_params(struct mufd_init_params* p) {
     err("%s, malloc out fail\n", __func__);
     MUDP_ERR_RET(ENOMEM);
   }
-  rte_memcpy(out, p, sizeof(*p));
+  memcpy(out, p, sizeof(*p));
   g_init_para = out;
   info("%s, succ\n", __func__);
   return 0;

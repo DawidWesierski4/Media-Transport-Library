@@ -239,7 +239,7 @@ static int rx_st20p_frame_ready(void* priv, void* frame,
   framebuff->user_meta_data_size = 0;
   if (meta->user_meta) {
     if (meta->user_meta_size <= framebuff->user_meta_buffer_size) {
-      rte_memcpy(framebuff->user_meta, meta->user_meta, meta->user_meta_size);
+      memcpy(framebuff->user_meta, meta->user_meta, meta->user_meta_size);
       framebuff->user_meta_data_size = meta->user_meta_size;
     } else {
       err("%s(%d), wrong user_meta_size\n", __func__, ctx->idx);

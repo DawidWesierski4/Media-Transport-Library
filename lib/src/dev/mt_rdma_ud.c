@@ -1111,7 +1111,7 @@ struct mt_tx_rdma_entry* mt_tx_rdma_get(struct mtl_main_impl* impl, enum mtl_por
   }
   entry->parent = impl;
   entry->port = port;
-  rte_memcpy(&entry->flow, flow, sizeof(entry->flow));
+  memcpy(&entry->flow, flow, sizeof(entry->flow));
 
   struct mt_rdma_priv* rdma = mt_if(impl, port)->rdma;
   struct mt_rdma_tx_queue* txq = NULL;
@@ -1205,7 +1205,7 @@ struct mt_rx_rdma_entry* mt_rx_rdma_get(struct mtl_main_impl* impl, enum mtl_por
   }
   entry->parent = impl;
   entry->port = port;
-  rte_memcpy(&entry->flow, flow, sizeof(entry->flow));
+  memcpy(&entry->flow, flow, sizeof(entry->flow));
 
   struct mt_rdma_priv* rdma = mt_if(impl, port)->rdma;
   struct mt_rdma_rx_queue* rxq = NULL;

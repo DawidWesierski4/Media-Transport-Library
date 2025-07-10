@@ -109,7 +109,7 @@ index 34a0bfcff8..65eed0acbd 100644
  		tm_node->reference_count = 0;
 -		tm_node->children = (struct ice_tm_node **)
 -			rte_calloc(NULL, 256, (sizeof(struct ice_tm_node *)), 0);
- 		rte_memcpy(&tm_node->params, params,
+ 		memcpy(&tm_node->params, params,
  				 sizeof(struct rte_tm_node_params));
  		pf->tm_conf.root = tm_node;
 @@ -464,16 +431,14 @@ ice_tm_node_add(struct rte_eth_dev *dev, uint32_t node_id,
@@ -179,7 +179,7 @@ index 34a0bfcff8..65eed0acbd 100644
 -		PMD_DRV_LOG(WARNING, "weight != 1 not supported in level %d",
 -			    level_id);
 -
- 	rte_memcpy(&tm_node->params, params,
+ 	memcpy(&tm_node->params, params,
  			 sizeof(struct rte_tm_node_params));
  	if (parent_node_type == ICE_TM_NODE_TYPE_PORT) {
 @@ -547,20 +485,10 @@ ice_tm_node_add(struct rte_eth_dev *dev, uint32_t node_id,
