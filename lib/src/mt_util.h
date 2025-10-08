@@ -97,8 +97,8 @@ static inline bool st_is_valid_payload_type(int payload_type) {
 
 void mt_eth_macaddr_dump(enum mtl_port port, char* tag, struct rte_ether_addr* mac_addr);
 
-static inline bool st_rx_seq_drop(uint16_t new_id, uint16_t old_id, uint16_t delta) {
-  if ((new_id <= old_id) && ((old_id - new_id) < delta))
+static inline bool st_rx_seq_drop(uint16_t new_id, uint16_t old_id) {
+  if ((new_id <= old_id))
     return true;
   else
     return false;

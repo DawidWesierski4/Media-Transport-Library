@@ -91,7 +91,6 @@ static int rx_fastmetadata_session_handle_pkt(struct mtl_main_impl* impl,
   size_t hdr_offset = sizeof(struct st_rfc3550_hdr) - sizeof(struct st_rfc3550_rtp_hdr);
   struct st_rfc3550_rtp_hdr* rtp =
       rte_pktmbuf_mtod_offset(mbuf, struct st_rfc3550_rtp_hdr*, hdr_offset);
-  uint16_t seq_id = ntohs(rtp->seq_number);
   uint8_t payload_type = rtp->payload_type;
   MTL_MAY_UNUSED(s_port);
   uint32_t pkt_len = mbuf->data_len - sizeof(struct st41_rtp_hdr);
@@ -114,14 +113,19 @@ static int rx_fastmetadata_session_handle_pkt(struct mtl_main_impl* impl,
     }
   }
 
+  uint16_t seq_id = ntohs(rtp->seq_number);
   /* set if it is first pkt */
-  if (unlikely(s->latest_seq_id == -1)) s->latest_seq_id = seq_id - 1;
+  if (unlikely(s->latest_seq_id == -1)) {
+    s->latest_seq_id = seq_id - 1;
+  }
+
   /* drop old packet */
-  if (st_rx_seq_drop(seq_id, s->latest_seq_id, 5)) {
+  if (st_rx_seq_drop(seq_id, s->latest_seq_id)) {
     dbg("%s(%d,%d), drop as pkt seq %d is old\n", __func__, s->idx, s_port, seq_id);
     ST_SESSION_STAT_INC(s, port_user_stats, stat_pkts_redundant);
     return 0;
   }
+
   if (seq_id != (uint16_t)(s->latest_seq_id + 1)) {
     ST_SESSION_STAT_INC(s, port_user_stats.common, stat_pkts_out_of_order);
   }
