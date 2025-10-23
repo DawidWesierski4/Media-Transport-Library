@@ -97,11 +97,29 @@ static inline bool st_is_valid_payload_type(int payload_type) {
 
 void mt_eth_macaddr_dump(enum mtl_port port, char* tag, struct rte_ether_addr* mac_addr);
 
-static inline bool st_rx_seq_drop(uint16_t new_id, uint16_t old_id, uint16_t delta) {
-  if ((new_id <= old_id) && ((old_id - new_id) < delta))
-    return true;
-  else
-    return false;
+static inline bool mt_seq16_greater(uint16_t a, uint16_t b) {
+  return ((int16_t)(a - b)) > 0;
+}
+
+static inline bool mt_seq32_greater(uint32_t a, uint32_t b) {
+  return ((int32_t)(a - b)) > 0;
+}
+
+static inline bool mt_seq64_greater(uint64_t a, uint64_t b) {
+  return ((int64_t)(a - b)) > 0;
+}
+
+static inline bool st_rx_seq_redundant_drop(uint16_t new_id, int* sessions_redundant, enum mtl_session_port s_port, int num_port) {
+  for (int i = MTL_SESSION_PORT_P; i < num_port; i++) {
+    if (i == s_port) continue;
+
+    uint16_t old_id = sessions_redundant[i];
+    if (mt_seq16_greater(old_id, new_id)) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 struct rte_mbuf* mt_build_pad(struct mtl_main_impl* impl, struct rte_mempool* mempool,
