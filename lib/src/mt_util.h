@@ -109,7 +109,8 @@ static inline bool mt_seq64_greater(uint64_t a, uint64_t b) {
   return ((int64_t)(a - b)) > 0;
 }
 
-static inline bool st_rx_seq_redundant_drop(uint16_t new_id, int* sessions_redundant, enum mtl_session_port s_port, int num_port) {
+static inline bool st_rx_seq_redundant_drop(uint16_t new_id, int* sessions_redundant,
+                                            enum mtl_session_port s_port, int num_port) {
   for (int i = MTL_SESSION_PORT_P; i < num_port; i++) {
     if (i == s_port) continue;
 
@@ -118,7 +119,7 @@ static inline bool st_rx_seq_redundant_drop(uint16_t new_id, int* sessions_redun
       return true;
     }
   }
-  
+
   return false;
 }
 

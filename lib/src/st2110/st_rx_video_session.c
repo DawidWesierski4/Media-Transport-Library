@@ -1109,7 +1109,6 @@ static struct st_rx_video_slot_impl* rv_slot_by_tmstamp(
     }
   }
 
-
   /* if the slot timestamp is in the past just drop it */
   bool timestamp_is_in_the_past = true;
   for (i = 0; i < s->slot_max; i++) {
@@ -1127,7 +1126,6 @@ static struct st_rx_video_slot_impl* rv_slot_by_tmstamp(
   }
 
   dbg("%s(%d): new tmstamp %u\n", __func__, s->idx, tmstamp);
-
 
   if (s->dma_dev && !mt_dma_empty(s->dma_dev)) {
     /* still in progress of previous frame, drop current pkt */
