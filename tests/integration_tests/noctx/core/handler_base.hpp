@@ -1,7 +1,9 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2025 Intel Corporation
+ */
+
 #pragma once
 
-#include <atomic>
 #include <functional>
 #include <vector>
 
@@ -15,8 +17,8 @@ class Handlers {
                     FrameTestStrategy* frameTestStrategy = nullptr);
   virtual ~Handlers();
 
-  void startSession(
-      std::vector<std::function<void(std::atomic<bool>&)>> threadFunctions = {});
+  void startSession(std::vector<std::function<void(std::atomic<bool>&)>> threadFunctions,
+                    bool isRx);
   void stopSession();
 
   void setSessionPortsRx(struct st_rx_port* port, int rxPortIdx, int rxPortRedundantIdx);

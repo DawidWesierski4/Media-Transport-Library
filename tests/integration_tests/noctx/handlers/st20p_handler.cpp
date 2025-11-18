@@ -1,4 +1,6 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2025 Intel Corporation
+ */
 
 #include "st20p_handler.hpp"
 
@@ -67,7 +69,7 @@ void St20pHandler::fillSt20Ops(uint transmissionPort, uint framebufferQueueSize,
          MTL_IP_ADDR_LEN);
   memcpy(sessionsOpsTx.port.dip_addr[MTL_SESSION_PORT_R], ctx->mcast_ip_addr[MTL_PORT_R],
          MTL_IP_ADDR_LEN);
-
+  /* Don't enable Redundant by default */
   sessionsOpsTx.port.num_port = 1;
   snprintf(sessionsOpsTx.port.port[MTL_SESSION_PORT_P], MTL_PORT_MAX_LEN, "%s",
            ctx->para.port[MTL_PORT_P]);
@@ -223,23 +225,24 @@ void St20pHandler::st20RxDefaultFunction(std::atomic<bool>& stopFlag) {
 
 void St20pHandler::startSessionTx() {
   Handlers::startSession(
-      {[this](std::atomic<bool>& stopFlag) { this->st20TxDefaultFunction(stopFlag); }});
+      {[this](std::atomic<bool>& stopFlag) { this->st20TxDefaultFunction(stopFlag); }},
+      /*isRx=*/false);
 }
 
 void St20pHandler::startSessionRx() {
   Handlers::startSession(
-      {[this](std::atomic<bool>& stopFlag) { this->st20RxDefaultFunction(stopFlag); }});
+      {[this](std::atomic<bool>& stopFlag) { this->st20RxDefaultFunction(stopFlag); }},
+      /*isRx=*/true);
 }
 
 void St20pHandler::startSession() {
   startSessionRx();
-  sleep(1);
   startSessionTx();
 }
 
 void St20pHandler::startSession(
-    std::vector<std::function<void(std::atomic<bool>&)>> threadFunctions) {
-  Handlers::startSession(threadFunctions);
+    std::vector<std::function<void(std::atomic<bool>&)>> threadFunctions, bool isRx) {
+  Handlers::startSession(threadFunctions, isRx);
 }
 
 void St20pHandler::setSessionPorts(int txPortIdx, int rxPortIdx, int txPortRedundantIdx,

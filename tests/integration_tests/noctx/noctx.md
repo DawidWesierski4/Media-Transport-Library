@@ -23,7 +23,8 @@ and need special configuration.
 ./build/tests/KahawaiTest \
     --auto_start_stop \
     --port_list=0000:xx:xx.x,0000:xx:xx.x,0000:xx:xx.x,0000:xx:xx.x \
-    --gtest_filter=noctx.TestName
+    --gtest_filter=noctx.TestName \
+    --no_ctx
 ```
 
 Replace `TestName` with any test from [`noctx.env`](noctx.env) and update the port addresses to match your system.

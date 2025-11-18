@@ -1,4 +1,7 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2025 Intel Corporation
+ */
+
 #pragma once
 
 #include <atomic>
@@ -11,12 +14,13 @@
  */
 class Session {
  public:
-  void addThread(std::function<void(std::atomic<bool>&)> func);
+  void addThread(std::function<void(std::atomic<bool>&)> func, bool isRx);
   bool isRunning() const;
   void stop();
   ~Session();
 
  private:
   std::vector<std::thread> threads_;
-  std::atomic<bool> stopFlag_{false};
+  std::atomic<bool> stopFlagRx{false};
+  std::atomic<bool> stopFlagTx{false};
 };

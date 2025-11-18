@@ -1,17 +1,20 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2025 Intel Corporation
+ */
 
 #include "session.hpp"
 
-void Session::addThread(std::function<void(std::atomic<bool>&)> func) {
+void Session::addThread(std::function<void(std::atomic<bool>&)> func, bool isRx) {
   if (!func) {
     return;
   }
+  std::atomic<bool>& stopFlag = isRx ? stopFlagRx : stopFlagTx;
 
   if (threads_.empty()) {
-    stopFlag_.store(false);
+    stopFlag.store(false);
   }
 
-  threads_.emplace_back(func, std::ref(stopFlag_));
+  threads_.emplace_back(func, std::ref(stopFlag));
 }
 
 bool Session::isRunning() const {
@@ -29,7 +32,9 @@ bool Session::isRunning() const {
 }
 
 void Session::stop() {
-  stopFlag_ = true;
+  stopFlagTx.store(true);
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  stopFlagRx.store(true);
   for (auto& thread : threads_) {
     if (thread.joinable()) {
       thread.join();

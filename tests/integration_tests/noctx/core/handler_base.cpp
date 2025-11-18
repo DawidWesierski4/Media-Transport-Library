@@ -1,4 +1,6 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2025 Intel Corporation
+ */
 
 #include "handler_base.hpp"
 
@@ -14,9 +16,9 @@ Handlers::~Handlers() {
 }
 
 void Handlers::startSession(
-    std::vector<std::function<void(std::atomic<bool>&)>> threadFunctions) {
+    std::vector<std::function<void(std::atomic<bool>&)>> threadFunctions, bool isRx) {
   for (auto& func : threadFunctions) {
-    session.addThread(func);
+    session.addThread(func, isRx);
   }
 }
 

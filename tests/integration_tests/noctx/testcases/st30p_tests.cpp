@@ -2,7 +2,10 @@
  * Copyright(c) 2025 Intel Corporation
  */
 
-#include "noctx.hpp"
+#include "core/constants.hpp"
+#include "core/test_fixture.hpp"
+#include "handlers/st30p_handler.hpp"
+#include "strategies/st30p_strategies.hpp"
 
 TEST_F(NoCtxTest, st30p_default_timestamps) {
   ctx->para.ptp_get_time_fn = NoCtxTest::TestPtpSourceSinceEpoch;
@@ -13,7 +16,7 @@ TEST_F(NoCtxTest, st30p_default_timestamps) {
   auto frameTestStrategy = std::make_unique<St30pDefaultTimestamp>();
   auto handler = std::make_unique<St30pHandler>(ctx, frameTestStrategy.get());
   st30pHandlers.emplace_back(std::move(handler));
-  frameTestStrategys.emplace_back(std::move(frameTestStrategy));
+  frameTestStrategies.emplace_back(std::move(frameTestStrategy));
   sleepUntilFailure();
 }
 
@@ -31,7 +34,7 @@ TEST_F(NoCtxTest, st30p_user_pacing) {
   handler->createSession(true);
 
   st30pHandlers.emplace_back(std::move(handler));
-  frameTestStrategys.emplace_back(std::move(frameTestStrategy));
+  frameTestStrategies.emplace_back(std::move(frameTestStrategy));
   sleepUntilFailure();
 }
 
@@ -52,7 +55,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency) {
   uint sessionRxSideId = 0;
   auto rxStrategy = std::make_unique<St30pRedundantLatency>(0);
   auto* rxStrategyRaw = rxStrategy.get();
-  frameTestStrategys.emplace_back(std::move(rxStrategy));
+  frameTestStrategies.emplace_back(std::move(rxStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, rxStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
   st30pHandlers[sessionRxSideId]->sessionsOpsTx.flags |= ST30P_TX_FLAG_USER_PACING;
@@ -63,7 +66,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency) {
   uint sessionTxPrimarySideId = 1;
   auto primaryStrategy = std::make_unique<St30pRedundantLatency>(0);
   auto* primaryStrategyRaw = primaryStrategy.get();
-  frameTestStrategys.emplace_back(std::move(primaryStrategy));
+  frameTestStrategies.emplace_back(std::move(primaryStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, primaryStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
   st30pHandlers[sessionTxPrimarySideId]->sessionsOpsTx.flags |= ST30P_TX_FLAG_USER_PACING;
@@ -74,7 +77,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency) {
   uint sessionTxRedundantLatencySideId = 2;
   auto redundantStrategy = std::make_unique<St30pRedundantLatency>(testedLatencyMs);
   auto* redundantStrategyRaw = redundantStrategy.get();
-  frameTestStrategys.emplace_back(std::move(redundantStrategy));
+  frameTestStrategies.emplace_back(std::move(redundantStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, redundantStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
   st30pHandlers[sessionTxRedundantLatencySideId]->sessionsOpsTx.flags |=
@@ -125,8 +128,8 @@ TEST_F(NoCtxTest, st30p_redundant_latency) {
 
   uint64_t packetsSend = statsTxPrimary.common.port[0].packets;
   uint64_t packetsRecieved = stats.common.port[0].packets + stats.common.port[1].packets;
-  uint64_t framesSend = frameTestStrategys[sessionTxPrimarySideId]->idx_tx;
-  uint64_t framesRecieved = frameTestStrategys[sessionRxSideId]->idx_rx;
+  uint64_t framesSend = frameTestStrategies[sessionTxPrimarySideId]->idx_tx;
+  uint64_t framesRecieved = frameTestStrategies[sessionRxSideId]->idx_rx;
 
   ASSERT_NEAR(packetsSend, packetsRecieved, packetsSend / 100)
       << "Comparison against primary stream";
@@ -153,7 +156,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency2) {
   uint sessionRxSideId = 0;
   auto rxStrategy = std::make_unique<St30pRedundantLatency>(0);
   auto* rxStrategyRaw = rxStrategy.get();
-  frameTestStrategys.emplace_back(std::move(rxStrategy));
+  frameTestStrategies.emplace_back(std::move(rxStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, rxStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
   st30pHandlers[sessionRxSideId]->sessionsOpsTx.flags |= ST30P_TX_FLAG_USER_PACING;
@@ -165,7 +168,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency2) {
   uint sessionTxPrimarySideId = 1;
   auto primaryStrategy = std::make_unique<St30pRedundantLatency>(0);
   auto* primaryStrategyRaw = primaryStrategy.get();
-  frameTestStrategys.emplace_back(std::move(primaryStrategy));
+  frameTestStrategies.emplace_back(std::move(primaryStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, primaryStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
   st30pHandlers[sessionTxPrimarySideId]->sessionsOpsTx.flags |= ST30P_TX_FLAG_USER_PACING;
@@ -177,7 +180,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency2) {
   uint sessionTxRedundantLatencySideId = 2;
   auto redundantStrategy = std::make_unique<St30pRedundantLatency>(testedLatencyMs);
   auto* redundantStrategyRaw = redundantStrategy.get();
-  frameTestStrategys.emplace_back(std::move(redundantStrategy));
+  frameTestStrategies.emplace_back(std::move(redundantStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, redundantStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
   st30pHandlers[sessionTxRedundantLatencySideId]->sessionsOpsTx.flags |=
@@ -230,8 +233,8 @@ TEST_F(NoCtxTest, st30p_redundant_latency2) {
 
   uint64_t packetsSend = statsTxRedundant.common.port[0].packets;
   uint64_t packetsRecieved = stats.common.port[0].packets + stats.common.port[1].packets;
-  uint64_t framesSend = frameTestStrategys[sessionTxRedundantLatencySideId]->idx_tx;
-  uint64_t framesRecieved = frameTestStrategys[sessionRxSideId]->idx_rx;
+  uint64_t framesSend = frameTestStrategies[sessionTxRedundantLatencySideId]->idx_tx;
+  uint64_t framesRecieved = frameTestStrategies[sessionRxSideId]->idx_rx;
 
   ASSERT_NEAR(packetsSend, packetsRecieved, packetsSend / 100)
       << "Comparison against primary stream";

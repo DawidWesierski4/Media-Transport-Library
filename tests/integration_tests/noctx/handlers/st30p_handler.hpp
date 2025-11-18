@@ -1,4 +1,7 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2025 Intel Corporation
+ */
+
 #pragma once
 
 #include <atomic>
@@ -35,7 +38,8 @@ class St30pHandler : public Handlers {
   void createSessionTx();
   void createSessionRx();
 
-  void startSession(std::vector<std::function<void(std::atomic<bool>&)>> threadFunctions);
+  void startSession(std::vector<std::function<void(std::atomic<bool>&)>> threadFunctions,
+                    bool isRx);
   void startSession();
   void startSessionTx();
   void startSessionRx();
@@ -43,6 +47,23 @@ class St30pHandler : public Handlers {
   void st30pTxDefaultFunction(std::atomic<bool>& stopFlag);
   void st30pRxDefaultFunction(std::atomic<bool>& stopFlag);
 
+  /**
+   * @brief Set the session port names for TX and RX, including redundant ports if
+   * specified.
+   *
+   * This function updates the port names in sessionsOpsTx and sessionsOpsRx based on the
+   * provided indices. If an index is SESSION_SKIP_PORT, that port is not set. If both
+   * primary and redundant ports are set, num_port is set to 2, otherwise to 1.
+   *
+   * @param txPortIdx Index for the primary TX port in ctx->para.port, or
+   * SESSION_SKIP_PORT to skip.
+   * @param rxPortIdx Index for the primary RX port in ctx->para.port, or
+   * SESSION_SKIP_PORT to skip.
+   * @param txPortRedundantIdx Index for the redundant TX port in ctx->para.port, or
+   * SESSION_SKIP_PORT to skip.
+   * @param rxPortRedundantIdx Index for the redundant RX port in ctx->para.port, or
+   * SESSION_SKIP_PORT to skip.
+   */
   void setSessionPorts(int txPortIdx = SESSION_SKIP_PORT,
                        int rxPortIdx = SESSION_SKIP_PORT,
                        int txPortRedundantIdx = SESSION_SKIP_PORT,

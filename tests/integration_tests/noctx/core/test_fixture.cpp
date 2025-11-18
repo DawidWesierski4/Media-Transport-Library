@@ -1,4 +1,6 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2025 Intel Corporation
+ */
 
 #include "test_fixture.hpp"
 
@@ -46,7 +48,7 @@ void NoCtxTest::SetUp() {
 void NoCtxTest::TearDown() {
   st30pHandlers.clear();
   st20pHandlers.clear();
-  frameTestStrategys.clear();
+  frameTestStrategies.clear();
 
   if (ctx) {
     if (ctx->handle) {
@@ -93,14 +95,10 @@ void NoCtxTest::sleepUntilFailure(int sleep_duration) {
 NoCtxTest::St20pHandlerBundle NoCtxTest::createSt20pHandlerBundle(
     bool createTx, bool createRx,
     std::function<FrameTestStrategy*(St20pHandler*)> strategyFactory,
-    std::function<void(St20pHandler*)> configure,
-    std::shared_ptr<StrategySharedState> sharedState) {
+    std::function<void(St20pHandler*)> configure) {
   if (!ctx) {
     throw std::runtime_error("createSt20pHandlerBundle expects initialized ctx");
   }
-
-  auto bundleSharedState =
-      sharedState ? sharedState : std::make_shared<StrategySharedState>();
 
   auto handlerOwned = std::make_unique<St20pHandler>(ctx);
   auto* handler = handlerOwned.get();
@@ -114,7 +112,6 @@ NoCtxTest::St20pHandlerBundle NoCtxTest::createSt20pHandlerBundle(
     strategyOwned.reset(strategyFactory(handler));
     strategy = strategyOwned.get();
     handler->setFrameTestStrategy(strategy);
-    strategy->setSharedState(bundleSharedState);
   }
 
   if (createRx) {
@@ -125,7 +122,6 @@ NoCtxTest::St20pHandlerBundle NoCtxTest::createSt20pHandlerBundle(
   }
 
   auto bundle = registerSt20pResources(std::move(handlerOwned), std::move(strategyOwned));
-  bundle.sharedState = bundleSharedState;
   return bundle;
 }
 
@@ -138,7 +134,7 @@ NoCtxTest::St20pHandlerBundle NoCtxTest::registerSt20pResources(
   }
   if (strategy) {
     bundle.strategy = strategy.get();
-    frameTestStrategys.emplace_back(std::move(strategy));
+    frameTestStrategies.emplace_back(std::move(strategy));
   }
   return bundle;
 }
@@ -164,34 +160,4 @@ bool NoCtxTest::waitForSession(Session& session, std::chrono::milliseconds timeo
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
   }
   return session.isRunning();
-}
-
-bool NoCtxTest::startRxThenTx(St20pHandlerBundle& rxBundle, St20pHandlerBundle& txBundle,
-                              std::chrono::milliseconds warmup) {
-  if (!rxBundle.handler || !txBundle.handler) {
-    return false;
-  }
-
-  rxBundle.handler->startSessionRx();
-  if (!waitForSession(rxBundle.handler->session, warmup)) {
-    return false;
-  }
-
-  txBundle.handler->startSessionTx();
-  return waitForSession(txBundle.handler->session, warmup);
-}
-
-void NoCtxTest::stopTxThenRx(St20pHandlerBundle& txBundle, St20pHandlerBundle& rxBundle,
-                             std::chrono::milliseconds rxDelay) {
-  if (txBundle.handler) {
-    txBundle.handler->session.stop();
-  }
-
-  if (rxDelay.count() > 0) {
-    std::this_thread::sleep_for(rxDelay);
-  }
-
-  if (rxBundle.handler) {
-    rxBundle.handler->session.stop();
-  }
 }

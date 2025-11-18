@@ -2,7 +2,10 @@
  * Copyright(c) 2025 Intel Corporation
  */
 
-#include "noctx.hpp"
+#include "core/constants.hpp"
+#include "core/test_fixture.hpp"
+#include "handlers/st20p_handler.hpp"
+#include "strategies/st20p_strategies.hpp"
 
 TEST_F(NoCtxTest, st20p_redundant_latency) {
   if (ctx->para.num_ports < 4) {

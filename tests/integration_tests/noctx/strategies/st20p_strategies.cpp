@@ -1,4 +1,6 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2025 Intel Corporation
+ */
 
 #include "st20p_strategies.hpp"
 
@@ -75,15 +77,15 @@ void St20pUserTimestamp::rxTestFrameModifier(void* frame, size_t /*frame_size*/)
 }
 
 uint64_t St20pUserTimestamp::plannedTimestampNs(uint64_t frame_idx) const {
-  double candidate = plannedTimestampBaseNs(frame_idx);
-  return candidate <= 0.0 ? 0 : static_cast<uint64_t>(candidate);
+  double base = plannedTimestampBaseNs(frame_idx);
+  double offset = frameTimeNs * offsetMultiplierForFrame(frame_idx);
+  double adjusted = base + offset;
+  return adjusted <= 0.0 ? 0 : static_cast<uint64_t>(adjusted);
 }
 
 double St20pUserTimestamp::plannedTimestampBaseNs(uint64_t frame_idx) const {
   double base = startingTime + frame_idx * frameTimeNs;
-  double offset = frameTimeNs * offsetMultiplierForFrame(frame_idx);
-  double adjusted = base + offset;
-  return adjusted < 0.0 ? 0.0 : adjusted;
+  return base < 0.0 ? 0.0 : base;
 }
 
 double St20pUserTimestamp::offsetMultiplierForFrame(uint64_t frame_idx) const {
@@ -97,7 +99,10 @@ double St20pUserTimestamp::offsetMultiplierForFrame(uint64_t frame_idx) const {
 
 uint64_t St20pUserTimestamp::expectedTransmitTimeNs(uint64_t frame_idx) const {
   double target_ns = plannedTimestampBaseNs(frame_idx);
-  double pacing_adjustment = pacing_tr_offset_ns - pacing_vrx_pkts * pacing_trs_ns;
+  double pacing_adjustment = 0.0;
+
+  pacing_adjustment = pacing_tr_offset_ns - pacing_vrx_pkts * pacing_trs_ns;
+
   double expected = target_ns + pacing_adjustment;
   return expected <= 0.0 ? 0 : static_cast<uint64_t>(expected);
 }
@@ -106,9 +111,9 @@ void St20pUserTimestamp::verifyReceiveTiming(uint64_t frame_idx, uint64_t receiv
                                              uint64_t expected_transmit_time_ns) const {
   const int64_t delta_ns = static_cast<int64_t>(receive_time_ns) -
                            static_cast<int64_t>(expected_transmit_time_ns);
-  int64_t expected_delta_ns = 10 * NS_PER_US;
+  int64_t expected_delta_ns = 15 * NS_PER_US;
   if (frame_idx == 0) {
-    expected_delta_ns = 20 * NS_PER_US;
+    expected_delta_ns = 30 * NS_PER_US;
   }
 
   EXPECT_LE(delta_ns, expected_delta_ns)

@@ -1,4 +1,7 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2025 Intel Corporation
+ */
+
 #pragma once
 
 #ifndef SESSION_SKIP_PORT
