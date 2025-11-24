@@ -139,6 +139,52 @@ NoCtxTest::St20pHandlerBundle NoCtxTest::registerSt20pResources(
   return bundle;
 }
 
+NoCtxTest::St30pHandlerBundle NoCtxTest::createSt30pHandlerBundle(
+    bool createTx, bool createRx,
+    std::function<FrameTestStrategy*(St30pHandler*)> strategyFactory,
+    std::function<void(St30pHandler*)> configure) {
+  if (!ctx) {
+    throw std::runtime_error("createSt30pHandlerBundle expects initialized ctx");
+  }
+
+  auto handlerOwned = std::make_unique<St30pHandler>(ctx);
+  auto* handler = handlerOwned.get();
+  if (configure) {
+    configure(handler);
+  }
+
+  std::unique_ptr<FrameTestStrategy> strategyOwned;
+  FrameTestStrategy* strategy = nullptr;
+  if (strategyFactory) {
+    strategyOwned.reset(strategyFactory(handler));
+    strategy = strategyOwned.get();
+    handler->setFrameTestStrategy(strategy);
+  }
+
+  if (createRx) {
+    handler->createSessionRx();
+  }
+  if (createTx) {
+    handler->createSessionTx();
+  }
+
+  return registerSt30pResources(std::move(handlerOwned), std::move(strategyOwned));
+}
+
+NoCtxTest::St30pHandlerBundle NoCtxTest::registerSt30pResources(
+    std::unique_ptr<St30pHandler> handler, std::unique_ptr<FrameTestStrategy> strategy) {
+  St30pHandlerBundle bundle;
+  if (handler) {
+    bundle.handler = handler.get();
+    st30pHandlers.emplace_back(std::move(handler));
+  }
+  if (strategy) {
+    bundle.strategy = strategy.get();
+    frameTestStrategies.emplace_back(std::move(strategy));
+  }
+  return bundle;
+}
+
 void NoCtxTest::initSt20pDefaultContext() {
   if (!ctx) {
     throw std::runtime_error("initSt20pDefaultContext expects initialized ctx");

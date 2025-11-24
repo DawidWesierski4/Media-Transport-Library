@@ -7,37 +7,6 @@
 #include "handlers/st30p_handler.hpp"
 #include "strategies/st30p_strategies.hpp"
 
-TEST_F(NoCtxTest, st30p_default_timestamps) {
-  ctx->para.ptp_get_time_fn = NoCtxTest::TestPtpSourceSinceEpoch;
-  ctx->para.log_level = MTL_LOG_LEVEL_INFO;
-  ctx->handle = mtl_init(&ctx->para);
-  ASSERT_TRUE(ctx->handle != nullptr);
-
-  auto frameTestStrategy = std::make_unique<St30pDefaultTimestamp>();
-  auto handler = std::make_unique<St30pHandler>(ctx, frameTestStrategy.get());
-  st30pHandlers.emplace_back(std::move(handler));
-  frameTestStrategies.emplace_back(std::move(frameTestStrategy));
-  sleepUntilFailure();
-}
-
-TEST_F(NoCtxTest, st30p_user_pacing) {
-  ctx->para.ptp_get_time_fn = NoCtxTest::TestPtpSourceSinceEpoch;
-  ctx->para.log_level = MTL_LOG_LEVEL_INFO;
-
-  ctx->handle = mtl_init(&ctx->para);
-  ASSERT_TRUE(ctx->handle != nullptr);
-
-  auto frameTestStrategy = std::make_unique<St30pUserTimestamp>();
-  auto handler = std::make_unique<St30pHandler>(ctx);
-  handler->sessionsOpsTx.flags |= ST30P_TX_FLAG_USER_PACING;
-  handler->setFrameTestStrategy(frameTestStrategy.get());
-  handler->createSession(true);
-
-  st30pHandlers.emplace_back(std::move(handler));
-  frameTestStrategies.emplace_back(std::move(frameTestStrategy));
-  sleepUntilFailure();
-}
-
 TEST_F(NoCtxTest, st30p_redundant_latency) {
   ctx->para.ptp_get_time_fn = NoCtxTest::TestPtpSourceSinceEpoch;
   ctx->para.log_level = MTL_LOG_LEVEL_INFO;
@@ -58,6 +27,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency) {
   frameTestStrategies.emplace_back(std::move(rxStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, rxStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
+  rxStrategyRaw->initializeTiming(st30pHandlers[sessionRxSideId].get());
   st30pHandlers[sessionRxSideId]->sessionsOpsTx.flags |= ST30P_TX_FLAG_USER_PACING;
   st30pHandlers[sessionRxSideId]->setSessionPorts(SESSION_SKIP_PORT, 0, SESSION_SKIP_PORT,
                                                   1);
@@ -69,6 +39,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency) {
   frameTestStrategies.emplace_back(std::move(primaryStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, primaryStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
+  primaryStrategyRaw->initializeTiming(st30pHandlers[sessionTxPrimarySideId].get());
   st30pHandlers[sessionTxPrimarySideId]->sessionsOpsTx.flags |= ST30P_TX_FLAG_USER_PACING;
   st30pHandlers[sessionTxPrimarySideId]->setSessionPorts(
       2, SESSION_SKIP_PORT, SESSION_SKIP_PORT, SESSION_SKIP_PORT);
@@ -80,6 +51,8 @@ TEST_F(NoCtxTest, st30p_redundant_latency) {
   frameTestStrategies.emplace_back(std::move(redundantStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, redundantStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
+  redundantStrategyRaw->initializeTiming(
+      st30pHandlers[sessionTxRedundantLatencySideId].get());
   st30pHandlers[sessionTxRedundantLatencySideId]->sessionsOpsTx.flags |=
       ST30P_TX_FLAG_USER_PACING;
   /* the later we want to send the stream the more we need to shift the timestamps */
@@ -159,6 +132,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency2) {
   frameTestStrategies.emplace_back(std::move(rxStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, rxStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
+  rxStrategyRaw->initializeTiming(st30pHandlers[sessionRxSideId].get());
   st30pHandlers[sessionRxSideId]->sessionsOpsTx.flags |= ST30P_TX_FLAG_USER_PACING;
   st30pHandlers[sessionRxSideId]->sessionsOpsTx.ptime = ST31_PTIME_80US;
   st30pHandlers[sessionRxSideId]->setSessionPorts(SESSION_SKIP_PORT, 0, SESSION_SKIP_PORT,
@@ -171,6 +145,7 @@ TEST_F(NoCtxTest, st30p_redundant_latency2) {
   frameTestStrategies.emplace_back(std::move(primaryStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, primaryStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
+  primaryStrategyRaw->initializeTiming(st30pHandlers[sessionTxPrimarySideId].get());
   st30pHandlers[sessionTxPrimarySideId]->sessionsOpsTx.flags |= ST30P_TX_FLAG_USER_PACING;
   st30pHandlers[sessionTxPrimarySideId]->sessionsOpsTx.ptime = ST31_PTIME_80US;
   st30pHandlers[sessionTxPrimarySideId]->setSessionPorts(
@@ -183,6 +158,8 @@ TEST_F(NoCtxTest, st30p_redundant_latency2) {
   frameTestStrategies.emplace_back(std::move(redundantStrategy));
   st30pHandlers.emplace_back(std::make_unique<St30pHandler>(
       ctx, redundantStrategyRaw, st30p_tx_ops{}, st30p_rx_ops{}, 10, false, false));
+  redundantStrategyRaw->initializeTiming(
+      st30pHandlers[sessionTxRedundantLatencySideId].get());
   st30pHandlers[sessionTxRedundantLatencySideId]->sessionsOpsTx.flags |=
       ST30P_TX_FLAG_USER_PACING;
   /* the later we want to send the stream the more we need to shift the timestamps */

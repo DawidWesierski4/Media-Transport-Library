@@ -27,10 +27,14 @@ class NoCtxTest : public ::testing::Test {
   void TearDown() override;
 
  public:
-  struct St20pHandlerBundle {
-    St20pHandler* handler = nullptr;
+  template <typename HandlerT>
+  struct HandlerBundle {
+    HandlerT* handler = nullptr;
     FrameTestStrategy* strategy = nullptr;
   };
+
+  using St20pHandlerBundle = HandlerBundle<St20pHandler>;
+  using St30pHandlerBundle = HandlerBundle<St30pHandler>;
 
   uint defaultTestDuration = 0;
 
@@ -42,6 +46,12 @@ class NoCtxTest : public ::testing::Test {
       std::function<FrameTestStrategy*(St20pHandler*)> strategyFactory,
       std::function<void(St20pHandler*)> configure = nullptr);
   St20pHandlerBundle registerSt20pResources(std::unique_ptr<St20pHandler> handler,
+                                            std::unique_ptr<FrameTestStrategy> strategy);
+  St30pHandlerBundle createSt30pHandlerBundle(
+      bool createTx, bool createRx,
+      std::function<FrameTestStrategy*(St30pHandler*)> strategyFactory,
+      std::function<void(St30pHandler*)> configure = nullptr);
+  St30pHandlerBundle registerSt30pResources(std::unique_ptr<St30pHandler> handler,
                                             std::unique_ptr<FrameTestStrategy> strategy);
   void initSt20pDefaultContext();
   bool waitForSession(Session& session,
