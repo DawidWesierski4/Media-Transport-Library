@@ -229,10 +229,20 @@ void St20pHandler::startSessionTx() {
       /*isRx=*/false);
 }
 
+void St20pHandler::startSessionTx(
+    std::function<void(std::atomic<bool>&)> threadFunction) {
+  Handlers::startSession({threadFunction}, true);
+}
+
 void St20pHandler::startSessionRx() {
   Handlers::startSession(
       {[this](std::atomic<bool>& stopFlag) { this->st20RxDefaultFunction(stopFlag); }},
       /*isRx=*/true);
+}
+
+void St20pHandler::startSessionRx(
+    std::function<void(std::atomic<bool>&)> threadFunction) {
+  Handlers::startSession({threadFunction}, false);
 }
 
 void St20pHandler::startSession() {
@@ -249,4 +259,42 @@ void St20pHandler::setSessionPorts(int txPortIdx, int rxPortIdx, int txPortRedun
                                    int rxPortRedundantIdx) {
   setSessionPortsTx(&(this->sessionsOpsTx.port), txPortIdx, txPortRedundantIdx);
   setSessionPortsRx(&(this->sessionsOpsRx.port), rxPortIdx, rxPortRedundantIdx);
+}
+
+void St20pHandler::st20TxSimulateUnderFlowFunction(std::atomic<bool>& stopFlag) {
+  struct st_frame* frame;
+  st20p_tx_handle handle = sessionsHandleTx;
+  ASSERT_TRUE(handle != nullptr);
+  uint32_t width = sessionsOpsTx.width;
+  uint32_t height = sessionsOpsTx.height;
+  enum st20_fmt fmt = (enum st20_fmt)sessionsOpsTx.input_fmt;
+  uint16_t frameCounter = 0;
+
+  uint frameSize = st_frame_size((enum st_frame_fmt)fmt, width, height, false);
+
+  while (!stopFlag) {
+    frame = st20p_tx_get_frame(handle);
+
+    if (this->underflowEveryNFrames &&
+        frameCounter++ % this->underflowEveryNFrames == 0) {
+      usleep(this->underflowDurationUs);
+    }
+
+    if (!frame) {
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      continue;
+    }
+
+    ASSERT_TRUE(frame->addr != nullptr);
+    ASSERT_EQ(frame->fmt, (enum st_frame_fmt)fmt);
+    ASSERT_EQ(frame->width, width);
+    ASSERT_EQ(frame->height, height);
+
+    if (frameTestStrategy->enable_tx_modifier) {
+      frameTestStrategy->txTestFrameModifier(frame->addr, frameSize);
+    }
+
+    frame->data_size = frameSize;
+    st20p_tx_put_frame(handle, frame);
+  }
 }

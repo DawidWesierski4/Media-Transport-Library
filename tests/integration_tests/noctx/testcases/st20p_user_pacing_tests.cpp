@@ -93,3 +93,46 @@ TEST_F(NoCtxTest, st20p_user_pacing_offset_jitter) {
   ASSERT_GE(strategy->idx_rx, jitterMultipliers.size()) << "RX frames below expectation";
   ASSERT_EQ(strategy->idx_tx, strategy->idx_rx) << "TX/RX frame count mismatch";
 }
+
+TEST_F(NoCtxTest, st20p_user_pacing_drop_old) {
+  initSt20pDefaultContext();
+
+  auto bundle = createSt20pHandlerBundle(
+      /*createTx=*/true, /*createRx=*/true,
+      [](St20pHandler* handler) { return new St20pUserTimestamp(handler); },
+      [](St20pHandler* handler) {
+        handler->sessionsOpsTx.flags |= ST20P_TX_FLAG_USER_PACING;
+        handler->sessionsOpsTx.flags |= ST20P_TX_FLAG_BLOCK_GET;
+        handler->sessionsOpsTx.flags |= ST20P_TX_FLAG_USER_TIMESTAMP;
+        /* TODO: Enable */
+        /* handler->sessionsOpsTx.flags |= ST20P_TX_FLAG_DROP_WHEN_LATE; */
+      });
+
+  bundle.handler->startSessionRx();
+  bundle.handler->startSessionTx(
+      {[this, &bundle](std::atomic<bool>& stopFlag) {
+        bundle.handler->st20TxSimulateUnderFlowFunction(stopFlag);
+      }});
+
+  /*
+  TestPtpSourceSinceEpoch(nullptr);
+  mtl_start(ctx->handle);
+  sleepUntilFailure(130);
+  mtl_stop(ctx->handle);
+
+  st20_rx_user_stats stats;
+  st20p_rx_get_session_stats(bundle.handler->sessionsHandleRx, &stats);
+  st20_tx_user_stats statsTx;
+  st20p_tx_get_session_stats(bundle.handler->sessionsHandleTx, &statsTx);
+  uint64_t packetsSend = statsTx.common.port[0].packets;
+  uint64_t packetsRecieved = stats.common.port[0].packets + stats.common.port[1].packets;
+
+  ASSERT_NEAR(packetsSend, packetsRecieved, packetsSend / 100)
+      << "Packet comparison against primary stream";
+  ASSERT_LE(stats.common.stat_pkts_out_of_order, packetsRecieved / 1000)
+      << "Out of order packets";
+  ASSERT_NEAR(bundle.strategy->idx_tx, bundle.strategy->idx_rx, bundle.strategy->idx_tx / 100)
+      << "Frame comparison against primary stream";
+  */
+  bundle.handler->stopSession();
+}

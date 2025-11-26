@@ -44,10 +44,37 @@ class St20pHandler : public Handlers {
                     bool isRx);
   void startSession();
   void startSessionTx();
+  void startSessionTx(std::function<void(std::atomic<bool>&)> threadFunction);
   void startSessionRx();
-
+  void startSessionRx(std::function<void(std::atomic<bool>&)> threadFunction);
   void st20TxDefaultFunction(std::atomic<bool>& stopFlag);
   void st20RxDefaultFunction(std::atomic<bool>& stopFlag);
+
+    /**
+     * @brief Configure how often the TX underflow simulation fires.
+     *
+     * A non-zero value triggers an artificial delay every N-th frame pushed by
+     * the TX loop. Defaults to 500 to keep the test lightweight.
+     */
+    uint16_t underflowEveryNFrames = 500;
+
+    /**
+     * @brief Duration of the simulated underflow in microseconds.
+     *
+     * During an underflow event the TX thread sleeps for this long to mimic a
+     * stalled producer.
+     */
+    uint32_t underflowDurationUs = 200000;
+
+    /**
+     * @brief TX worker that injects periodic underflow delays for robustness tests.
+     *
+     * Grabs frames from the TX session, sleeps every
+     * `underflowEveryNFrames` for `underflowDurationUs`, optionally mutates the
+     * payload, and hands the frame back to the SDK until `stopFlag` becomes true.
+     */
+    void st20TxSimulateUnderFlowFunction(std::atomic<bool>& stopFlag);
+
 
   /**
    * @brief Set the session port names for TX and RX, including redundant ports if
