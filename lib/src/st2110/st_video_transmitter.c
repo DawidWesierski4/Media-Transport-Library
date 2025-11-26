@@ -149,8 +149,19 @@ static int video_burst_packet(struct mtl_main_impl* impl,
                               enum mtl_session_port s_port, struct rte_mbuf** pkts,
                               int bulk, bool use_two) {
   struct st_tx_video_pacing* pacing = &s->pacing;
-  int tx = video_trs_burst(impl, s, s_port, &pkts[0], bulk);
+  int tx;
   int pkt_idx = st_tx_mbuf_get_idx(pkts[0]);
+
+   if (mt_if_has_packet_loss_simulation(impl)) {
+    for (int i = 0; i < bulk; i++) {
+      if (pkt_idx % s->ops.num_port == s_port) {
+        tx = video_trs_burst(impl, s, s_port, &pkts[i], 1);
+      } else {
+        tx = video_trs_burst_pad(impl, s, s_port, &s->pad[s_port][ST20_PKT_TYPE_NORMAL], 1);
+      }
+    }
+  }
+
 
   if (tx < bulk) {
     unsigned int i;

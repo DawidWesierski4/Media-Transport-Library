@@ -464,6 +464,9 @@ enum mtl_init_flag {
   MTL_FLAG_RX_UDP_PORT_ONLY = (MTL_BIT64(46)),
   /** not bind current process to NIC numa socket */
   MTL_FLAG_NOT_BIND_PROCESS_NUMA = (MTL_BIT64(47)),
+
+  /** tis to test don't use ok babe ? ⸜(｡˃ ᵕ ˂ )⸝♡ */
+  MTL_FLAG_REDUNDANT_SIMULATE_PACKET_LOSS = (MTL_BIT64(63))
 };
 
 /** MTL port init flag */
