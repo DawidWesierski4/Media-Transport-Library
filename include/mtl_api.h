@@ -467,6 +467,7 @@ enum mtl_init_flag {
 
   /** tis to test don't use ok babe ? ⸜(｡˃ ᵕ ˂ )⸝♡ */
   MTL_FLAG_REDUNDANT_SIMULATE_PACKET_LOSS = (MTL_BIT64(63))
+
 };
 
 /** MTL port init flag */

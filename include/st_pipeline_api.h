@@ -807,6 +807,20 @@ struct st_tx_port {
   /** Optional. Synchronization source defined in RFC3550, if zero the session will assign
    * a random value */
   uint32_t ssrc;
+  /**
+   * Enable packet loss simulation on redundant TX streams for debug use only.
+   * Requires MTL_FLAG_REDUNDANT_SIMULATE_PACKET_LOSS to be set.
+   *
+   * The fields below let a caller target specific streams or distribute loss by
+   * percentage. Without these overrides, the flag alone drops an equal share of
+   * packets across redundant streams (currently limited to two).
+   *
+   * Example for two streams:
+   *  stream id 1 |PACKET-1--|DROP------|PACKET-3--|...
+   *  stream id 2 |DROP------|PACKET-2--|DROP------|...
+   */
+  uint16_t tx_stream_loss_id[MTL_SESSION_PORT_MAX];
+  uint16_t tx_stream_loss_divider[MTL_SESSION_PORT_MAX];
 };
 
 /** The structure info for st rx port, used in creating session. */

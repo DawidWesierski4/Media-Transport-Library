@@ -12,6 +12,7 @@ TEST_F(NoCtxTest, st20p_redundant_latency) {
     throw std::runtime_error("st20p_redundant_latency test ctx needs at least 4 ports");
   }
 
+  ctx->para.flags |= MTL_FLAG_REDUNDANT_SIMULATE_PACKET_LOSS;
   initSt20pDefaultContext();
 
   uint testedLatencyMs = 10;

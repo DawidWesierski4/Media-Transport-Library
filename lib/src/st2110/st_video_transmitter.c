@@ -160,6 +160,8 @@ static int video_burst_packet(struct mtl_main_impl* impl,
         tx = video_trs_burst_pad(impl, s, s_port, &s->pad[s_port][ST20_PKT_TYPE_NORMAL], 1);
       }
     }
+  } else {
+    tx = video_trs_burst(impl, s, s_port, &pkts[0], bulk);
   }
 
 
