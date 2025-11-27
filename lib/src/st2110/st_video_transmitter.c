@@ -66,8 +66,14 @@ static uint16_t video_trs_burst(struct mtl_main_impl* impl,
                                 struct st_tx_video_session_impl* s,
                                 enum mtl_session_port s_port, struct rte_mbuf** tx_pkts,
                                 uint16_t nb_pkts) {
+  int pkt_idx;
   if (s->rtcp_tx[s_port]) mt_mbuf_refcnt_inc_bulk(tx_pkts, nb_pkts);
+#ifdef MTL_DEBUG
+  pkt_idx = st_tx_mbuf_get_idx(tx_pkts[0]);
+  tx = mt_txq_burst(s->queue[s_port], tx_pkts, nb_pkts, pkt_idx);
+#else
   uint16_t tx = mt_txq_burst(s->queue[s_port], tx_pkts, nb_pkts);
+#endif
   s->stat_pkts_burst += tx;
   if (!tx) {
     if (s->rtcp_tx[s_port]) rte_pktmbuf_free_bulk(tx_pkts, nb_pkts);
@@ -79,7 +85,7 @@ static uint16_t video_trs_burst(struct mtl_main_impl* impl,
     rte_pktmbuf_free_bulk(tx_pkts, nb_pkts);
   }
 
-  int pkt_idx = st_tx_mbuf_get_idx(tx_pkts[0]);
+  pkt_idx = st_tx_mbuf_get_idx(tx_pkts[0]);
   if (0 == pkt_idx) {
     struct st_frame_trans* frame = st_tx_mbuf_get_priv(tx_pkts[0]);
     if (frame) st20_frame_tx_start(impl, s, s_port, frame);
@@ -152,17 +158,7 @@ static int video_burst_packet(struct mtl_main_impl* impl,
   int tx;
   int pkt_idx = st_tx_mbuf_get_idx(pkts[0]);
 
-   if (mt_if_has_packet_loss_simulation(impl)) {
-    for (int i = 0; i < bulk; i++) {
-      if (pkt_idx % s->ops.num_port == s_port) {
-        tx = video_trs_burst(impl, s, s_port, &pkts[i], 1);
-      } else {
-        tx = video_trs_burst_pad(impl, s, s_port, &s->pad[s_port][ST20_PKT_TYPE_NORMAL], 1);
-      }
-    }
-  } else {
-    tx = video_trs_burst(impl, s, s_port, &pkts[0], bulk);
-  }
+  tx = video_trs_burst(impl, s, s_port, &pkts[0], bulk);
 
 
   if (tx < bulk) {
@@ -269,6 +265,7 @@ static int _video_trs_rl_tasklet(struct mtl_main_impl* impl,
 
   /* dequeue from ring */
   struct rte_mbuf* pkts[bulk];
+  uint32_t ring_remaining = rte_ring_free_count(ring);
   n = mt_rte_ring_sc_dequeue_bulk(ring, (void**)&pkts[0], bulk, NULL);
   if (n == 0) {
     *ret_status = -STI_RLTRS_DEQUEUE_FAIL;

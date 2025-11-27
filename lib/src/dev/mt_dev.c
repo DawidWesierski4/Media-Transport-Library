@@ -1024,15 +1024,18 @@ static bool dev_pkt_valid(struct mt_interface* inf, uint16_t queue,
     err("%s(%d:%u), invalid pkt_len %u at %p\n", __func__, port, queue, pkt_len, pkt);
     return false;
   }
+#if !MTL_DEBUG
   if (pkt->nb_segs > 2) {
     err("%s(%d:%u), invalid nb_segs %u at %p\n", __func__, port, queue, pkt->nb_segs,
         pkt);
     return false;
   }
+#endif
 
   return true;
 }
 #endif
+
 
 static uint16_t dev_tx_pkt_check(uint16_t port, uint16_t queue, struct rte_mbuf** pkts,
                                  uint16_t nb_pkts, void* priv) {

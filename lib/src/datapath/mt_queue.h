@@ -56,8 +56,13 @@ static inline struct rte_mempool* mt_txq_mempool(struct mt_txq_entry* entry) {
   else
     return NULL; /* only for shared queue */
 }
+#ifdef MTL_DEBUG
+uint16_t mt_txq_burst(struct mt_txq_entry* entry, struct rte_mbuf** tx_pkts,
+                      uint16_t nb_pkts, uint64_t idx);
+#else
 uint16_t mt_txq_burst(struct mt_txq_entry* entry, struct rte_mbuf** tx_pkts,
                       uint16_t nb_pkts);
+#endif
 uint16_t mt_txq_burst_busy(struct mt_txq_entry* entry, struct rte_mbuf** tx_pkts,
                            uint16_t nb_pkts, int timeout_ms);
 int mt_txq_flush(struct mt_txq_entry* entry, struct rte_mbuf* pad);

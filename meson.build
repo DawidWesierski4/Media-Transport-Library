@@ -12,7 +12,7 @@ message('BUILD Environment: ' + exec_env)
 # enable debug logging
 if get_option('buildtype') == 'debug'
   add_global_arguments('-DDEBUG=DEBUG', language : 'c')
-  add_global_arguments('-D__MTL_LIB_DEBUG_PACKET_LOSS__', language : 'c')
+  add_global_arguments('-DMTL_DEBUG=1', language : 'c')
 endif
 
 # enable BSD_SOURCE
