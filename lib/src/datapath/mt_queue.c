@@ -143,22 +143,6 @@ static uint16_t tx_tsq_burst(struct mt_txq_entry* entry, struct rte_mbuf** tx_pk
 
 static uint16_t tx_dpdk_burst(struct mt_txq_entry* entry, struct rte_mbuf** tx_pkts,
                               uint16_t nb_pkts) {
-
-#ifdef MTL_DEBUG
-  struct mtl_main_impl* impl = entry->parent;
-  struct mt_session_impl* s = mt_get_session_by_main(impl);
-   /* drop some of the packets generlaly magic */
-   if (mt_if_has_packet_loss_simulation(impl)) {
-    uint port = s->port_maps[s_port];
-    uint num_port = impl->user_para.port_packet_loss[port].tx_stream_loss_divider;
-    if (!num_port) return 0;
-    uint loss_id = impl->user_para.port_packet_loss[port].tx_stream_loss_id;
-
-    st_tx_mbuf_get_idx()
-  }
-
-
-#endif
   return mt_dpdk_tx_burst(entry->txq, tx_pkts, nb_pkts);
 }
 
@@ -253,18 +237,12 @@ int mt_txq_flush(struct mt_txq_entry* entry, struct rte_mbuf* pad) {
     return 0;
 }
 
-#ifdef MTL_DEBUG
 uint16_t mt_txq_burst(struct mt_txq_entry* entry, struct rte_mbuf** tx_pkts,
-                      uint16_t nb_pkts, uint64_t idx) {
-
-
+                      uint16_t nb_pkts) {
   return entry->burst(entry, tx_pkts, nb_pkts);
-#else
-uint16_t mt_txq_burst(struct mt_txq_entry* entry, struct rte_mbuf** tx_pkts,
-                      uint16_t nb_pkts, uint64_t idx) {
-  return entry->burst(entry, tx_pkts, nb_pkts);
-#endif
 }
+
+
 uint16_t mt_txq_burst_busy(struct mt_txq_entry* entry, struct rte_mbuf** tx_pkts,
                            uint16_t nb_pkts, int timeout_ms) {
   uint16_t sent = 0;
