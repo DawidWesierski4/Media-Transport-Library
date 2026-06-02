@@ -96,11 +96,11 @@ function setup_ubuntu_install_dependencies() {
 	python3 -m pip install pyelftools ninja
 
 	# Ice driver dependencies
-	if [ "${CICD_BUILD}" != "0" ] || [ "${SETUP_BUILD_AND_INSTALL_ICE_DRIVER}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${SETUP_BUILD_AND_INSTALL_ICE_DRIVER}" == "1" ]; then
 		echo "Installing Ice driver dependencies"
 
 		if ! sudo apt install -y "linux-headers-$(uname -r)"; then
-			if [ "${CICD_BUILD}" != "0" ]; then
+			if [ "${CICD_BUILD}" == "1" ]; then
 				ret=0
 			else
 				log_error "Error: Failed to install linux-headers-$(uname -r)."
@@ -115,8 +115,9 @@ function setup_ubuntu_install_dependencies() {
 				else
 					log_warning "Installed linux-headers-generic."
 				fi
-			elif [ "${CICD_BUILD}" != "0" ]; then
-				SETUP_BUILD_AND_INSTALL_ICE_DRIVER=0
+			elif [ "${CICD_BUILD}" == "1" ] && [ "${SETUP_BUILD_AND_INSTALL_ICE_DRIVER}" == "1" ]; then
+				log_error "Error: Cannot install Ice driver without kernel headers. Exiting."
+				exit 1
 			else
 				log_error "Cannot proceed without kernel headers. Exiting."
 				exit 1
@@ -124,7 +125,7 @@ function setup_ubuntu_install_dependencies() {
 		fi
 	fi
 
-	if [ "${CICD_BUILD}" != "0" ] || [ "${SETUP_BUILD_AND_INSTALL_EBPF_XDP}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${SETUP_BUILD_AND_INSTALL_EBPF_XDP}" == "1" ]; then
 		echo "Installing eBPF/XDP dependencies"
 		sudo apt install -y \
 			make \
@@ -136,7 +137,7 @@ function setup_ubuntu_install_dependencies() {
 			gcc-multilib # clang llvm
 	fi
 
-	if [ "${CICD_BUILD}" != "0" ] || [ "${SETUP_BUILD_AND_INSTALL_GPU_DIRECT}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${SETUP_BUILD_AND_INSTALL_GPU_DIRECT}" == "1" ]; then
 		echo "Installing GPU Direct dependencies"
 		ONE_API_TGZ="oneapi.tgz"
 
@@ -167,7 +168,7 @@ function setup_ubuntu_install_dependencies() {
 		rm -rf "${setup_script_folder}/level-zero-${ONE_API_GPU_VER}"
 	fi
 
-	if [ "${CICD_BUILD}" != "0" ] || [ "${ECOSYSTEM_BUILD_AND_INSTALL_FFMPEG_PLUGIN}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${ECOSYSTEM_BUILD_AND_INSTALL_FFMPEG_PLUGIN}" == "1" ]; then
 		echo "Installing FFMPEG dependencies"
 		sudo apt install -y \
 			nasm \
@@ -175,7 +176,7 @@ function setup_ubuntu_install_dependencies() {
 			patch
 	fi
 
-	if [ "${CICD_BUILD}" != "0" ] || [ "${PLUGIN_BUILD_AND_INSTALL_JPEGXS}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${PLUGIN_BUILD_AND_INSTALL_JPEGXS}" == "1" ]; then
 		echo "Installing JPEG-XS dependencies"
 		sudo apt install -y \
 			cmake \
@@ -184,7 +185,7 @@ function setup_ubuntu_install_dependencies() {
 			build-essential
 	fi
 
-	if [ "${CICD_BUILD}" != "0" ] || [ "${ECOSYSTEM_BUILD_AND_INSTALL_GSTREAMER_PLUGIN}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${ECOSYSTEM_BUILD_AND_INSTALL_GSTREAMER_PLUGIN}" == "1" ]; then
 		echo "Installing GStreamer dependencies"
 		sudo apt install -y \
 			libunwind-dev \
@@ -196,13 +197,13 @@ function setup_ubuntu_install_dependencies() {
 			libgstreamer1.0-dev
 	fi
 
-	if [ "${CICD_BUILD}" != "0" ] || [ "${ECOSYSTEM_BUILD_AND_INSTALL_OBS_PLUGIN}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${ECOSYSTEM_BUILD_AND_INSTALL_OBS_PLUGIN}" == "1" ]; then
 		echo "Installing OBS dependencies"
 		sudo apt install -y \
 			libobs-dev
 	fi
 
-	if [ "${CICD_BUILD}" != "0" ] || [ "${HOOK_PYTHON}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${HOOK_PYTHON}" == "1" ]; then
 		echo "Installing Python hook dependencies"
 		sudo apt install -y \
 			swig \
@@ -212,14 +213,14 @@ function setup_ubuntu_install_dependencies() {
 		python3 -m pip install setuptools
 	fi
 
-	if [ "${CICD_BUILD}" != "0" ] || [ "${HOOK_RUST}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${HOOK_RUST}" == "1" ]; then
 		echo "Installing Rust hook dependencies"
 		sudo apt install -y \
 			cargo \
 			rustc
 	fi
 
-	if [ "${CICD_BUILD}" != "0" ] || [ "${TOOLS_BUILD_AND_INSTALL_MTL_READPCAP}" == "1" ]; then
+	if [ "${CICD_BUILD}" == "1" ] || [ "${TOOLS_BUILD_AND_INSTALL_MTL_READPCAP}" == "1" ]; then
 		echo "Installing MTL readpcap dependencies"
 		sudo apt install -y \
 			libpcap-dev
