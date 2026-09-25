@@ -24,7 +24,7 @@ static int perf_cvt_422_10_pg2_be_to_v210(mtl_handle st, int w, int h, int frame
   enum mtl_simd_level cpu_level = mtl_get_simd_level();
 
   size_t be_1line_size = st_frame_size(ST_FRAME_FMT_YUV422RFC4175PG2BE10, w, 1, false);
-  size_t v210_1line_size = st_frame_size(ST_FRAME_FMT_V210, w, 1, false);
+  size_t v210_1line_size = (w % 6) ? 0 : w * 8 / 3; /* packed, no line padding */
   info("v210_1line_size %" PRIu64 "\n", v210_1line_size);
 
   struct st20_rfc4175_422_10_pg2_be* pg_be_in;

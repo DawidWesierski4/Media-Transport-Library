@@ -131,6 +131,13 @@ int ut20p_tx_frame_stat(const ut20p_tx_ctx* ctx, int i);
 
 uint64_t ut20p_tx_stat_frames_sent(const ut20p_tx_ctx* ctx);
 
+/**
+ * Session linesize an st20p TX passes to st20_tx_create() for this
+ * transport fmt, width and st20p transport_linesize. The session is not created.
+ */
+uint32_t ut20p_tx_transport_linesize(enum st20_fmt tfmt, uint32_t width,
+                                     size_t transport_linesize, bool derive);
+
 #ifdef __cplusplus
 }
 #endif

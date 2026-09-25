@@ -201,6 +201,7 @@ Sample: 422<br>
 Packed/planar: packed<br>
 Depth: 10<br>
 Bytes/pixels: 16/6<br>
+Line stride: 128 bytes per 48 pixels (Apple TN2162); missing samples of the last 6-pixel group are zero, bytes after it are not written<br>
 Endian: LE<br>
 Memory Layout:<br>
 V210 (3 pixel groups)<br>

@@ -557,11 +557,10 @@ size_t st_frame_size(enum st_frame_fmt fmt, uint32_t width, uint32_t height,
       size = pixels * 2 * 2; /* 10/12bits in two bytes */
       break;
     case ST_FRAME_FMT_V210:
-      if (pixels % 3) {
-        err("%s, invalid width %u height %u for v210 fmt, not multiple of 3\n", __func__,
-            width, height);
+      if (width % 2) {
+        err("%s, invalid width %u for v210 fmt, not multiple of 2\n", __func__, width);
       } else {
-        size = pixels * 8 / 3;
+        size = (size_t)((width + 47) / 48) * 128 * height; /* 48-pixel line padding */
       }
       break;
     case ST_FRAME_FMT_YUV422PLANAR8:

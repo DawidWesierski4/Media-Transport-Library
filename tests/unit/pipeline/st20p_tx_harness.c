@@ -5,17 +5,21 @@
  * Includes the production translation unit so the file-local transport
  * callbacks (tx_st20p_next_frame / tx_st20p_frame_done) are reachable, and
  * hand-initialises the ctx in the derive path so create_transport is bypassed.
+ * Only ut20p_tx_transport_linesize() runs create_transport, against a stub
+ * st20_tx_create().
  */
 
 #include <stdlib.h>
 #include <string.h>
 
+#define st20_tx_create ut20p_tx_stub_create
 #undef MTL_HAS_USDT
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #include "st2110/pipeline/st20_pipeline_tx.c"
 #pragma GCC diagnostic pop
+#undef st20_tx_create
 
 #include "common/ut_common.h"
 
@@ -28,6 +32,14 @@ struct ut20p_tx_ctx {
 };
 
 #include "pipeline/st20p_tx_harness.h"
+
+static uint32_t ut20p_tx_created_linesize;
+
+st20_tx_handle ut20p_tx_stub_create(mtl_handle mt, struct st20_tx_ops* ops) {
+  (void)mt;
+  ut20p_tx_created_linesize = ops->linesize;
+  return NULL;
+}
 
 int ut20p_tx_init(void) {
   return ut_eal_init();
@@ -219,4 +231,23 @@ int ut20p_tx_frame_stat(const ut20p_tx_ctx* ctx, int i) {
 
 uint64_t ut20p_tx_stat_frames_sent(const ut20p_tx_ctx* ctx) {
   return ctx->pipeline.stat_frames_sent;
+}
+
+uint32_t ut20p_tx_transport_linesize(enum st20_fmt tfmt, uint32_t width,
+                                     size_t transport_linesize, bool derive) {
+  ut20p_tx_ctx* ctx = ut20p_tx_ctx_create(1);
+  struct st20p_tx_ops ops;
+
+  if (!ctx) return 0;
+  memset(&ops, 0, sizeof(ops));
+  ops.transport_fmt = tfmt;
+  ops.width = width;
+  ops.height = 720;
+  ops.transport_linesize = transport_linesize;
+  ops.framebuff_cnt = 1;
+  ctx->pipeline.derive = derive;
+  ut20p_tx_created_linesize = 0;
+  tx_st20p_create_transport(&ctx->impl, &ctx->pipeline, &ops);
+  ut20p_tx_ctx_destroy(ctx);
+  return ut20p_tx_created_linesize;
 }

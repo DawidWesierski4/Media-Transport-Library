@@ -449,6 +449,10 @@ static int tx_st20p_create_transport(struct mtl_main_impl* impl, struct st20p_tx
   ops_tx.fmt = ops->transport_fmt;
   ops_tx.interlaced = ops->interlaced;
   ops_tx.linesize = ops->transport_linesize;
+  /* %48 guard: the session rejects a linesize not above the packed ceil(w * 8 / 3) */
+  if (ops->transport_fmt == ST20_FMT_V210 && ops->width % 48)
+    ops_tx.linesize = RTE_MAX(ops->transport_linesize,
+                              st_frame_least_linesize(ST_FRAME_FMT_V210, ops->width, 0));
   ops_tx.payload_type = ops->port.payload_type;
   ops_tx.ssrc = ops->port.ssrc;
   ops_tx.type = ST20_TYPE_FRAME_LEVEL;

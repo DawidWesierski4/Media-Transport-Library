@@ -32,6 +32,7 @@
  * HW-backed symbol here, which dereferenced our fake transport handle
  * and crashed.
  */
+#define st20_rx_create ut20p_stub_rx_create
 #define st20_rx_put_framebuff ut20p_stub_put_framebuff
 #define st20_rx_get_session_stats ut20p_stub_get_session_stats
 #define st20_rx_reset_session_stats ut20p_stub_reset_session_stats
@@ -40,6 +41,7 @@
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #include "st2110/pipeline/st20_pipeline_rx.c"
 #pragma GCC diagnostic pop
+#undef st20_rx_create
 #undef st20_rx_put_framebuff
 #undef st20_rx_get_session_stats
 #undef st20_rx_reset_session_stats
@@ -55,6 +57,14 @@
  * transport session). Named distinctly from the real st20_rx_* symbols
  * and wired in via the #define redirection above.
  */
+
+static uint32_t ut20p_rx_created_linesize;
+
+st20_rx_handle ut20p_stub_rx_create(mtl_handle mt, struct st20_rx_ops* ops) {
+  (void)mt;
+  ut20p_rx_created_linesize = ops->linesize;
+  return NULL;
+}
 
 int ut20p_stub_put_framebuff(st20_rx_handle handle, void* frame) {
   (void)handle;
@@ -234,4 +244,23 @@ int ut20p_get_session_stats(ut20p_ctx* ctx, struct st20_rx_user_stats* stats) {
 
 int ut20p_reset_session_stats(ut20p_ctx* ctx) {
   return st20p_rx_reset_session_stats(&ctx->pipeline);
+}
+
+uint32_t ut20p_rx_transport_linesize(enum st20_fmt tfmt, uint32_t width,
+                                     size_t transport_linesize, bool derive) {
+  ut20p_ctx* ctx = ut20p_ctx_create(1);
+  struct st20p_rx_ops ops;
+
+  if (!ctx) return 0;
+  memset(&ops, 0, sizeof(ops));
+  ops.transport_fmt = tfmt;
+  ops.width = width;
+  ops.height = 720;
+  ops.transport_linesize = transport_linesize;
+  ops.framebuff_cnt = 1;
+  ctx->pipeline.derive = derive;
+  ut20p_rx_created_linesize = 0;
+  rx_st20p_create_transport(&ctx->impl, &ctx->pipeline, &ops);
+  ut20p_ctx_destroy(ctx);
+  return ut20p_rx_created_linesize;
 }

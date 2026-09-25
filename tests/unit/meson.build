@@ -51,6 +51,7 @@ unit_sources = [
   'dev/mt_flow_harness.c',
   'dev/mt_flow_retry_test.cpp',
   'fmt/st_fmt_test.cpp',
+  'fmt/st_v210_test.cpp',
   'session/st40_harness.c',
   'session/st40_tx_test_harness.c',
   'session/st40/redundancy_test.cpp',

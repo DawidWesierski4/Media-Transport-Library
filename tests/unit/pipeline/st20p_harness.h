@@ -94,6 +94,13 @@ int ut20p_get_session_stats(ut20p_ctx* ctx, struct st20_rx_user_stats* stats);
 /** Wraps st20p_rx_reset_session_stats(). */
 int ut20p_reset_session_stats(ut20p_ctx* ctx);
 
+/**
+ * Session linesize an st20p RX passes to st20_rx_create() for this
+ * transport fmt, width and st20p transport_linesize. The session is not created.
+ */
+uint32_t ut20p_rx_transport_linesize(enum st20_fmt tfmt, uint32_t width,
+                                     size_t transport_linesize, bool derive);
+
 #ifdef __cplusplus
 }
 #endif
