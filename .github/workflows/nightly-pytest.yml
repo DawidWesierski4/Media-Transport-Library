@@ -134,6 +134,60 @@ jobs:
           name: system-info-${{ matrix.nic }}-${{ matrix.dir }}
           path: ./system-info-${{ matrix.nic }}-${{ matrix.dir }}
 
+  # The fuzz targets need no NIC and no hugepages, so they run on a
+  # GitHub-hosted runner, independent of the build job. Clang 14 of Ubuntu
+  # 22.04 builds them; clang 18 of Ubuntu 24.04 does not (T-115).
+  run-fuzz:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: 'preparation: Harden Runner'
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        with:
+          egress-policy: audit
+      - name: 'preparation: Checkout MTL'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: ${{ inputs.branch && '0' || '1' }}
+      - name: 'preparation: Install Task'
+        uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
+      # Twice, as in run-pytest. The harnesses in tests/fuzz stay from the
+      # branch under test.
+      - name: 'preparation: Overlay CI and tests from the workflow commit'
+        if: inputs.branch != ''
+        env:
+          MTL_SOURCE: ${{ inputs.branch }}
+          TEST_SHA: ${{ github.sha }}
+          TEST_REF: ${{ github.ref_name }}
+        run: task ci:workflow -- overlay-tests && task ci:workflow -- overlay-tests
+      - name: 'preparation: Install the dependencies and DPDK'
+        run: sudo -E .github/scripts/setup_environment.sh
+        env:
+          SETUP_ENVIRONMENT: 1
+          SETUP_BUILD_AND_INSTALL_DPDK: 1
+          CICD_BUILD: 1
+      # The corpus of the last night is the start of this one.
+      - name: 'preparation: Restore the fuzz corpus'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: fuzz-corpus
+          key: fuzz-corpus-${{ github.run_id }}
+          restore-keys: fuzz-corpus-
+      - name: 'build: Fuzz targets with clang and ASan'
+        run: task ci:fuzz -- build
+      - name: 'execution: Run each fuzz target'
+        env:
+          FUZZ_TIME: 600
+        run: task ci:fuzz -- run
+      - name: 'upload fuzz report'
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nightly-fuzz-report
+          path: fuzz-report/
+          if-no-files-found: ignore
+
   aggregate-python-reports:
     needs: run-pytest
     if: ${{ always() }}
