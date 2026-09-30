@@ -158,7 +158,8 @@ test pass — fix the environment or config.
 
 **Fuzz (`tests/fuzz/`)** — single-packet libFuzzer harnesses over RX parsers; see
 `tests/doc/fuzz/index.rst`. `task ci:fuzz -- build` then `task ci:fuzz -- run` is what
-the nightly `run-fuzz` job does.
+the `fuzz-tests` job of `fuzz_tests.yml` does (on a PR that changes `lib/`, `include/`
+or `tests/fuzz/`, and each night on main).
 
 ## Runtime setup (needed for anything beyond unit tests)
 

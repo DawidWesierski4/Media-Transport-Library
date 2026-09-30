@@ -889,7 +889,8 @@ ninja -C build_fuzz
 ```
 
 The guide is `tests/doc/fuzz/index.rst`. Its target list comes from `tests/fuzz/meson.build` and the `/** @file */` comment of each harness (`tests/doc/_ext/fuzz_targets.py`), so a new harness needs that comment or the tests/doc build fails.
-The nightly `run-fuzz` job of `nightly-pytest.yml` runs `.github/scripts/ci/fuzz.sh` (`task ci:fuzz -- build|run`) on `ubuntu-22.04` (clang 14), 600 s per target, and uploads `nightly-fuzz-report`.
+The `fuzz-tests` job of `fuzz_tests.yml` runs `.github/scripts/ci/fuzz.sh` (`task ci:fuzz -- build|run`) on `ubuntu-22.04` (clang 14) and uploads `fuzz-report`: 60 s per target on a pull request that matches the `fuzz_tests` path filter, 600 s per target on the nightly schedule of `main` and on a manual run.
+The harnesses link `libmtl`, so the filter holds all of `lib/**` and `include/**`. `fuzz-tests-result` always runs and is the check to require.
 
 ### Acceptance Tests (`tests/acceptance/`)
 E2E framework launching real MTL apps over SSH. Tests do NOT call MTL C API.

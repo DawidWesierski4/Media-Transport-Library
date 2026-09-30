@@ -87,17 +87,34 @@ and SSRC mismatches, the redundant packets and the enqueue failures.
 ``mt_rtcp_tx_parse_fuzz`` sets the MTL log level to ``CRIT``.
 ``st40_ancillary_helpers_fuzz`` writes no log.
 
-Nightly CI
-==========
+CI
+==
 
-The ``run-fuzz`` job of ``.github/workflows/nightly-pytest.yml`` runs on a
+The ``fuzz-tests`` job of ``.github/workflows/fuzz_tests.yml`` runs on a
 GitHub-hosted ``ubuntu-22.04`` runner. It builds the harnesses with clang and
 AddressSanitizer, and runs each target for ``FUZZ_TIME`` seconds, one after the
-other. The corpus stays in the Actions cache from one night to the next. The
-job fails when a target exits with a code that is not zero, or writes a
-``crash-``, ``leak-`` or ``timeout-`` file.
+other. The job fails when a target exits with a code that is not zero, or
+writes a ``crash-``, ``leak-`` or ``timeout-`` file.
 
-The ``nightly-fuzz-report`` artifact holds:
+The workflow runs in three cases:
+
+* A pull request to ``main`` or to a ``maint-*`` branch, with 60 s for each
+  target. The job runs only when the pull request changes a path of the
+  ``fuzz_tests`` filter in ``.github/path_filters.yml``: ``lib/``,
+  ``include/``, ``tests/fuzz/``, the DPDK inputs, the root meson files or the
+  workflow files. Each harness links ``libmtl``, so each file of ``lib/`` can
+  change a target. For a different change, the job does not run.
+* A schedule, each night on ``main``, with 600 s for each target.
+* A manual run (``workflow_dispatch``), with 600 s for each target.
+
+The ``fuzz-tests-result`` job always runs, also when the filter skips the fuzz
+job. It fails only when the fuzz job fails or is cancelled, so it is the check
+to require in branch protection.
+
+The corpus stays in the Actions cache from one run to the next. A pull request
+can read the corpus of ``main``.
+
+The ``fuzz-report`` artifact holds:
 
 * ``summary.md``: one line for each target, with the executions, the coverage
   and the finding. The job summary shows the same table.

@@ -48,7 +48,8 @@ Fuzz Tests (libFuzzer)
 Random packets for the RX parsers, with AddressSanitizer:
 
 * **Targets**: made from ``tests/fuzz/meson.build`` and the harness comments
-* **Nightly CI**: each target runs in the ``run-fuzz`` job of ``nightly-pytest.yml``
+* **CI**: ``fuzz_tests.yml`` runs each target for a pull request that changes
+  the library or the harnesses, and each night on ``main``
 
 Getting Started
 ===============
