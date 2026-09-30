@@ -12,13 +12,21 @@ harness thus gets its section with no change to the documentation.
 
 from __future__ import annotations
 
-import os
 import re
+from dataclasses import dataclass
+from pathlib import Path
 
 from docutils import nodes
 from docutils.statemachine import StringList
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.nodes import nested_parse_with_titles
+
+# This file is tests/doc/_ext/fuzz_targets.py.
+ROOT_DIR = Path(__file__).resolve().parents[3]
+FUZZ_DIR = ROOT_DIR / "tests" / "fuzz"
+BUILD_FILE = FUZZ_DIR / "meson.build"
+# The include directories of tests/fuzz/meson.build.
+INCLUDE_DIRS = (ROOT_DIR / "lib" / "src", ROOT_DIR / "include")
 
 # One ['name', 'dir/file.c'] entry of the fuzz_targets list.
 TARGET_RE = re.compile(r"\[\s*'(\w+)'\s*,\s*'([^']+\.c)'\s*\]")
@@ -26,10 +34,41 @@ COMMENT_RE = re.compile(r"/\*\*(.*?)\*/", re.S)
 INCLUDE_RE = re.compile(r'^#include "([^"]+\.c)"', re.M)
 # A C name with an underscore, or a function call, for example "struct st_hdr".
 IDENT_RE = re.compile(r"\b((?:struct )?[A-Za-z]\w*_\w*(?:\(\))?)")
-# The include directories of tests/fuzz/meson.build, relative to the root.
-INCLUDE_DIRS = ("lib/src", "include")
-# This file is tests/doc/_ext/fuzz_targets.py.
-ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+
+
+class FuzzTargetError(Exception):
+    """A fault in tests/fuzz that stops the list."""
+
+
+@dataclass
+class FuzzTarget:
+    name: str
+    harness: Path
+    # The paragraphs of the file comment, as reStructuredText.
+    paragraphs: list[str]
+    # The production .c files that the harness includes.
+    code: list[Path]
+
+
+def target_sources() -> list[tuple[str, Path]]:
+    """Return the name and the harness source of each fuzz_targets entry."""
+    if not BUILD_FILE.is_file():
+        raise FuzzTargetError(f"{BUILD_FILE} does not exist")
+    entries = TARGET_RE.findall(BUILD_FILE.read_text(encoding="utf-8"))
+    if not entries:
+        raise FuzzTargetError(f"{BUILD_FILE} has no fuzz_targets entry")
+    return [(name, FUZZ_DIR / source) for name, source in entries]
+
+
+def read_target(name: str, harness: Path) -> FuzzTarget:
+    if not harness.is_file():
+        raise FuzzTargetError(f"{name} has no source {harness}")
+    source = harness.read_text(encoding="utf-8")
+    paragraphs = [_literal(p) for p in _paragraphs(source)]
+    if not paragraphs:
+        raise FuzzTargetError(f"{harness} has no /** */ file comment")
+    code = [_find(include, harness.parent) for include in INCLUDE_RE.findall(source)]
+    return FuzzTarget(name, harness, paragraphs, [path for path in code if path])
 
 
 def _paragraphs(source: str) -> list[str]:
@@ -50,68 +89,75 @@ def _literal(text: str) -> str:
     return IDENT_RE.sub(r"``\1``", text)
 
 
+def _find(include: str, harness_dir: Path) -> Path | None:
+    """Return the file that the compiler takes for #include "include"."""
+    for base in (harness_dir, *INCLUDE_DIRS):
+        path = base / include
+        if path.is_file():
+            return path.resolve()
+    return None
+
+
+def _link(path: Path, url: str) -> str:
+    relative = path.relative_to(ROOT_DIR).as_posix()
+    return f"`{relative} <{url}/{relative}>`__"
+
+
+def _table(targets: list[FuzzTarget]) -> list[str]:
+    lines = [
+        ".. list-table::",
+        "   :header-rows: 1",
+        "   :widths: 30 70",
+        "",
+        "   * - Target",
+        "     - Input",
+    ]
+    for target in targets:
+        lines += [f"   * - :ref:`fuzz-{target.name}`", f"     - {target.paragraphs[0]}"]
+    return lines + [""]
+
+
+def _section(target: FuzzTarget, url: str) -> list[str]:
+    title = f"``{target.name}``"
+    lines = [f".. _fuzz-{target.name}:", "", title, "-" * len(title), ""]
+    for paragraph in target.paragraphs:
+        lines += [paragraph, ""]
+    lines.append(f":Harness: {_link(target.harness, url)}")
+    lines += [f":Code under test: {_link(path, url)}" for path in target.code]
+    return lines + [
+        "",
+        ".. code-block:: sh",
+        "",
+        f"   mkdir -p corpus/{target.name}",
+        f"   ./build_fuzz/tests/fuzz/{target.name} -max_total_time=60 corpus/{target.name}",
+        "",
+    ]
+
+
 class FuzzTargets(SphinxDirective):
+    """Write the table and one section for each target of tests/fuzz."""
+
     has_content = False
 
     def run(self):
-        fuzz_dir = os.path.join(ROOT_DIR, "tests", "fuzz")
-        build_file = os.path.join(fuzz_dir, "meson.build")
-        if not os.path.isfile(build_file):
-            raise self.error(f"fuzz-targets: {build_file} does not exist")
-        self.env.note_dependency(build_file)
-        with open(build_file, encoding="utf-8") as f:
-            targets = TARGET_RE.findall(f.read())
-        if not targets:
-            raise self.error(f"fuzz-targets: {build_file} has no fuzz_targets entry")
+        # Each file is a dependency before it is read, so that the next build
+        # reads the page again after a fix.
+        self.env.note_dependency(str(BUILD_FILE))
+        try:
+            sources = target_sources()
+            for _, harness in sources:
+                self.env.note_dependency(str(harness))
+            targets = [read_target(name, harness) for name, harness in sources]
+        except FuzzTargetError as error:
+            raise self.error(f"fuzz-targets: {error}") from error
 
         url = self.config.fuzz_targets_url
-        table = [
-            ".. list-table::",
-            "   :header-rows: 1",
-            "   :widths: 30 70",
-            "",
-            "   * - Target",
-            "     - Input",
-        ]
-        sections = []
-        for name, src in targets:
-            path = os.path.join(fuzz_dir, src)
-            if not os.path.isfile(path):
-                raise self.error(f"fuzz-targets: {name} has no source {path}")
-            self.env.note_dependency(path)
-            with open(path, encoding="utf-8") as f:
-                source = f.read()
-            paragraphs = [_literal(p) for p in _paragraphs(source)]
-            if not paragraphs:
-                raise self.error(f"fuzz-targets: {path} has no /** */ file comment")
-            table += [f"   * - :ref:`fuzz-{name}`", f"     - {paragraphs[0]}"]
-
-            harness = f"tests/fuzz/{src}"
-            fields = [f":Harness: `{harness} <{url}/{harness}>`__"]
-            for include in INCLUDE_RE.findall(source):
-                for base in (os.path.dirname(harness),) + INCLUDE_DIRS:
-                    if os.path.isfile(os.path.join(ROOT_DIR, base, include)):
-                        code = os.path.normpath(f"{base}/{include}").replace(
-                            os.sep, "/"
-                        )
-                        fields.append(f":Code under test: `{code} <{url}/{code}>`__")
-                        break
-            title = f"``{name}``"
-            sections += [f".. _fuzz-{name}:", "", title, "-" * len(title), ""]
-            for paragraph in paragraphs:
-                sections += [paragraph, ""]
-            sections += fields + [
-                "",
-                ".. code-block:: sh",
-                "",
-                f"   mkdir -p corpus/{name}",
-                f"   ./build_fuzz/tests/fuzz/{name} -max_total_time=60 corpus/{name}",
-                "",
-            ]
-
+        lines = _table(targets)
+        for target in targets:
+            lines += _section(target, url)
         content = StringList()
-        for line in table + [""] + sections:
-            content.append(line, build_file)
+        for line in lines:
+            content.append(line, str(BUILD_FILE))
         node = nodes.section()
         node.document = self.state.document
         nested_parse_with_titles(self.state, content, node)
