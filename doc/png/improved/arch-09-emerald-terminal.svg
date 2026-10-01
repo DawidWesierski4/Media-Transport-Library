@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1118" viewBox="0 0 1280 1118" role="img" aria-labelledby="t d">
+<title id="t">Media Transport Library architecture</title>
+<desc id="d">Layers from top to bottom: applications; the Media Transport Library with Pipeline API, Color Format Conversion, ST 2110 sessions, control plane protocols, management and device abstraction layer; network backend with DPDK PMD and the Linux kernel path (NIC driver, eBPF program, AF_XDP); supported platforms; NIC and DMA hardware.</desc>
+<defs>
+<filter id="glow" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+<filter id="glowS" x="-50%" y="-20%" width="200%" height="140%"><feGaussianBlur stdDeviation="1.8"/></filter>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#04110c"/><stop offset="1" stop-color="#020504"/></linearGradient>
+<pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="9" cy="9" r="1.1" fill="#1f5c45"/></pattern>
+<marker id="aD" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="11" markerHeight="11" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#34f5c5"/></marker>
+<marker id="aU" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="11" markerHeight="11" orient="auto" markerUnits="userSpaceOnUse"><path d="M10,0 L0,5 L10,10 z" fill="#34f5c5"/></marker>
+<marker id="aY" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#facc15"/></marker>
+<linearGradient id="g0" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34f5c5" stop-opacity="0.2"/><stop offset="1" stop-color="#34f5c5" stop-opacity="0.08"/></linearGradient>
+<linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22c55e" stop-opacity="0.16"/><stop offset="1" stop-color="#22c55e" stop-opacity="0.06"/></linearGradient>
+<linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#facc15" stop-opacity="0.2"/><stop offset="1" stop-color="#facc15" stop-opacity="0.08"/></linearGradient>
+<linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde047" stop-opacity="0.2"/><stop offset="1" stop-color="#fde047" stop-opacity="0.08"/></linearGradient>
+<linearGradient id="g4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a3e635" stop-opacity="0.2"/><stop offset="1" stop-color="#a3e635" stop-opacity="0.08"/></linearGradient>
+<linearGradient id="g5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2dd4bf" stop-opacity="0.2"/><stop offset="1" stop-color="#2dd4bf" stop-opacity="0.08"/></linearGradient>
+<linearGradient id="g6" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5eead4" stop-opacity="0.2"/><stop offset="1" stop-color="#5eead4" stop-opacity="0.08"/></linearGradient>
+<linearGradient id="g7" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ade80" stop-opacity="0.2"/><stop offset="1" stop-color="#4ade80" stop-opacity="0.08"/></linearGradient>
+<linearGradient id="g8" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10b981" stop-opacity="0.2"/><stop offset="1" stop-color="#10b981" stop-opacity="0.08"/></linearGradient>
+<linearGradient id="g9" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399" stop-opacity="0.2"/><stop offset="1" stop-color="#34d399" stop-opacity="0.08"/></linearGradient>
+<linearGradient id="g10" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb59e" stop-opacity="0.2"/><stop offset="1" stop-color="#7fb59e" stop-opacity="0.08"/></linearGradient>
+</defs>
+<rect width="1280" height="1118" fill="url(#bg)"/>
+<rect width="1280" height="1118" fill="url(#dots)" opacity="0.5"/>
+<g font-family="'Intel Clear','Intel One Display','Segoe UI','Helvetica Neue',Arial,sans-serif">
+<rect x="32" y="32" width="1216" height="100" rx="6" fill="none" stroke="#34f5c5" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="32" y="32" width="1216" height="100" rx="6" fill="url(#g0)" stroke="#34f5c5" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="44" y="53.5" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#7bf8d9" letter-spacing="1.4">APPLICATIONS</text>
+<rect x="44" y="66" width="232" height="54" rx="3" fill="#06140f"/>
+<rect x="44" y="66" width="232" height="54" rx="3" fill="#34f5c5" fill-opacity="0.14" stroke="#34f5c5" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="160" y="98" font-size="14" font-weight="700" fill="#d2fdf2" text-anchor="middle">Video App</text>
+<rect x="284" y="66" width="232" height="54" rx="3" fill="#06140f"/>
+<rect x="284" y="66" width="232" height="54" rx="3" fill="#34f5c5" fill-opacity="0.14" stroke="#34f5c5" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="400" y="98" font-size="14" font-weight="700" fill="#d2fdf2" text-anchor="middle">Audio App</text>
+<rect x="524" y="66" width="232" height="54" rx="3" fill="#06140f"/>
+<rect x="524" y="66" width="232" height="54" rx="3" fill="#34f5c5" fill-opacity="0.14" stroke="#34f5c5" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="640" y="98" font-size="14" font-weight="700" fill="#d2fdf2" text-anchor="middle">Ancillary App</text>
+<rect x="764" y="66" width="232" height="54" rx="3" fill="#06140f"/>
+<rect x="764" y="66" width="232" height="54" rx="3" fill="#34f5c5" fill-opacity="0.14" stroke="#34f5c5" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="880" y="98" font-size="14" font-weight="700" fill="#d2fdf2" text-anchor="middle">Fast Metadata App</text>
+<rect x="1004" y="66" width="232" height="54" rx="3" fill="#06140f"/>
+<rect x="1004" y="66" width="232" height="54" rx="3" fill="#34f5c5" fill-opacity="0.14" stroke="#34f5c5" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="1120" y="89.4" font-size="14" font-weight="700" fill="#d2fdf2" text-anchor="middle">Third-party Plugins</text>
+<text x="1120" y="106.7" font-size="11.5" font-weight="400" fill="#a4fae5" text-anchor="middle">OBS, FFmpeg, GStreamer</text>
+<rect x="32" y="204" width="1216" height="508" rx="10" fill="none" stroke="#22c55e" stroke-width="4" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="32" y="204" width="1216" height="508" rx="10" fill="url(#g1)" stroke="#22c55e" stroke-width="2.0" stroke-opacity="0.9"/>
+<text x="640" y="242" font-size="24" font-weight="700" fill="#7ee2a4" text-anchor="middle">Media Transport Library</text>
+<rect x="48" y="260" width="511" height="100" rx="6" fill="none" stroke="#facc15" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="48" y="260" width="511" height="100" rx="6" fill="url(#g2)" stroke="#facc15" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="60" y="281.5" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#fcde67" letter-spacing="1.4">PIPELINE API</text>
+<rect x="60" y="294" width="239.5" height="54" rx="3" fill="#06140f"/>
+<rect x="60" y="294" width="239.5" height="54" rx="3" fill="#facc15" fill-opacity="0.14" stroke="#facc15" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="179.8" y="317.4" font-size="14" font-weight="700" fill="#fef4cc" text-anchor="middle">ST 2110-20</text>
+<text x="179.8" y="334.7" font-size="11.5" font-weight="400" fill="#fde896" text-anchor="middle">Conversion Plugin</text>
+<rect x="307.5" y="294" width="239.5" height="54" rx="3" fill="#06140f"/>
+<rect x="307.5" y="294" width="239.5" height="54" rx="3" fill="#facc15" fill-opacity="0.14" stroke="#facc15" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="427.2" y="317.4" font-size="14" font-weight="700" fill="#fef4cc" text-anchor="middle">ST 2110-22</text>
+<text x="427.2" y="334.7" font-size="11.5" font-weight="400" fill="#fde896" text-anchor="middle">Codec Plugin</text>
+<rect x="571" y="260" width="329" height="100" rx="6" fill="none" stroke="#fde047" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="571" y="260" width="329" height="100" rx="6" fill="url(#g3)" stroke="#fde047" stroke-width="1.4" stroke-opacity="0.7"/>
+<rect x="583" y="272" width="305" height="76" rx="3" fill="#06140f"/>
+<rect x="583" y="272" width="305" height="76" rx="3" fill="#fde047" fill-opacity="0.14" stroke="#fde047" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="735.5" y="306.4" font-size="14" font-weight="700" fill="#fff8d7" text-anchor="middle">Color Format Conversion</text>
+<text x="735.5" y="323.7" font-size="11.5" font-weight="400" fill="#fef1ac" text-anchor="middle">Accelerated by SIMD (AVX512)</text>
+<rect x="48" y="372" width="852" height="100" rx="6" fill="none" stroke="#a3e635" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="48" y="372" width="852" height="100" rx="6" fill="url(#g4)" stroke="#a3e635" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="60" y="393.5" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#c3ef7c" letter-spacing="1.4">ST 2110 SESSIONS</text>
+<rect x="60" y="406" width="159.2" height="54" rx="3" fill="#06140f"/>
+<rect x="60" y="406" width="159.2" height="54" rx="3" fill="#a3e635" fill-opacity="0.14" stroke="#a3e635" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="139.6" y="429.4" font-size="14" font-weight="700" fill="#ebfad3" text-anchor="middle">ST 2110-20</text>
+<text x="139.6" y="446.7" font-size="11.5" font-weight="400" fill="#d6f4a4" text-anchor="middle">Uncompressed Video</text>
+<rect x="227.2" y="406" width="159.2" height="54" rx="3" fill="#06140f"/>
+<rect x="227.2" y="406" width="159.2" height="54" rx="3" fill="#a3e635" fill-opacity="0.14" stroke="#a3e635" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="306.8" y="429.4" font-size="14" font-weight="700" fill="#ebfad3" text-anchor="middle">ST 2110-22</text>
+<text x="306.8" y="446.7" font-size="11.5" font-weight="400" fill="#d6f4a4" text-anchor="middle">Compressed Video</text>
+<rect x="394.4" y="406" width="159.2" height="54" rx="3" fill="#06140f"/>
+<rect x="394.4" y="406" width="159.2" height="54" rx="3" fill="#a3e635" fill-opacity="0.14" stroke="#a3e635" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="474" y="429.4" font-size="14" font-weight="700" fill="#ebfad3" text-anchor="middle">ST 2110-30/31</text>
+<text x="474" y="446.7" font-size="11.5" font-weight="400" fill="#d6f4a4" text-anchor="middle">(Un)compressed Audio</text>
+<rect x="561.6" y="406" width="159.2" height="54" rx="3" fill="#06140f"/>
+<rect x="561.6" y="406" width="159.2" height="54" rx="3" fill="#a3e635" fill-opacity="0.14" stroke="#a3e635" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="641.2" y="429.4" font-size="14" font-weight="700" fill="#ebfad3" text-anchor="middle">ST 2110-40</text>
+<text x="641.2" y="446.7" font-size="11.5" font-weight="400" fill="#d6f4a4" text-anchor="middle">Ancillary Data</text>
+<rect x="728.8" y="406" width="159.2" height="54" rx="3" fill="#06140f"/>
+<rect x="728.8" y="406" width="159.2" height="54" rx="3" fill="#a3e635" fill-opacity="0.14" stroke="#a3e635" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="808.4" y="429.4" font-size="14" font-weight="700" fill="#ebfad3" text-anchor="middle">ST 2110-41</text>
+<text x="808.4" y="446.7" font-size="11.5" font-weight="400" fill="#d6f4a4" text-anchor="middle">Fast Metadata</text>
+<rect x="912" y="260" width="320" height="212" rx="6" fill="none" stroke="#2dd4bf" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="912" y="260" width="320" height="212" rx="6" fill="url(#g5)" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="924" y="281.5" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#76e3d5" letter-spacing="1.4">CONTROL PLANE PROTOCOLS</text>
+<rect x="924" y="294" width="144" height="50" rx="3" fill="#06140f"/>
+<rect x="924" y="294" width="144" height="50" rx="3" fill="#2dd4bf" fill-opacity="0.14" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="996" y="324" font-size="14" font-weight="700" fill="#d1f6f1" text-anchor="middle">IGMP</text>
+<rect x="1076" y="294" width="144" height="50" rx="3" fill="#06140f"/>
+<rect x="1076" y="294" width="144" height="50" rx="3" fill="#2dd4bf" fill-opacity="0.14" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="1148" y="324" font-size="14" font-weight="700" fill="#d1f6f1" text-anchor="middle">PTP</text>
+<rect x="924" y="352" width="144" height="50" rx="3" fill="#06140f"/>
+<rect x="924" y="352" width="144" height="50" rx="3" fill="#2dd4bf" fill-opacity="0.14" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="996" y="382" font-size="14" font-weight="700" fill="#d1f6f1" text-anchor="middle">DHCP</text>
+<rect x="1076" y="352" width="144" height="50" rx="3" fill="#06140f"/>
+<rect x="1076" y="352" width="144" height="50" rx="3" fill="#2dd4bf" fill-opacity="0.14" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="1148" y="382" font-size="14" font-weight="700" fill="#d1f6f1" text-anchor="middle">ARP</text>
+<rect x="924" y="410" width="296" height="50" rx="3" fill="#06140f"/>
+<rect x="924" y="410" width="296" height="50" rx="3" fill="#2dd4bf" fill-opacity="0.14" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="1072" y="440" font-size="14" font-weight="700" fill="#d1f6f1" text-anchor="middle">RTCP</text>
+<rect x="48" y="484" width="1184" height="100" rx="6" fill="none" stroke="#5eead4" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="48" y="484" width="1184" height="100" rx="6" fill="url(#g6)" stroke="#5eead4" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="60" y="505.5" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#96f1e3" letter-spacing="1.4">MANAGEMENT</text>
+<rect x="60" y="518" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="60" y="518" width="225.6" height="54" rx="3" fill="#5eead4" fill-opacity="0.14" stroke="#5eead4" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="172.8" y="541.4" font-size="14" font-weight="700" fill="#dcfaf6" text-anchor="middle">Pacing</text>
+<text x="172.8" y="558.7" font-size="11.5" font-weight="400" fill="#b7f6ec" text-anchor="middle">(TSN, RL, TSC)</text>
+<rect x="293.6" y="518" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="293.6" y="518" width="225.6" height="54" rx="3" fill="#5eead4" fill-opacity="0.14" stroke="#5eead4" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="406.4" y="550" font-size="14" font-weight="700" fill="#dcfaf6" text-anchor="middle">Tasklet Scheduler</text>
+<rect x="527.2" y="518" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="527.2" y="518" width="225.6" height="54" rx="3" fill="#5eead4" fill-opacity="0.14" stroke="#5eead4" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="640" y="550" font-size="14" font-weight="700" fill="#dcfaf6" text-anchor="middle">Flow Director / RSS</text>
+<rect x="760.8" y="518" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="760.8" y="518" width="225.6" height="54" rx="3" fill="#5eead4" fill-opacity="0.14" stroke="#5eead4" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="873.6" y="550" font-size="14" font-weight="700" fill="#dcfaf6" text-anchor="middle">PTP Timesync</text>
+<rect x="994.4" y="518" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="994.4" y="518" width="225.6" height="54" rx="3" fill="#5eead4" fill-opacity="0.14" stroke="#5eead4" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="1107.2" y="550" font-size="14" font-weight="700" fill="#dcfaf6" text-anchor="middle">DMA Memcpy Helper</text>
+<rect x="48" y="596" width="1184" height="100" rx="6" fill="none" stroke="#4ade80" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="48" y="596" width="1184" height="100" rx="6" fill="url(#g7)" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="60" y="617.5" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#89eaac" letter-spacing="1.4">DEVICE ABSTRACTION LAYER</text>
+<rect x="60" y="630" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="60" y="630" width="225.6" height="54" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="172.8" y="653" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Unified Tx &amp; Rx</text>
+<text x="172.8" y="671.1" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Burst Interface</text>
+<rect x="293.6" y="630" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="293.6" y="630" width="225.6" height="54" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="406.4" y="653" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Tx &amp; Rx Queue</text>
+<text x="406.4" y="671.1" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Management</text>
+<rect x="527.2" y="630" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="527.2" y="630" width="225.6" height="54" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="640" y="653" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Mbuf Pool / Ring</text>
+<text x="640" y="671.1" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Management</text>
+<rect x="760.8" y="630" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="760.8" y="630" width="225.6" height="54" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="873.6" y="653" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Shared Queue</text>
+<text x="873.6" y="671.1" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Management</text>
+<rect x="994.4" y="630" width="225.6" height="54" rx="3" fill="#06140f"/>
+<rect x="994.4" y="630" width="225.6" height="54" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="1107.2" y="653" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Virtio-user</text>
+<text x="1107.2" y="671.1" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Exception Path</text>
+<line x1="336" y1="135" x2="336" y2="201" stroke="#34f5c5" stroke-width="6" stroke-linecap="round" opacity="0.35" filter="url(#glowS)"/>
+<line x1="336" y1="135" x2="336" y2="201" stroke="#34f5c5" stroke-width="2.2" marker-start="url(#aU)" marker-end="url(#aD)"/>
+<rect x="296.4" y="156" width="79.3" height="24" rx="12" fill="#06231a" stroke="#34f5c5" stroke-width="1.3"/>
+<text x="336" y="172.5" font-size="12.5" font-weight="700" fill="#e6fff4" text-anchor="middle">Frames</text>
+<line x1="640" y1="135" x2="640" y2="201" stroke="#34f5c5" stroke-width="6" stroke-linecap="round" opacity="0.35" filter="url(#glowS)"/>
+<line x1="640" y1="135" x2="640" y2="201" stroke="#34f5c5" stroke-width="2.2" marker-start="url(#aU)" marker-end="url(#aD)"/>
+<rect x="566.2" y="156" width="147.6" height="24" rx="12" fill="#06231a" stroke="#34f5c5" stroke-width="1.3"/>
+<text x="640" y="172.5" font-size="12.5" font-weight="700" fill="#e6fff4" text-anchor="middle">RTP Passthrough</text>
+<line x1="944" y1="135" x2="944" y2="201" stroke="#34f5c5" stroke-width="6" stroke-linecap="round" opacity="0.35" filter="url(#glowS)"/>
+<line x1="944" y1="135" x2="944" y2="201" stroke="#34f5c5" stroke-width="2.2" marker-start="url(#aU)" marker-end="url(#aD)"/>
+<rect x="895.1" y="156" width="97.8" height="24" rx="12" fill="#06231a" stroke="#34f5c5" stroke-width="1.3"/>
+<text x="944" y="172.5" font-size="12.5" font-weight="700" fill="#e6fff4" text-anchor="middle">Datagram</text>
+<rect x="32" y="728" width="1216" height="190" rx="6" fill="none" stroke="#10b981" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="32" y="728" width="1216" height="190" rx="6" fill="url(#g8)" stroke="#10b981" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="44" y="749.5" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#64d2ad" letter-spacing="1.4">NETWORK BACKEND</text>
+<rect x="44" y="762" width="262" height="144" rx="3" fill="#06140f"/>
+<rect x="44" y="762" width="262" height="144" rx="3" fill="#2dd4bf" fill-opacity="0.14" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="175" y="829.9" font-size="17" font-weight="700" fill="#d1f6f1" text-anchor="middle">DPDK PMD</text>
+<text x="175" y="850.3" font-size="13" font-weight="400" fill="#a0ece2" text-anchor="middle">Linux &amp; Windows</text>
+<rect x="318" y="762" width="703" height="144" rx="6" fill="url(#g9)" stroke="#34d399" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="328" y="782" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#7be2bd" letter-spacing="1.4">LINUX KERNEL</text>
+<rect x="328" y="792" width="305.5" height="32" rx="3" fill="#06140f"/>
+<rect x="328" y="792" width="305.5" height="32" rx="3" fill="#a3e635" fill-opacity="0.14" stroke="#a3e635" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="480.8" y="813" font-size="14" font-weight="700" fill="#ebfad3" text-anchor="middle">Kernel Network Stack</text>
+<rect x="328" y="864" width="305.5" height="32" rx="3" fill="#06140f"/>
+<rect x="328" y="864" width="305.5" height="32" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="480.8" y="885" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">NIC Driver</text>
+<rect x="705.5" y="792" width="305.5" height="32" rx="3" fill="#06140f"/>
+<rect x="705.5" y="792" width="305.5" height="32" rx="3" fill="#facc15" fill-opacity="0.14" stroke="#facc15" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="858.2" y="813" font-size="14" font-weight="700" fill="#fef4cc" text-anchor="middle">AF_XDP</text>
+<rect x="705.5" y="864" width="305.5" height="32" rx="3" fill="#06140f"/>
+<rect x="705.5" y="864" width="305.5" height="32" rx="3" fill="#fde047" fill-opacity="0.14" stroke="#fde047" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="858.2" y="885" font-size="14" font-weight="700" fill="#fff8d7" text-anchor="middle">eBPF program</text>
+<line x1="637.5" y1="880" x2="701.5" y2="880" stroke="#facc15" stroke-width="2.4" marker-end="url(#aY)"/>
+<line x1="858.2" y1="860" x2="858.2" y2="828" stroke="#facc15" stroke-width="2.4" marker-end="url(#aY)"/>
+<rect x="1033" y="762" width="203" height="144" rx="3" fill="#06140f"/>
+<rect x="1033" y="762" width="203" height="144" rx="3" fill="#5f8a77" fill-opacity="0.14" stroke="#5f8a77" stroke-width="1.4" stroke-opacity="0.75" stroke-dasharray="5 4"/>
+<text x="1134.5" y="830.4" font-size="14" font-weight="700" fill="#9cc2b1" text-anchor="middle">Windows Kernel</text>
+<text x="1134.5" y="847.7" font-size="11.5" font-weight="400" fill="#8db5a3" text-anchor="middle">(Not supported)</text>
+<rect x="32" y="934" width="1216" height="46" rx="6" fill="none" stroke="#7fb59e" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="32" y="934" width="1216" height="46" rx="6" fill="url(#g10)" stroke="#7fb59e" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="44" y="961" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#accfc0" letter-spacing="1.4">PLATFORMS</text>
+<rect x="182" y="941" width="521" height="32" rx="16" fill="#06140f" stroke="#7fb59e" stroke-width="1.2" stroke-opacity="0.8"/>
+<text x="369.1" y="962" font-size="13.5" font-weight="700" fill="#e6fff4" text-anchor="end">Linux:</text>
+<text x="375.1" y="962" font-size="13.5" fill="#a9cdbd">Bare metal / VM / Container</text>
+<rect x="715" y="941" width="521" height="32" rx="16" fill="#06140f" stroke="#7fb59e" stroke-width="1.2" stroke-opacity="0.8"/>
+<text x="955.4" y="962" font-size="13.5" font-weight="700" fill="#e6fff4" text-anchor="end">Windows:</text>
+<text x="961.4" y="962" font-size="13.5" fill="#a9cdbd">Bare metal / VM</text>
+<rect x="32" y="996" width="851" height="90" rx="6" fill="none" stroke="#4ade80" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="32" y="996" width="851" height="90" rx="6" fill="url(#g7)" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="44" y="1017.5" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#89eaac" letter-spacing="1.4">NIC HARDWARE</text>
+<rect x="44" y="1030" width="222.9" height="44" rx="3" fill="#06140f"/>
+<rect x="44" y="1030" width="222.9" height="44" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="155.5" y="1057" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Intel E810 / E830 / E835</text>
+<rect x="274.9" y="1030" width="125.8" height="44" rx="3" fill="#06140f"/>
+<rect x="274.9" y="1030" width="125.8" height="44" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="337.8" y="1057" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Intel XL710</text>
+<rect x="408.7" y="1030" width="150.8" height="44" rx="3" fill="#06140f"/>
+<rect x="408.7" y="1030" width="150.8" height="44" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="484.1" y="1057" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Intel I225/I226</text>
+<rect x="567.5" y="1030" width="206.4" height="44" rx="3" fill="#06140f"/>
+<rect x="567.5" y="1030" width="206.4" height="44" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="670.7" y="1057" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Intel X540-AT2/X550T</text>
+<rect x="781.9" y="1030" width="89.1" height="44" rx="3" fill="#06140f"/>
+<rect x="781.9" y="1030" width="89.1" height="44" rx="3" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="826.5" y="1057" font-size="14" font-weight="700" fill="#d7f8e3" text-anchor="middle">Others</text>
+<rect x="895" y="996" width="353" height="90" rx="6" fill="none" stroke="#2dd4bf" stroke-width="2.8" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="895" y="996" width="353" height="90" rx="6" fill="url(#g5)" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.7"/>
+<text x="907" y="1017.5" font-family="'JetBrains Mono','Cascadia Code',Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" font-weight="700" fill="#76e3d5" letter-spacing="1.4">DMA HARDWARE</text>
+<rect x="907" y="1030" width="160.5" height="44" rx="3" fill="#06140f"/>
+<rect x="907" y="1030" width="160.5" height="44" rx="3" fill="#2dd4bf" fill-opacity="0.14" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="987.2" y="1057" font-size="14" font-weight="700" fill="#d1f6f1" text-anchor="middle">DSA (IDXD)</text>
+<rect x="1075.5" y="1030" width="160.5" height="44" rx="3" fill="#06140f"/>
+<rect x="1075.5" y="1030" width="160.5" height="44" rx="3" fill="#2dd4bf" fill-opacity="0.14" stroke="#2dd4bf" stroke-width="1.4" stroke-opacity="0.75"/>
+<text x="1155.8" y="1057" font-size="14" font-weight="700" fill="#d1f6f1" text-anchor="middle">CBDMA (IOAT)</text>
+</g>
+</svg>

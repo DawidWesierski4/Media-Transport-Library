@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1278" viewBox="0 0 1280 1278" role="img" aria-labelledby="t d">
+<title id="t">Media Transport Library architecture</title>
+<desc id="d">Applications connect to the Media Transport Library through frames, RTP passthrough and datagrams. The library holds the Pipeline API, ST 2110 sessions, color format conversion, control plane protocols, management and the device abstraction layer. It runs on the DPDK PMD or Linux kernel network backends over Intel NIC and DMA hardware.</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17120e"/><stop offset="1" stop-color="#0a0908"/></linearGradient>
+<radialGradient id="gc"><stop offset="0" stop-color="#c2410c" stop-opacity="0.16"/><stop offset="1" stop-color="#c2410c" stop-opacity="0"/></radialGradient>
+<radialGradient id="gt"><stop offset="0" stop-color="#0f766e" stop-opacity="0.16"/><stop offset="1" stop-color="#0f766e" stop-opacity="0"/></radialGradient>
+<marker id="at" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#5eead4"/></marker>
+<marker id="aa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#fcd34d"/></marker>
+</defs>
+<rect width="1280" height="1278" fill="#120e0b"/>
+<rect width="1280" height="1278" fill="url(#bg) #120e0b"/>
+<circle cx="1090" cy="200" r="520" fill="url(#gc) none"/>
+<circle cx="150" cy="1078" r="520" fill="url(#gt) none"/>
+<g font-family="'Intel Clear','Intel One Display','Segoe UI','Helvetica Neue',Arial,sans-serif">
+<rect x="32" y="32" width="1216" height="110" rx="12" fill="#1c2b25" stroke="#4dbaa8" stroke-width="1.5"/>
+<text x="48" y="57" font-size="11.5" font-weight="700" fill="#7eeedd" letter-spacing="1.4">APPLICATIONS</text>
+<rect x="48" y="72" width="228.8" height="54" rx="8" fill="#182420" stroke="#58d8c4" stroke-width="1.4"/>
+<text x="162.4" y="104" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Video App</text>
+<rect x="286.8" y="72" width="228.8" height="54" rx="8" fill="#182420" stroke="#58d8c4" stroke-width="1.4"/>
+<text x="401.2" y="104" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Audio App</text>
+<rect x="525.6" y="72" width="228.8" height="54" rx="8" fill="#182420" stroke="#58d8c4" stroke-width="1.4"/>
+<text x="640" y="104" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Ancillary App</text>
+<rect x="764.4" y="72" width="228.8" height="54" rx="8" fill="#182420" stroke="#58d8c4" stroke-width="1.4"/>
+<text x="878.8" y="104" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Fast Metadata App</text>
+<rect x="1003.2" y="72" width="228.8" height="54" rx="8" fill="#182420" stroke="#58d8c4" stroke-width="1.4"/>
+<text x="1117.6" y="96" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">3rd-party Plugins</text>
+<text x="1117.6" y="114" font-size="11.5" fill="#b7f6ec" text-anchor="middle">OBS, FFmpeg, GStreamer</text>
+<rect x="32" y="206" width="1216" height="564" rx="14" fill="#2a1f16" stroke="#c9945d" stroke-width="2.2"/>
+<text x="640" y="245" font-size="26" font-weight="700" fill="#fed2a5" text-anchor="middle">Media Transport Library</text>
+<rect x="48" y="266" width="500" height="110" rx="12" fill="#452e1b" stroke="#cd7934" stroke-width="1.5"/>
+<text x="64" y="291" font-size="11.5" font-weight="700" fill="#fca863" letter-spacing="1.4">PIPELINE API</text>
+<rect x="64" y="306" width="229" height="54" rx="8" fill="#392413" stroke="#ec8a39" stroke-width="1.4"/>
+<text x="178.5" y="330" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">ST 2110-20</text>
+<text x="178.5" y="348" font-size="11.5" fill="#fdcea7" text-anchor="middle">Conversion Plugin</text>
+<rect x="303" y="306" width="229" height="54" rx="8" fill="#392413" stroke="#ec8a39" stroke-width="1.4"/>
+<text x="417.5" y="330" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">ST 2110-22</text>
+<text x="417.5" y="348" font-size="11.5" fill="#fdcea7" text-anchor="middle">Codec Plugin</text>
+<rect x="564" y="266" width="322" height="110" rx="12" fill="#45361d" stroke="#ceab41" stroke-width="1.5"/>
+<text x="580" y="291" font-size="11.5" font-weight="700" fill="#fddc71" letter-spacing="1.4">COLOR FORMAT CONVERSION</text>
+<rect x="580" y="306" width="290" height="54" rx="8" fill="#3a3016" stroke="#edc649" stroke-width="1.4"/>
+<text x="725" y="330" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Accelerated by SIMD</text>
+<text x="725" y="348" font-size="11.5" fill="#feebaf" text-anchor="middle">AVX512</text>
+<rect x="48" y="392" width="838" height="110" rx="12" fill="#452a16" stroke="#cb6116" stroke-width="1.5"/>
+<text x="64" y="417" font-size="11.5" font-weight="700" fill="#fa8f45" letter-spacing="1.4">ST 2110 SESSIONS</text>
+<rect x="64" y="432" width="167.148" height="54" rx="8" fill="#391f0c" stroke="#eb6d16" stroke-width="1.4"/>
+<text x="147.574" y="456" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">ST 2110-20</text>
+<text x="147.574" y="474" font-size="11.5" fill="#fcc096" text-anchor="middle">Uncompressed Video</text>
+<rect x="241.148" y="432" width="153.15" height="54" rx="8" fill="#391f0c" stroke="#eb6d16" stroke-width="1.4"/>
+<text x="317.723" y="456" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">ST 2110-22</text>
+<text x="317.723" y="474" font-size="11.5" fill="#fcc096" text-anchor="middle">Compressed Video</text>
+<rect x="404.298" y="432" width="176.587" height="54" rx="8" fill="#391f0c" stroke="#eb6d16" stroke-width="1.4"/>
+<text x="492.591" y="456" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">ST 2110-30/31</text>
+<text x="492.591" y="474" font-size="11.5" fill="#fcc096" text-anchor="middle">(Un)compressed Audio</text>
+<rect x="590.884" y="432" width="134.558" height="54" rx="8" fill="#391f0c" stroke="#eb6d16" stroke-width="1.4"/>
+<text x="658.163" y="456" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">ST 2110-40</text>
+<text x="658.163" y="474" font-size="11.5" fill="#fcc096" text-anchor="middle">Ancillary Data</text>
+<rect x="735.442" y="432" width="134.558" height="54" rx="8" fill="#391f0c" stroke="#eb6d16" stroke-width="1.4"/>
+<text x="802.721" y="456" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">ST 2110-41</text>
+<text x="802.721" y="474" font-size="11.5" fill="#fcc096" text-anchor="middle">Fast Metadata</text>
+<rect x="902" y="266" width="330" height="236" rx="12" fill="#443134" stroke="#c48cc9" stroke-width="1.5"/>
+<text x="918" y="291" font-size="11.5" font-weight="700" fill="#f3bcfd" letter-spacing="1.4">CONTROL PLANE PROTOCOLS</text>
+<rect x="918" y="306" width="144" height="54" rx="8" fill="#332531" stroke="#e2a1ec" stroke-width="1.4"/>
+<text x="990" y="338" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">IGMP</text>
+<rect x="1072" y="306" width="144" height="54" rx="8" fill="#332531" stroke="#e2a1ec" stroke-width="1.4"/>
+<text x="1144" y="338" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">PTP</text>
+<rect x="918" y="369" width="144" height="54" rx="8" fill="#332531" stroke="#e2a1ec" stroke-width="1.4"/>
+<text x="990" y="401" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">DHCP</text>
+<rect x="1072" y="369" width="144" height="54" rx="8" fill="#332531" stroke="#e2a1ec" stroke-width="1.4"/>
+<text x="1144" y="401" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">ARP</text>
+<rect x="918" y="432" width="298" height="54" rx="8" fill="#332531" stroke="#e2a1ec" stroke-width="1.4"/>
+<text x="1067" y="464" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">RTCP</text>
+<rect x="48" y="518" width="1184" height="110" rx="12" fill="#3e3234" stroke="#a294ca" stroke-width="1.5"/>
+<text x="64" y="543" font-size="11.5" font-weight="700" fill="#d0c4fd" letter-spacing="1.4">MANAGEMENT</text>
+<rect x="64" y="558" width="222.4" height="54" rx="8" fill="#2c2731" stroke="#b9abed" stroke-width="1.4"/>
+<text x="175.2" y="582" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Pacing</text>
+<text x="175.2" y="600" font-size="11.5" fill="#e4defe" text-anchor="middle">TSN, RL, TSC</text>
+<rect x="296.4" y="558" width="222.4" height="54" rx="8" fill="#2c2731" stroke="#b9abed" stroke-width="1.4"/>
+<text x="407.6" y="590" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Tasklet Scheduler</text>
+<rect x="528.8" y="558" width="222.4" height="54" rx="8" fill="#2c2731" stroke="#b9abed" stroke-width="1.4"/>
+<text x="640" y="590" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Flow Director / RSS</text>
+<rect x="761.2" y="558" width="222.4" height="54" rx="8" fill="#2c2731" stroke="#b9abed" stroke-width="1.4"/>
+<text x="872.4" y="590" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">PTP Timesync</text>
+<rect x="993.6" y="558" width="222.4" height="54" rx="8" fill="#2c2731" stroke="#b9abed" stroke-width="1.4"/>
+<text x="1104.8" y="590" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">DMA Memcpy Helper</text>
+<rect x="48" y="644" width="1184" height="110" rx="12" fill="#2a372c" stroke="#2cac9a" stroke-width="1.5"/>
+<text x="64" y="669" font-size="11.5" font-weight="700" fill="#57ddcc" letter-spacing="1.4">DEVICE ABSTRACTION LAYER</text>
+<rect x="64" y="684" width="222.4" height="54" rx="8" fill="#142c27" stroke="#2dc7b3" stroke-width="1.4"/>
+<text x="175.2" y="707" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Unified Tx &amp; Rx</text>
+<text x="175.2" y="725" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Burst Interface</text>
+<rect x="296.4" y="684" width="222.4" height="54" rx="8" fill="#142c27" stroke="#2dc7b3" stroke-width="1.4"/>
+<text x="407.6" y="707" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Tx &amp; Rx Queue</text>
+<text x="407.6" y="725" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Management</text>
+<rect x="528.8" y="684" width="222.4" height="54" rx="8" fill="#142c27" stroke="#2dc7b3" stroke-width="1.4"/>
+<text x="640" y="707" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Mbuf Pool / Ring</text>
+<text x="640" y="725" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Management</text>
+<rect x="761.2" y="684" width="222.4" height="54" rx="8" fill="#142c27" stroke="#2dc7b3" stroke-width="1.4"/>
+<text x="872.4" y="707" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Shared Queue</text>
+<text x="872.4" y="725" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Management</text>
+<rect x="993.6" y="684" width="222.4" height="54" rx="8" fill="#142c27" stroke="#2dc7b3" stroke-width="1.4"/>
+<text x="1104.8" y="707" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Virtio-user</text>
+<text x="1104.8" y="725" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Exception Path</text>
+<line x1="298" y1="144" x2="298" y2="162.0" stroke="#5eead4" stroke-width="2" marker-start="url(#at)"/>
+<line x1="298" y1="186.0" x2="298" y2="204" stroke="#5eead4" stroke-width="2" marker-end="url(#at)"/>
+<rect x="258.358" y="162" width="79.2832" height="24" rx="12" fill="#1e312b" stroke="#53c9b6" stroke-width="1.4"/>
+<text x="298" y="178.5" font-size="12.5" font-weight="700" fill="#fbf3ea" text-anchor="middle">Frames</text>
+<line x1="568" y1="144" x2="568" y2="162.0" stroke="#5eead4" stroke-width="2" marker-start="url(#at)"/>
+<line x1="568" y1="186.0" x2="568" y2="204" stroke="#5eead4" stroke-width="2" marker-end="url(#at)"/>
+<rect x="494.192" y="162" width="147.615" height="24" rx="12" fill="#1e312b" stroke="#53c9b6" stroke-width="1.4"/>
+<text x="568" y="178.5" font-size="12.5" font-weight="700" fill="#fbf3ea" text-anchor="middle">RTP Passthrough</text>
+<line x1="1067" y1="144" x2="1067" y2="162.0" stroke="#5eead4" stroke-width="2" marker-start="url(#at)"/>
+<line x1="1067" y1="186.0" x2="1067" y2="204" stroke="#5eead4" stroke-width="2" marker-end="url(#at)"/>
+<rect x="1018.1" y="162" width="97.7949" height="24" rx="12" fill="#1e312b" stroke="#53c9b6" stroke-width="1.4"/>
+<text x="1067" y="178.5" font-size="12.5" font-weight="700" fill="#fbf3ea" text-anchor="middle">Datagram</text>
+<rect x="32" y="798" width="1216" height="254" rx="12" fill="#1a2423" stroke="#54b8c5" stroke-width="1.5"/>
+<text x="48" y="823" font-size="11.5" font-weight="700" fill="#85edfa" letter-spacing="1.4">NETWORK BACKEND</text>
+<rect x="48" y="838" width="270" height="198" rx="8" fill="#28242c" stroke="#b6a9ec" stroke-width="1.4"/>
+<text x="183" y="935" font-size="20" font-weight="700" fill="#fbf3ea" text-anchor="middle">DPDK PMD</text>
+<text x="183" y="959" font-size="13" fill="#e4defe" text-anchor="middle">Linux &amp; Windows</text>
+<rect x="334" y="838" width="652" height="198" rx="12" fill="#223838" stroke="#56bdca" stroke-width="1.5"/>
+<text x="350" y="863" font-size="11.5" font-weight="700" fill="#85edfa" letter-spacing="1.4">LINUX KERNEL</text>
+<rect x="350" y="878" width="272" height="54" rx="8" fill="#352424" stroke="#eb9ba5" stroke-width="1.4"/>
+<text x="486" y="910" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Kernel Network Stack</text>
+<rect x="350" y="966" width="272" height="54" rx="8" fill="#142c27" stroke="#2cc8b4" stroke-width="1.4"/>
+<text x="486" y="998" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">NIC Driver</text>
+<rect x="698" y="878" width="272" height="54" rx="8" fill="#392413" stroke="#ea8b3c" stroke-width="1.4"/>
+<text x="834" y="910" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">AF_XDP</text>
+<rect x="698" y="966" width="272" height="54" rx="8" fill="#3a3016" stroke="#ebc74b" stroke-width="1.4"/>
+<text x="834" y="998" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">eBPF program</text>
+<line x1="628" y1="993" x2="694" y2="993" stroke="#fcd34d" stroke-width="2" marker-end="url(#aa)"/>
+<line x1="834" y1="963" x2="834" y2="935" stroke="#fcd34d" stroke-width="2" marker-end="url(#aa)"/>
+<rect x="1002" y="838" width="230" height="198" rx="8" fill="#272e2c" stroke="#888074" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="1117" y="935" font-size="16" font-weight="700" fill="#cfc3b6" text-anchor="middle">Windows Kernel</text>
+<text x="1117" y="957" font-size="13" fill="#b7a796" text-anchor="middle">Not supported</text>
+<rect x="32" y="1068" width="1216" height="52" rx="12" fill="#1f1a16" stroke="#938577" stroke-width="1.5"/>
+<text x="48" y="1098.5" font-size="11.5" font-weight="700" fill="#d6ccc1" letter-spacing="1.4">PLATFORMS</text>
+<rect x="162.423" y="1079" width="272.4" height="30" rx="15" fill="#312b25" stroke="#7a6f63" stroke-width="1.2"/>
+<text x="180.423" y="1099" font-size="13.5" font-weight="700" fill="#fbf3ea">Linux</text>
+<text x="229.581" y="1099" font-size="13.5" fill="#d6ccc1">Bare metal / VM / Container</text>
+<rect x="446.849" y="1079" width="220.7" height="30" rx="15" fill="#312b25" stroke="#7a6f63" stroke-width="1.2"/>
+<text x="464.849" y="1099" font-size="13.5" font-weight="700" fill="#fbf3ea">Windows</text>
+<text x="541.423" y="1099" font-size="13.5" fill="#d6ccc1">Bare metal / VM</text>
+<rect x="32" y="1136" width="886.068" height="110" rx="12" fill="#18201b" stroke="#4dbaa8" stroke-width="1.5"/>
+<text x="48" y="1161" font-size="11.5" font-weight="700" fill="#7eeedd" letter-spacing="1.4">NIC HARDWARE</text>
+<rect x="48" y="1176" width="222.838" height="54" rx="8" fill="#1c302a" stroke="#58dac5" stroke-width="1.4"/>
+<text x="159.419" y="1208" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Intel E810 / E830 / E835</text>
+<rect x="280.838" y="1176" width="125.691" height="54" rx="8" fill="#1c302a" stroke="#58dac5" stroke-width="1.4"/>
+<text x="343.684" y="1208" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Intel XL710</text>
+<rect x="416.529" y="1176" width="160.479" height="54" rx="8" fill="#1c302a" stroke="#58dac5" stroke-width="1.4"/>
+<text x="496.769" y="1208" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Intel I225 / I226</text>
+<rect x="587.009" y="1176" width="216.048" height="54" rx="8" fill="#1c302a" stroke="#58dac5" stroke-width="1.4"/>
+<text x="695.033" y="1208" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Intel X540-AT2 / X550T</text>
+<rect x="813.057" y="1176" width="89.0113" height="54" rx="8" fill="#1c302a" stroke="#58dac5" stroke-width="1.4"/>
+<text x="857.562" y="1208" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">Others</text>
+<rect x="934.068" y="1136" width="313.932" height="110" rx="12" fill="#191f1e" stroke="#54b8c5" stroke-width="1.5"/>
+<text x="950.068" y="1161" font-size="11.5" font-weight="700" fill="#85edfa" letter-spacing="1.4">DMA HARDWARE</text>
+<rect x="950.068" y="1176" width="125.175" height="54" rx="8" fill="#1d2f30" stroke="#61d8e7" stroke-width="1.4"/>
+<text x="1012.66" y="1208" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">DSA (IDXD)</text>
+<rect x="1085.24" y="1176" width="146.757" height="54" rx="8" fill="#1d2f30" stroke="#61d8e7" stroke-width="1.4"/>
+<text x="1158.62" y="1208" font-size="14" font-weight="700" fill="#fbf3ea" text-anchor="middle">CBDMA (IOAT)</text>
+</g>
+</svg>

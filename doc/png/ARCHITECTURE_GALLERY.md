@@ -1,7 +1,7 @@
 # MTL Architecture SVG Gallery
 
 This gallery shows each architecture SVG in this directory and its child directories.
-Select an image or a file name to open the SVG.
+Select an image or a filename to open the SVG.
 
 ## Current Diagram
 
@@ -94,3 +94,91 @@ Select an image or a file name to open the SVG.
 | :--: | :--: |
 | <a href="claude-arch-svg/arch-13-light-intel-clean.svg"><img src="claude-arch-svg/arch-13-light-intel-clean.svg" alt="Light Intel Clean architecture proposition" width="720"></a> | <a href="claude-arch-svg/arch-14-copper-night.svg"><img src="claude-arch-svg/arch-14-copper-night.svg" alt="Copper Night architecture proposition" width="720"></a> |
 | [arch-13-light-intel-clean.svg](claude-arch-svg/arch-13-light-intel-clean.svg) | [arch-14-copper-night.svg](claude-arch-svg/arch-14-copper-night.svg) |
+
+## Improved Versions
+
+### Improved E835 Design Concepts
+
+| 01 Intel Clean | 02 Arctic Teal |
+| :--: | :--: |
+| <a href="improved/arch-e835-01-intel-clean.svg"><img src="improved/arch-e835-01-intel-clean.svg" alt="Improved Intel Clean architecture concept" width="720"></a> | <a href="improved/arch-e835-02-arctic-teal.svg"><img src="improved/arch-e835-02-arctic-teal.svg" alt="Improved Arctic Teal architecture concept" width="720"></a> |
+| [arch-e835-01-intel-clean.svg](improved/arch-e835-01-intel-clean.svg) | [arch-e835-02-arctic-teal.svg](improved/arch-e835-02-arctic-teal.svg) |
+
+| 03 Dark Signal | 04 Blueprint |
+| :--: | :--: |
+| <a href="improved/arch-e835-03-dark-signal.svg"><img src="improved/arch-e835-03-dark-signal.svg" alt="Improved Dark Signal architecture concept" width="720"></a> | <a href="improved/arch-e835-04-blueprint.svg"><img src="improved/arch-e835-04-blueprint.svg" alt="Improved Blueprint architecture concept" width="720"></a> |
+| [arch-e835-03-dark-signal.svg](improved/arch-e835-03-dark-signal.svg) | [arch-e835-04-blueprint.svg](improved/arch-e835-04-blueprint.svg) |
+
+| 05 Warm Technical | 06 High Contrast |
+| :--: | :--: |
+| <a href="improved/arch-e835-05-warm-technical.svg"><img src="improved/arch-e835-05-warm-technical.svg" alt="Improved Warm Technical architecture concept" width="720"></a> | <a href="improved/arch-e835-06-high-contrast.svg"><img src="improved/arch-e835-06-high-contrast.svg" alt="Improved High Contrast architecture concept" width="720"></a> |
+| [arch-e835-05-warm-technical.svg](improved/arch-e835-05-warm-technical.svg) | [arch-e835-06-high-contrast.svg](improved/arch-e835-06-high-contrast.svg) |
+
+| 07 Cobalt Mint | 08 Neon Glass |
+| :--: | :--: |
+| <a href="improved/arch-e835-07-cobalt-mint.svg"><img src="improved/arch-e835-07-cobalt-mint.svg" alt="Improved Cobalt Mint architecture concept" width="720"></a> | <a href="improved/arch-e835-08-neon-glass.svg"><img src="improved/arch-e835-08-neon-glass.svg" alt="Improved Neon Glass architecture concept" width="720"></a> |
+| [arch-e835-07-cobalt-mint.svg](improved/arch-e835-07-cobalt-mint.svg) | [arch-e835-08-neon-glass.svg](improved/arch-e835-08-neon-glass.svg) |
+
+### Improved GPT Propositions
+
+| 01 Precision Grid | 02 Broadcast Console |
+| :--: | :--: |
+| <a href="improved/arch-option-01-precision-grid.svg"><img src="improved/arch-option-01-precision-grid.svg" alt="Improved Precision Grid architecture proposition" width="720"></a> | <a href="improved/arch-option-02-broadcast-console.svg"><img src="improved/arch-option-02-broadcast-console.svg" alt="Improved Broadcast Console architecture proposition" width="720"></a> |
+| [arch-option-01-precision-grid.svg](improved/arch-option-01-precision-grid.svg) | [arch-option-02-broadcast-console.svg](improved/arch-option-02-broadcast-console.svg) |
+
+| 03 Arctic Documentation | 04 Layered Workbench |
+| :--: | :--: |
+| <a href="improved/arch-option-03-arctic-documentation.svg"><img src="improved/arch-option-03-arctic-documentation.svg" alt="Improved Arctic Documentation architecture proposition" width="720"></a> | <a href="improved/arch-option-04-layered-workbench.svg"><img src="improved/arch-option-04-layered-workbench.svg" alt="Improved Layered Workbench architecture proposition" width="720"></a> |
+| [arch-option-03-arctic-documentation.svg](improved/arch-option-03-arctic-documentation.svg) | [arch-option-04-layered-workbench.svg](improved/arch-option-04-layered-workbench.svg) |
+
+| 05 Midnight Mint | 06 High Contrast Paper |
+| :--: | :--: |
+| <a href="improved/arch-option-05-midnight-mint.svg"><img src="improved/arch-option-05-midnight-mint.svg" alt="Improved Midnight Mint architecture proposition" width="720"></a> | <a href="improved/arch-option-06-high-contrast-paper.svg"><img src="improved/arch-option-06-high-contrast-paper.svg" alt="Improved High Contrast Paper architecture proposition" width="720"></a> |
+| [arch-option-05-midnight-mint.svg](improved/arch-option-05-midnight-mint.svg) | [arch-option-06-high-contrast-paper.svg](improved/arch-option-06-high-contrast-paper.svg) |
+
+| 07 Slate and Coral | 08 Cobalt Steel |
+| :--: | :--: |
+| <a href="improved/arch-option-07-slate-coral.svg"><img src="improved/arch-option-07-slate-coral.svg" alt="Improved Slate and Coral architecture proposition" width="720"></a> | <a href="improved/arch-option-08-cobalt-steel.svg"><img src="improved/arch-option-08-cobalt-steel.svg" alt="Improved Cobalt Steel architecture proposition" width="720"></a> |
+| [arch-option-07-slate-coral.svg](improved/arch-option-07-slate-coral.svg) | [arch-option-08-cobalt-steel.svg](improved/arch-option-08-cobalt-steel.svg) |
+
+| 09 Signal Map | 10 Executive System |
+| :--: | :--: |
+| <a href="improved/arch-option-09-signal-map.svg"><img src="improved/arch-option-09-signal-map.svg" alt="Improved Signal Map architecture proposition" width="720"></a> | <a href="improved/arch-option-10-executive-system.svg"><img src="improved/arch-option-10-executive-system.svg" alt="Improved Executive System architecture proposition" width="720"></a> |
+| [arch-option-09-signal-map.svg](improved/arch-option-09-signal-map.svg) | [arch-option-10-executive-system.svg](improved/arch-option-10-executive-system.svg) |
+
+### Improved Claude Propositions
+
+| 01 Neon Glass Refined | 02 Neon Cyber Eyebrow |
+| :--: | :--: |
+| <a href="improved/arch-01-neon-glass-refined.svg"><img src="improved/arch-01-neon-glass-refined.svg" alt="Improved Neon Glass Refined architecture proposition" width="720"></a> | <a href="improved/arch-02-neon-cyber-eyebrow.svg"><img src="improved/arch-02-neon-cyber-eyebrow.svg" alt="Improved Neon Cyber Eyebrow architecture proposition" width="720"></a> |
+| [arch-01-neon-glass-refined.svg](improved/arch-01-neon-glass-refined.svg) | [arch-02-neon-cyber-eyebrow.svg](improved/arch-02-neon-cyber-eyebrow.svg) |
+
+| 03 Aurora Frost | 04 Midnight Flat Accent |
+| :--: | :--: |
+| <a href="improved/arch-03-aurora-frost.svg"><img src="improved/arch-03-aurora-frost.svg" alt="Improved Aurora Frost architecture proposition" width="720"></a> | <a href="improved/arch-04-midnight-flat-accent.svg"><img src="improved/arch-04-midnight-flat-accent.svg" alt="Improved Midnight Flat Accent architecture proposition" width="720"></a> |
+| [arch-03-aurora-frost.svg](improved/arch-03-aurora-frost.svg) | [arch-04-midnight-flat-accent.svg](improved/arch-04-midnight-flat-accent.svg) |
+
+| 05 GitHub Dark | 06 Intel Blue Glow |
+| :--: | :--: |
+| <a href="improved/arch-05-github-dark.svg"><img src="improved/arch-05-github-dark.svg" alt="Improved GitHub Dark architecture proposition" width="720"></a> | <a href="improved/arch-06-intel-blue-glow.svg"><img src="improved/arch-06-intel-blue-glow.svg" alt="Improved Intel Blue Glow architecture proposition" width="720"></a> |
+| [arch-05-github-dark.svg](improved/arch-05-github-dark.svg) | [arch-06-intel-blue-glow.svg](improved/arch-06-intel-blue-glow.svg) |
+
+| 07 Blueprint Mono | 08 Synthwave |
+| :--: | :--: |
+| <a href="improved/arch-07-blueprint-mono.svg"><img src="improved/arch-07-blueprint-mono.svg" alt="Improved Blueprint Mono architecture proposition" width="720"></a> | <a href="improved/arch-08-synthwave.svg"><img src="improved/arch-08-synthwave.svg" alt="Improved Synthwave architecture proposition" width="720"></a> |
+| [arch-07-blueprint-mono.svg](improved/arch-07-blueprint-mono.svg) | [arch-08-synthwave.svg](improved/arch-08-synthwave.svg) |
+
+| 09 Emerald Terminal | 10 Graphite Focus |
+| :--: | :--: |
+| <a href="improved/arch-09-emerald-terminal.svg"><img src="improved/arch-09-emerald-terminal.svg" alt="Improved Emerald Terminal architecture proposition" width="720"></a> | <a href="improved/arch-10-graphite-focus.svg"><img src="improved/arch-10-graphite-focus.svg" alt="Improved Graphite Focus architecture proposition" width="720"></a> |
+| [arch-09-emerald-terminal.svg](improved/arch-09-emerald-terminal.svg) | [arch-10-graphite-focus.svg](improved/arch-10-graphite-focus.svg) |
+
+| 11 High Contrast | 12 Light Frost |
+| :--: | :--: |
+| <a href="improved/arch-11-high-contrast.svg"><img src="improved/arch-11-high-contrast.svg" alt="Improved High Contrast architecture proposition" width="720"></a> | <a href="improved/arch-12-light-frost.svg"><img src="improved/arch-12-light-frost.svg" alt="Improved Light Frost architecture proposition" width="720"></a> |
+| [arch-11-high-contrast.svg](improved/arch-11-high-contrast.svg) | [arch-12-light-frost.svg](improved/arch-12-light-frost.svg) |
+
+| 13 Light Intel Clean | 14 Copper Night |
+| :--: | :--: |
+| <a href="improved/arch-13-light-intel-clean.svg"><img src="improved/arch-13-light-intel-clean.svg" alt="Improved Light Intel Clean architecture proposition" width="720"></a> | <a href="improved/arch-14-copper-night.svg"><img src="improved/arch-14-copper-night.svg" alt="Improved Copper Night architecture proposition" width="720"></a> |
+| [arch-13-light-intel-clean.svg](improved/arch-13-light-intel-clean.svg) | [arch-14-copper-night.svg](improved/arch-14-copper-night.svg) |

@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1022" viewBox="0 0 1280 1022" role="img" aria-labelledby="t d">
+<title id="t">Media Transport Library architecture</title>
+<desc id="d">Layered architecture of the Media Transport Library: apps on top, the library (Pipeline API, ST 2110 sessions, color format conversion, control plane protocols, management, device abstraction layer), the network backend (DPDK PMD, Linux kernel with AF_XDP), the supported platforms, and the NIC and DMA hardware.</desc>
+<defs>
+<filter id="glow" x="-5%" y="-30%" width="110%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#002244"/><stop offset="1" stop-color="#000b18"/></linearGradient>
+<radialGradient id="rg0"><stop offset="0" stop-color="#0068b5" stop-opacity="0.35"/><stop offset="1" stop-color="#0068b5" stop-opacity="0"/></radialGradient>
+<radialGradient id="rg1"><stop offset="0" stop-color="#00c7fd" stop-opacity="0.10"/><stop offset="1" stop-color="#00c7fd" stop-opacity="0"/></radialGradient>
+<marker id="arrC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#00c7fd"/></marker>
+<marker id="arrCs" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="10" markerHeight="10" orient="auto" markerUnits="userSpaceOnUse"><path d="M10,0 L0,5 L10,10 z" fill="#00c7fd"/></marker>
+<marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#ffa300"/></marker>
+<linearGradient id="p00c7fd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00c7fd" stop-opacity="0.18"/><stop offset="1" stop-color="#00c7fd" stop-opacity="0.07"/></linearGradient>
+<linearGradient id="b00c7fd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00c7fd" stop-opacity="0.3"/><stop offset="1" stop-color="#00c7fd" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="frame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00c7fd" stop-opacity="0.15"/><stop offset="1" stop-color="#00c7fd" stop-opacity="0.05"/></linearGradient>
+<linearGradient id="pffa300" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffa300" stop-opacity="0.18"/><stop offset="1" stop-color="#ffa300" stop-opacity="0.07"/></linearGradient>
+<linearGradient id="bffa300" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffa300" stop-opacity="0.3"/><stop offset="1" stop-color="#ffa300" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="bfec91b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fec91b" stop-opacity="0.3"/><stop offset="1" stop-color="#fec91b" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="pff7a1a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a1a" stop-opacity="0.18"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0.07"/></linearGradient>
+<linearGradient id="bff7a1a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a1a" stop-opacity="0.3"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="pc18cff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c18cff" stop-opacity="0.18"/><stop offset="1" stop-color="#c18cff" stop-opacity="0.07"/></linearGradient>
+<linearGradient id="bc18cff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c18cff" stop-opacity="0.3"/><stop offset="1" stop-color="#c18cff" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="p8f9bff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8f9bff" stop-opacity="0.18"/><stop offset="1" stop-color="#8f9bff" stop-opacity="0.07"/></linearGradient>
+<linearGradient id="b8f9bff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8f9bff" stop-opacity="0.3"/><stop offset="1" stop-color="#8f9bff" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="p00d6a4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00d6a4" stop-opacity="0.18"/><stop offset="1" stop-color="#00d6a4" stop-opacity="0.07"/></linearGradient>
+<linearGradient id="b00d6a4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00d6a4" stop-opacity="0.3"/><stop offset="1" stop-color="#00d6a4" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="p2fbf71" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2fbf71" stop-opacity="0.18"/><stop offset="1" stop-color="#2fbf71" stop-opacity="0.07"/></linearGradient>
+<linearGradient id="b8f6bff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8f6bff" stop-opacity="0.3"/><stop offset="1" stop-color="#8f6bff" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="p0098ff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0098ff" stop-opacity="0.18"/><stop offset="1" stop-color="#0098ff" stop-opacity="0.07"/></linearGradient>
+<linearGradient id="be96115" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e96115" stop-opacity="0.3"/><stop offset="1" stop-color="#e96115" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="b2fbf71" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2fbf71" stop-opacity="0.3"/><stop offset="1" stop-color="#2fbf71" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="b5b7a99" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b7a99" stop-opacity="0.3"/><stop offset="1" stop-color="#5b7a99" stop-opacity="0.1"/></linearGradient>
+<linearGradient id="p7fb2e5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb2e5" stop-opacity="0.18"/><stop offset="1" stop-color="#7fb2e5" stop-opacity="0.07"/></linearGradient>
+</defs>
+<rect width="1280" height="1022" fill="url(#bg)"/>
+<circle cx="640" cy="0" r="704" fill="url(#rg0)"/>
+<circle cx="640" cy="1022" r="512" fill="url(#rg1)"/>
+<g font-family="'Intel Clear','Intel One Display','Segoe UI','Helvetica Neue',Arial,sans-serif" font-weight="700" fill="#f2f8ff" text-anchor="middle">
+<rect x="32" y="32" width="1216" height="80" rx="10" fill="none" stroke="#00c7fd" stroke-width="3" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="32" y="32" width="1216" height="80" rx="10" fill="url(#p00c7fd)" stroke="#00c7fd" stroke-width="1.5" stroke-opacity="0.65"/>
+<text x="68" y="77" font-size="14" text-anchor="start" fill="#59dbfe">Apps</text>
+<rect x="184.0" y="46" width="201.2" height="52" rx="7" fill="#03213d"/>
+<rect x="184.0" y="46" width="201.2" height="52" rx="7" fill="url(#b00c7fd)" stroke="#00c7fd" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="191.0" y="47" width="187.2" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="284.6" y="77.04" font-size="14">Video App</text>
+<rect x="395.2" y="46" width="201.2" height="52" rx="7" fill="#03213d"/>
+<rect x="395.2" y="46" width="201.2" height="52" rx="7" fill="url(#b00c7fd)" stroke="#00c7fd" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="402.2" y="47" width="187.2" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="495.8" y="77.04" font-size="14">Audio App</text>
+<rect x="606.4" y="46" width="201.2" height="52" rx="7" fill="#03213d"/>
+<rect x="606.4" y="46" width="201.2" height="52" rx="7" fill="url(#b00c7fd)" stroke="#00c7fd" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="613.4" y="47" width="187.2" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="707" y="77.04" font-size="14">Ancillary App</text>
+<rect x="817.5999999999999" y="46" width="201.2" height="52" rx="7" fill="#03213d"/>
+<rect x="817.5999999999999" y="46" width="201.2" height="52" rx="7" fill="url(#b00c7fd)" stroke="#00c7fd" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="824.5999999999999" y="47" width="187.2" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="918.2" y="77.04" font-size="14">Fast Metadata App</text>
+<rect x="1028.8" y="46" width="201.2" height="52" rx="7" fill="#03213d"/>
+<rect x="1028.8" y="46" width="201.2" height="52" rx="7" fill="url(#b00c7fd)" stroke="#00c7fd" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="1035.8" y="47" width="187.2" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="1129.4" y="70" font-size="14">Third-party Plugins</text>
+<text x="1129.4" y="87" font-size="11.5" font-weight="400" fill="#8ce6fe">OBS, FFmpeg, GStreamer</text>
+<rect x="32" y="172" width="1216" height="430" rx="14" fill="none" stroke="#00c7fd" stroke-width="4" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="32" y="172" width="1216" height="430" rx="14" fill="url(#frame)" stroke="#00c7fd" stroke-width="2" stroke-opacity="0.9"/>
+<text x="640" y="210" font-size="26" fill="#59dbfe">Media Transport Library</text>
+<line x1="284.6" y1="113" x2="284.6" y2="171" stroke="#00c7fd" stroke-width="2.2" marker-start="url(#arrCs)" marker-end="url(#arrC)"/>
+<rect x="244.952" y="130" width="79.2969" height="24" rx="12" fill="#032c4f" stroke="#00c7fd" stroke-width="1.3"/>
+<text x="284.6" y="146.5" font-size="12.5">Frames</text>
+<line x1="707" y1="113" x2="707" y2="171" stroke="#00c7fd" stroke-width="2.2" marker-start="url(#arrCs)" marker-end="url(#arrC)"/>
+<rect x="633.172" y="130" width="147.656" height="24" rx="12" fill="#032c4f" stroke="#00c7fd" stroke-width="1.3"/>
+<text x="707" y="146.5" font-size="12.5">RTP Passthrough</text>
+<line x1="1129.4" y1="113" x2="1129.4" y2="171" stroke="#00c7fd" stroke-width="2.2" marker-start="url(#arrCs)" marker-end="url(#arrC)"/>
+<rect x="1080.49" y="130" width="97.8125" height="24" rx="12" fill="#032c4f" stroke="#00c7fd" stroke-width="1.3"/>
+<text x="1129.4" y="146.5" font-size="12.5">Datagram</text>
+<rect x="50" y="228" width="462" height="80" rx="10" fill="url(#pffa300)" stroke="#ffa300" stroke-width="1.5" stroke-opacity="0.65"/>
+<text x="68" y="264" font-size="14" text-anchor="start" fill="#ffc359">Pipeline</text>
+<text x="68" y="282" font-size="14" text-anchor="start" fill="#ffc359">API</text>
+<rect x="184" y="242" width="152" height="52" rx="7" fill="#03213d"/>
+<rect x="184" y="242" width="152" height="52" rx="7" fill="url(#bffa300)" stroke="#ffa300" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="191" y="243" width="138" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="260" y="266" font-size="14">ST 2110-20</text>
+<text x="260" y="283" font-size="11.5" font-weight="400" fill="#ffd68c">Conversion Plugin</text>
+<rect x="346" y="242" width="152" height="52" rx="7" fill="#03213d"/>
+<rect x="346" y="242" width="152" height="52" rx="7" fill="url(#bffa300)" stroke="#ffa300" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="353" y="243" width="138" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="422" y="266" font-size="14">ST 2110-22</text>
+<text x="422" y="283" font-size="11.5" font-weight="400" fill="#ffd68c">Codec Plugin</text>
+<rect x="526" y="228" width="472" height="80" rx="10" fill="#03213d"/>
+<rect x="526" y="228" width="472" height="80" rx="10" fill="url(#bfec91b)" stroke="#fec91b" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="536" y="229" width="452" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="762" y="265" font-size="15">Color Format Conversion</text>
+<text x="762" y="284" font-size="12.5" font-weight="400" fill="#ffe798">Accelerated by SIMD (AVX512)</text>
+<rect x="50" y="320" width="948" height="80" rx="10" fill="url(#pff7a1a)" stroke="#ff7a1a" stroke-width="1.5" stroke-opacity="0.65"/>
+<text x="68" y="356" font-size="14" text-anchor="start" fill="#ffa96a">ST 2110</text>
+<text x="68" y="374" font-size="14" text-anchor="start" fill="#ffa96a">Sessions</text>
+<rect x="184" y="334" width="152" height="52" rx="7" fill="#03213d"/>
+<rect x="184" y="334" width="152" height="52" rx="7" fill="url(#bff7a1a)" stroke="#ff7a1a" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="191" y="335" width="138" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="260" y="358" font-size="14">ST 2110-20</text>
+<text x="260" y="375" font-size="11.5" font-weight="400" fill="#ffc398">Uncompressed Video</text>
+<rect x="346" y="334" width="152" height="52" rx="7" fill="#03213d"/>
+<rect x="346" y="334" width="152" height="52" rx="7" fill="url(#bff7a1a)" stroke="#ff7a1a" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="353" y="335" width="138" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="422" y="358" font-size="14">ST 2110-22</text>
+<text x="422" y="375" font-size="11.5" font-weight="400" fill="#ffc398">Compressed Video</text>
+<rect x="508" y="334" width="152" height="52" rx="7" fill="#03213d"/>
+<rect x="508" y="334" width="152" height="52" rx="7" fill="url(#bff7a1a)" stroke="#ff7a1a" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="515" y="335" width="138" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="584" y="358" font-size="14">ST 2110-30/31</text>
+<text x="584" y="375" font-size="11.5" font-weight="400" fill="#ffc398">(Un)compressed Audio</text>
+<rect x="670" y="334" width="152" height="52" rx="7" fill="#03213d"/>
+<rect x="670" y="334" width="152" height="52" rx="7" fill="url(#bff7a1a)" stroke="#ff7a1a" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="677" y="335" width="138" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="746" y="358" font-size="14">ST 2110-40</text>
+<text x="746" y="375" font-size="11.5" font-weight="400" fill="#ffc398">Ancillary Data</text>
+<rect x="832" y="334" width="152" height="52" rx="7" fill="#03213d"/>
+<rect x="832" y="334" width="152" height="52" rx="7" fill="url(#bff7a1a)" stroke="#ff7a1a" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="839" y="335" width="138" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="908" y="358" font-size="14">ST 2110-41</text>
+<text x="908" y="375" font-size="11.5" font-weight="400" fill="#ffc398">Fast Metadata</text>
+<rect x="1012" y="228" width="218" height="172" rx="10" fill="url(#pc18cff)" stroke="#c18cff" stroke-width="1.5" stroke-opacity="0.65"/>
+<text x="1026" y="253" font-size="13" text-anchor="start" fill="#d7b4ff">Control Plane Protocols</text>
+<rect x="1026.0" y="266.0" width="90.0" height="34.666666666666664" rx="7" fill="#03213d"/>
+<rect x="1026.0" y="266.0" width="90.0" height="34.666666666666664" rx="7" fill="url(#bc18cff)" stroke="#c18cff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="1033.0" y="267.0" width="76.0" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="1071" y="288.373" font-size="14">IGMP</text>
+<rect x="1126.0" y="266.0" width="90.0" height="34.666666666666664" rx="7" fill="#03213d"/>
+<rect x="1126.0" y="266.0" width="90.0" height="34.666666666666664" rx="7" fill="url(#bc18cff)" stroke="#c18cff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="1133.0" y="267.0" width="76.0" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="1171" y="288.373" font-size="14">PTP</text>
+<rect x="1026.0" y="308.6666666666667" width="90.0" height="34.666666666666664" rx="7" fill="#03213d"/>
+<rect x="1026.0" y="308.6666666666667" width="90.0" height="34.666666666666664" rx="7" fill="url(#bc18cff)" stroke="#c18cff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="1033.0" y="309.6666666666667" width="76.0" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="1071" y="331.04" font-size="14">DHCP</text>
+<rect x="1126.0" y="308.6666666666667" width="90.0" height="34.666666666666664" rx="7" fill="#03213d"/>
+<rect x="1126.0" y="308.6666666666667" width="90.0" height="34.666666666666664" rx="7" fill="url(#bc18cff)" stroke="#c18cff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="1133.0" y="309.6666666666667" width="76.0" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="1171" y="331.04" font-size="14">ARP</text>
+<rect x="1026" y="351.3333333333333" width="190" height="34.666666666666664" rx="7" fill="#03213d"/>
+<rect x="1026" y="351.3333333333333" width="190" height="34.666666666666664" rx="7" fill="url(#bc18cff)" stroke="#c18cff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="1033" y="352.3333333333333" width="176" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="1121" y="373.707" font-size="14">RTCP</text>
+<rect x="50" y="412" width="1180" height="80" rx="10" fill="url(#p8f9bff)" stroke="#8f9bff" stroke-width="1.5" stroke-opacity="0.65"/>
+<text x="68" y="457" font-size="14" text-anchor="start" fill="#b6beff">Management</text>
+<rect x="184.0" y="426" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="184.0" y="426" width="198.4" height="52" rx="7" fill="url(#b8f9bff)" stroke="#8f9bff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="191.0" y="427" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="283.2" y="457.04" font-size="14">Pacing (TSN, RL, TSC)</text>
+<rect x="392.4" y="426" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="392.4" y="426" width="198.4" height="52" rx="7" fill="url(#b8f9bff)" stroke="#8f9bff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="399.4" y="427" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="491.6" y="457.04" font-size="14">Tasklet Scheduler</text>
+<rect x="600.8" y="426" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="600.8" y="426" width="198.4" height="52" rx="7" fill="url(#b8f9bff)" stroke="#8f9bff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="607.8" y="427" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="700" y="457.04" font-size="14">Flow Director / RSS</text>
+<rect x="809.2" y="426" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="809.2" y="426" width="198.4" height="52" rx="7" fill="url(#b8f9bff)" stroke="#8f9bff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="816.2" y="427" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="908.4" y="457.04" font-size="14">PTP Timesync</text>
+<rect x="1017.6" y="426" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="1017.6" y="426" width="198.4" height="52" rx="7" fill="url(#b8f9bff)" stroke="#8f9bff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="1024.6" y="427" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="1116.8" y="457.04" font-size="14">DMA Memcpy Helper</text>
+<rect x="50" y="504" width="1180" height="80" rx="10" fill="url(#p00d6a4)" stroke="#00d6a4" stroke-width="1.5" stroke-opacity="0.65"/>
+<text x="68" y="531" font-size="14" text-anchor="start" fill="#59e4c4">Device</text>
+<text x="68" y="549" font-size="14" text-anchor="start" fill="#59e4c4">Abstraction</text>
+<text x="68" y="567" font-size="14" text-anchor="start" fill="#59e4c4">Layer</text>
+<rect x="184.0" y="518" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="184.0" y="518" width="198.4" height="52" rx="7" fill="url(#b00d6a4)" stroke="#00d6a4" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="191.0" y="519" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="283.2" y="541" font-size="14">Unified Tx &amp; Rx</text>
+<text x="283.2" y="558" font-size="14">Burst Interface</text>
+<rect x="392.4" y="518" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="392.4" y="518" width="198.4" height="52" rx="7" fill="url(#b00d6a4)" stroke="#00d6a4" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="399.4" y="519" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="491.6" y="541" font-size="14">Tx &amp; Rx Queue</text>
+<text x="491.6" y="558" font-size="14">Management</text>
+<rect x="600.8" y="518" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="600.8" y="518" width="198.4" height="52" rx="7" fill="url(#b00d6a4)" stroke="#00d6a4" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="607.8" y="519" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="700" y="541" font-size="14">Mbuf Pool / Ring</text>
+<text x="700" y="558" font-size="14">Management</text>
+<rect x="809.2" y="518" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="809.2" y="518" width="198.4" height="52" rx="7" fill="url(#b00d6a4)" stroke="#00d6a4" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="816.2" y="519" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="908.4" y="541" font-size="14">Shared Queue</text>
+<text x="908.4" y="558" font-size="14">Management</text>
+<rect x="1017.6" y="518" width="198.4" height="52" rx="7" fill="#03213d"/>
+<rect x="1017.6" y="518" width="198.4" height="52" rx="7" fill="url(#b00d6a4)" stroke="#00d6a4" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="1024.6" y="519" width="184.4" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="1116.8" y="541" font-size="14">Virtio-user</text>
+<text x="1116.8" y="558" font-size="14">Exception Path</text>
+<rect x="32" y="620" width="1216" height="192" rx="10" fill="none" stroke="#2fbf71" stroke-width="3" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="32" y="620" width="1216" height="192" rx="10" fill="url(#p2fbf71)" stroke="#2fbf71" stroke-width="1.5" stroke-opacity="0.65"/>
+<text x="68" y="712" font-size="14" text-anchor="start" fill="#78d5a3">Network</text>
+<text x="68" y="730" font-size="14" text-anchor="start" fill="#78d5a3">Backend</text>
+<rect x="184" y="634" width="244" height="164" rx="10" fill="#03213d"/>
+<rect x="184" y="634" width="244" height="164" rx="10" fill="url(#b8f6bff)" stroke="#8f6bff" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="194" y="635" width="224" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="306" y="714" font-size="20">DPDK PMD</text>
+<text x="306" y="736" font-size="13" font-weight="400" fill="#cdbcff">Linux &amp; Windows</text>
+<rect x="442" y="634" width="556" height="164" rx="10" fill="url(#p0098ff)" stroke="#0098ff" stroke-width="1.5" stroke-opacity="0.8"/>
+<text x="456" y="659" font-size="13" text-anchor="start" fill="#59bcff">Linux Kernel</text>
+<rect x="456" y="672" width="232.0" height="44" rx="7" fill="#03213d"/>
+<rect x="456" y="672" width="232.0" height="44" rx="7" fill="url(#be96115)" stroke="#e96115" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="463" y="673" width="218.0" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="572" y="699.04" font-size="14">Kernel Network Stack</text>
+<rect x="456" y="740" width="232.0" height="44" rx="7" fill="#03213d"/>
+<rect x="456" y="740" width="232.0" height="44" rx="7" fill="url(#b2fbf71)" stroke="#2fbf71" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="463" y="741" width="218.0" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="572" y="767.04" font-size="14">NIC Driver</text>
+<rect x="752.0" y="672" width="232.0" height="44" rx="7" fill="#03213d"/>
+<rect x="752.0" y="672" width="232.0" height="44" rx="7" fill="url(#bff7a1a)" stroke="#ff7a1a" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="759.0" y="673" width="218.0" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="868" y="699.04" font-size="14">AF_XDP</text>
+<rect x="752.0" y="740" width="232.0" height="44" rx="7" fill="#03213d"/>
+<rect x="752.0" y="740" width="232.0" height="44" rx="7" fill="url(#bfec91b)" stroke="#fec91b" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="759.0" y="741" width="218.0" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="868" y="767.04" font-size="14">eBPF program</text>
+<line x1="691" y1="762" x2="749" y2="762" stroke="#ffa300" stroke-width="2.2" marker-end="url(#arrA)"/>
+<line x1="868" y1="738" x2="868" y2="718" stroke="#ffa300" stroke-width="2.2" marker-end="url(#arrA)"/>
+<rect x="1012" y="634" width="218" height="164" rx="10" fill="#03213d"/>
+<rect x="1012" y="634" width="218" height="164" rx="10" fill="url(#b5b7a99)" stroke="#5b7a99" stroke-width="1.5" stroke-opacity="1" stroke-dasharray="6 5"/>
+<text x="1121" y="714" font-size="15" fill="#a9c3dd">Windows Kernel</text>
+<text x="1121" y="734" font-size="12.5" font-weight="400" fill="#a9c3dd">Not supported</text>
+<rect x="32" y="828" width="1216" height="48" rx="10" fill="url(#p7fb2e5)" stroke="#7fb2e5" stroke-width="1.5" stroke-opacity="0.7"/>
+<text x="68" y="857" font-size="14" text-anchor="start" fill="#accdee">Platforms</text>
+<rect x="184" y="837" width="278.438" height="30" rx="15" fill="#03213d" stroke="#7fb2e5" stroke-width="1.3"/>
+<circle cx="201" cy="852" r="4" fill="#00c7fd"/>
+<text x="214" y="857" font-size="13.5" text-anchor="start">Linux</text>
+<text x="264.156" y="857" font-size="13" font-weight="400" text-anchor="start" fill="#a9c3dd">Bare metal / VM / Container</text>
+<rect x="476.438" y="837" width="229.703" height="30" rx="15" fill="#03213d" stroke="#7fb2e5" stroke-width="1.3"/>
+<circle cx="493.438" cy="852" r="4" fill="#00c7fd"/>
+<text x="506.438" y="857" font-size="13.5" text-anchor="start">Windows</text>
+<text x="584" y="857" font-size="13" font-weight="400" text-anchor="start" fill="#a9c3dd">Bare metal / VM</text>
+<rect x="32" y="892" width="861.90625" height="98" rx="10" fill="none" stroke="#2fbf71" stroke-width="3" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="32" y="892" width="861.90625" height="98" rx="10" fill="url(#p2fbf71)" stroke="#2fbf71" stroke-width="1.5" stroke-opacity="0.65"/>
+<text x="50" y="917" font-size="13" text-anchor="start" fill="#78d5a3">NIC Hardware</text>
+<rect x="50" y="930" width="221.075" height="44" rx="7" fill="#03213d"/>
+<rect x="50" y="930" width="221.075" height="44" rx="7" fill="url(#b2fbf71)" stroke="#2fbf71" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="57" y="931" width="207.075" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="160.537" y="957.04" font-size="14">Intel E810 / E830 / E835</text>
+<rect x="281.075" y="930" width="123.98125" height="44" rx="7" fill="#03213d"/>
+<rect x="281.075" y="930" width="123.98125" height="44" rx="7" fill="url(#b2fbf71)" stroke="#2fbf71" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="288.075" y="931" width="109.98125" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="343.066" y="957.04" font-size="14">Intel XL710</text>
+<rect x="415.05625" y="930" width="148.98125" height="44" rx="7" fill="#03213d"/>
+<rect x="415.05625" y="930" width="148.98125" height="44" rx="7" fill="url(#b2fbf71)" stroke="#2fbf71" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="422.05625" y="931" width="134.98125" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="489.547" y="957.04" font-size="14">Intel I225/I226</text>
+<rect x="574.0374999999999" y="930" width="204.54375" height="44" rx="7" fill="#03213d"/>
+<rect x="574.0374999999999" y="930" width="204.54375" height="44" rx="7" fill="url(#b2fbf71)" stroke="#2fbf71" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="581.0374999999999" y="931" width="190.54375" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="676.309" y="957.04" font-size="14">Intel X540-AT2/X550T</text>
+<rect x="788.58125" y="930" width="87.325" height="44" rx="7" fill="#03213d"/>
+<rect x="788.58125" y="930" width="87.325" height="44" rx="7" fill="url(#b2fbf71)" stroke="#2fbf71" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="795.58125" y="931" width="73.325" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="832.244" y="957.04" font-size="14">Others</text>
+<rect x="907.90625" y="892" width="340.09375" height="98" rx="10" fill="none" stroke="#00c7fd" stroke-width="3" stroke-opacity="0.35" filter="url(#glow)"/>
+<rect x="907.90625" y="892" width="340.09375" height="98" rx="10" fill="url(#p00c7fd)" stroke="#00c7fd" stroke-width="1.5" stroke-opacity="0.65"/>
+<text x="925.906" y="917" font-size="13" text-anchor="start" fill="#59dbfe">DMA Hardware</text>
+<rect x="925.90625" y="930" width="147.046875" height="44" rx="7" fill="#03213d"/>
+<rect x="925.90625" y="930" width="147.046875" height="44" rx="7" fill="url(#b00c7fd)" stroke="#00c7fd" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="932.90625" y="931" width="133.046875" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="999.43" y="957.04" font-size="14">DSA (IDXD)</text>
+<rect x="1082.953125" y="930" width="147.046875" height="44" rx="7" fill="#03213d"/>
+<rect x="1082.953125" y="930" width="147.046875" height="44" rx="7" fill="url(#b00c7fd)" stroke="#00c7fd" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="1089.953125" y="931" width="133.046875" height="1" fill="#ffffff" fill-opacity="0.16"/>
+<text x="1156.48" y="957.04" font-size="14">CBDMA (IOAT)</text>
+</g>
+</svg>
