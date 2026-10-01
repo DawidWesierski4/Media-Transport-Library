@@ -1,0 +1,768 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Editable SVG with embedded diagrams.net source -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" style="background: #02060c; background-color: #02060c; color-scheme: dark;" version="1.1" width="992px" height="792px" viewBox="0 0 992 792" content="&lt;mxfile host=&quot;app.diagrams.net&quot; agent=&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0&quot; scale=&quot;1&quot; border=&quot;0&quot; version=&quot;29.3.7&quot; background=&quot;#02060c&quot;&gt;&#10;  &lt;diagram name=&quot;Overview&quot; id=&quot;In2UPKa8UrAWWRIqHnbd&quot;&gt;&#10;    &lt;mxGraphModel dx=&quot;2058&quot; dy=&quot;1116&quot; grid=&quot;1&quot; gridSize=&quot;10&quot; guides=&quot;1&quot; tooltips=&quot;1&quot; connect=&quot;1&quot; arrows=&quot;1&quot; fold=&quot;1&quot; page=&quot;1&quot; pageScale=&quot;1&quot; pageWidth=&quot;850&quot; pageHeight=&quot;1100&quot; math=&quot;0&quot; shadow=&quot;0&quot;&gt;&#10;      &lt;root&gt;&#10;        &lt;mxCell id=&quot;0&quot; /&gt;&#10;        &lt;mxCell id=&quot;1&quot; parent=&quot;0&quot; /&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-1&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;strokeWidth=2;fillColor=#02060c;fontColor=#e8f0f8;strokeColor=#142638;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;720&quot; width=&quot;990&quot; x=&quot;150&quot; y=&quot;120&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;aTVBBa3LqSJ_dW22ANa4-66&quot; parent=&quot;1&quot; style=&quot;rounded=1;strokeWidth=2;fillColor=#0b2032;strokeColor=#7beaff;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;400&quot; width=&quot;930&quot; x=&quot;180&quot; y=&quot;240&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-2&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2d703e;strokeColor=#69be78;fontColor=#ffffff;strokeWidth=2;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;150&quot; width=&quot;890&quot; x=&quot;200&quot; y=&quot;650&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-3&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d65b16;strokeColor=#ffb168;strokeWidth=2;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;80&quot; width=&quot;590&quot; x=&quot;200&quot; y=&quot;350&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-4&quot; parent=&quot;1&quot; style=&quot;text;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fillColor=none;strokeColor=none;fontColor=#e8f0f8;strokeWidth=2;fontSize=14;&quot; value=&quot;ST 2110&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;200&quot; y=&quot;375&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-5&quot; parent=&quot;1&quot; style=&quot;text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;strokeWidth=2;fontSize=14;fontColor=#FFFFFF;&quot; value=&quot;Network&amp;#10;Backend&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;220&quot; y=&quot;715&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-11&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;fontColor=#f7fbff;strokeColor=#75ca78;strokeWidth=2;gradientColor=#174a24;shadow=1;&quot; value=&quot;ST 2110-40&amp;#10;Ancillary&amp;#10;Data&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;90&quot; x=&quot;590&quot; y=&quot;360&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-12&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#635181;fontColor=#ffffff;strokeColor=#aa91d2;strokeWidth=2;fontSize=14;&quot; value=&quot;DPDK PMD&amp;#10;&amp;#10;Linux &amp;amp; Windows&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;130&quot; width=&quot;170&quot; x=&quot;305&quot; y=&quot;660&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-15&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#514274;strokeColor=#aa9bdc;strokeWidth=2;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;70&quot; width=&quot;890&quot; x=&quot;200&quot; y=&quot;440&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-16&quot; parent=&quot;1&quot; style=&quot;text;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fillColor=none;strokeColor=none;fontColor=#e8f0f8;strokeWidth=2;fontSize=14;&quot; value=&quot;Management&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;220&quot; y=&quot;460&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-17&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Pacing&amp;#10;(TSN, RL, TSC)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;330&quot; y=&quot;450&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-18&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Tasklet&amp;#10;Scheduler&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;480&quot; y=&quot;450&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-19&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Flow Director&amp;#10;/ RSS&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;630&quot; y=&quot;450&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-20&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#514274;strokeColor=#b2a4e3;strokeWidth=2;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;170&quot; width=&quot;280&quot; x=&quot;810&quot; y=&quot;260&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-21&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;IGMP&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;90&quot; x=&quot;840&quot; y=&quot;270&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-22&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;ARP&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;90&quot; x=&quot;960&quot; y=&quot;320&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-25&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;DHCP&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;90&quot; x=&quot;840&quot; y=&quot;320&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-26&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;PTP&amp;#10;Timesync&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;780&quot; y=&quot;450&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-27&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;RTCP&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;90&quot; x=&quot;960&quot; y=&quot;370&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-28&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;DMA Memcpy&amp;#10;Helper&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;930&quot; y=&quot;450&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-29&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d65b16;strokeColor=#ffb168;strokeWidth=2;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;80&quot; width=&quot;340&quot; x=&quot;200&quot; y=&quot;260&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-30&quot; parent=&quot;1&quot; style=&quot;text;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fillColor=none;strokeColor=none;fontColor=#e8f0f8;strokeWidth=2;fontSize=14;&quot; value=&quot;Pipeline&amp;#10;API&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;215&quot; y=&quot;285&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-35&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;strokeColor=#dce7ef;strokeWidth=2;fontSize=14;fontColor=#071018;shadow=1;gradientColor=#8c9bab;&quot; value=&quot;Color Format Conversion&amp;#10;Accelerated by SIMD (AVX512)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;80&quot; width=&quot;240&quot; x=&quot;550&quot; y=&quot;260&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-36&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#0b2b43;strokeColor=#28d9ff;strokeWidth=2;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;890&quot; x=&quot;200&quot; y=&quot;150&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-37&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Video App&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;120&quot; x=&quot;290&quot; y=&quot;160&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-38&quot; parent=&quot;1&quot; style=&quot;text;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fillColor=none;strokeColor=none;fontColor=#e8f0f8;strokeWidth=2;fontSize=14;&quot; value=&quot;Apps&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;210&quot; y=&quot;170&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-39&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Audio App&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;120&quot; x=&quot;415&quot; y=&quot;160&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-40&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Ancillary App&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;120&quot; x=&quot;540&quot; y=&quot;160&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-41&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Third-party Plugins: OBS, FFmpeg, GStreamer&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;280&quot; x=&quot;790&quot; y=&quot;160&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;4&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#0a1722;strokeColor=#607a8d;strokeWidth=2;fontColor=#e8f0f8;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;680&quot; x=&quot;150&quot; y=&quot;850&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;5&quot; parent=&quot;1&quot; style=&quot;text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fontColor=#e8f0f8;strokeWidth=2;fontSize=14;&quot; value=&quot;NIC&amp;#10;Hardware&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;160&quot; y=&quot;865&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;16&quot; parent=&quot;1&quot; style=&quot;text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fontColor=#e8f0f8;fontSize=16;strokeWidth=2;&quot; value=&quot;Linux: Bare metal / VM / Container&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;275&quot; y=&quot;810&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;17&quot; parent=&quot;1&quot; style=&quot;text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fontColor=#e8f0f8;fontSize=16;strokeWidth=2;&quot; value=&quot;Windows: Bare metal / VM&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;570&quot; y=&quot;810&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;19&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#0873b9;fontColor=#ffffff;strokeColor=#37b8ff;strokeWidth=2;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;130&quot; width=&quot;410&quot; x=&quot;500&quot; y=&quot;660&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;dc4D9y8Z-u1XLwbVgD6a-14&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d85c27;fontColor=#FFFFFF;strokeColor=#ff9a65;strokeWidth=2;fontSize=14;&quot; value=&quot;AF_XDP&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;720&quot; y=&quot;670&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;20&quot; parent=&quot;1&quot; style=&quot;text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;strokeWidth=2;fontColor=#FFFFFF;fontSize=14;&quot; value=&quot;Linux&amp;#10;Kernel&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;845&quot; y=&quot;710&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;25&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#8a4d3c;strokeColor=#dc947d;fontColor=#ffffff;strokeWidth=2;fontSize=13;&quot; value=&quot;Kernel&amp;#10;Network Stack&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;140&quot; x=&quot;525&quot; y=&quot;670&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;31&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;26&quot; style=&quot;edgeStyle=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Intel Clear;fontStyle=1;strokeWidth=3;strokeColor=#ff9a65;rounded=1;fillColor=#d85c27;&quot; target=&quot;30&quot; value=&quot;&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;26&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;strokeColor=#75ca78;fontColor=#f7fbff;strokeWidth=2;fontSize=13;gradientColor=#174a24;shadow=1;&quot; value=&quot;NIC&amp;#10;Driver&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;140&quot; x=&quot;525&quot; y=&quot;740&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;66&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;30&quot; style=&quot;edgeStyle=none;strokeWidth=3;fontFamily=Intel Clear;fontSize=12;fontColor=#F0F0F0;strokeColor=#ff9a65;rounded=1;fillColor=#d85c27;&quot; target=&quot;dc4D9y8Z-u1XLwbVgD6a-14&quot; value=&quot;&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;30&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d85c27;fontColor=#FFFFFF;strokeColor=#ff9a65;strokeWidth=2;fontSize=13;&quot; value=&quot;eBPF program&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;120&quot; x=&quot;720&quot; y=&quot;745&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;34&quot; parent=&quot;1&quot; style=&quot;text;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fillColor=none;strokeColor=none;fontColor=#e8f0f8;strokeWidth=2;fontSize=14;&quot; value=&quot;Control&amp;#10;Plane Protocols&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;85&quot; x=&quot;842.5&quot; y=&quot;380&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;35&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#18263a;fontColor=#e8f0f8;strokeColor=#52677f;strokeWidth=2;&quot; value=&quot;PTP&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;90&quot; x=&quot;960&quot; y=&quot;270&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;36&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2d703e;strokeColor=#83cc8b;strokeWidth=2;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;70&quot; width=&quot;890&quot; x=&quot;200&quot; y=&quot;520&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;37&quot; parent=&quot;1&quot; style=&quot;text;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fillColor=none;strokeColor=none;fontColor=#e8f0f8;strokeWidth=2;fontSize=14;&quot; value=&quot;Device&amp;#10;Abstraction&amp;#10;Layer&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;220&quot; y=&quot;540&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;38&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Tx &amp;amp; Rx Queue&amp;#10;Management&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;480&quot; y=&quot;530&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;39&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Mbuf Pool/Ring&amp;#10;Management&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;630&quot; y=&quot;530&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;40&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#0a1722;strokeColor=#607a8d;strokeWidth=2;fontColor=#e8f0f8;shadow=1;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;300&quot; x=&quot;840&quot; y=&quot;850&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;42&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Shared Queue&amp;#10;Management&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;780&quot; y=&quot;530&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;43&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Virtio-user&amp;#10;Exception Path&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;930&quot; y=&quot;530&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;44&quot; parent=&quot;1&quot; style=&quot;rounded=1;dashed=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2d4357;strokeColor=#7ea2bd;strokeWidth=2;fontColor=#bdcada;fontSize=13;&quot; value=&quot;Windows&amp;#10;Kernel&amp;#10;(Not supported)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;130&quot; width=&quot;120&quot; x=&quot;940&quot; y=&quot;660&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;48&quot; parent=&quot;1&quot; style=&quot;text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=Intel Clear;fontStyle=1;fontColor=#e8f0f8;strokeWidth=2;fontSize=14;&quot; value=&quot;DMA&amp;#10;Hardware&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;60&quot; x=&quot;850&quot; y=&quot;865&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;49&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#176f9b;strokeColor=#65b9dd;strokeWidth=2;fontColor=#ffffff;fontSize=13;&quot; value=&quot;CBDMA (IOAT)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;100&quot; x=&quot;1020&quot; y=&quot;860&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;50&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#176f9b;strokeColor=#65b9dd;strokeWidth=2;fontColor=#ffffff;fontSize=13;&quot; value=&quot;DSA (IDXD)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;90&quot; x=&quot;920&quot; y=&quot;860&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;54&quot; edge=&quot;1&quot; parent=&quot;1&quot; style=&quot;shape=flexArrow;endArrow=classic;startArrow=classic;fontSize=14;fontColor=#e8f0f8;entryX=0.313;entryY=0.936;entryDx=0;entryDy=0;entryPerimeter=0;fillColor=#245f66;strokeColor=#63c6cc;strokeWidth=2;&quot; target=&quot;dc4D9y8Z-u1XLwbVgD6a-36&quot; value=&quot;&quot;&gt;&#10;          &lt;mxGeometry height=&quot;100&quot; relative=&quot;1&quot; width=&quot;100&quot; as=&quot;geometry&quot;&gt;&#10;            &lt;mxPoint x=&quot;479&quot; y=&quot;260&quot; as=&quot;sourcePoint&quot; /&gt;&#10;            &lt;mxPoint x=&quot;580&quot; y=&quot;260&quot; as=&quot;targetPoint&quot; /&gt;&#10;          &lt;/mxGeometry&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;57&quot; parent=&quot;1&quot; style=&quot;rounded=0;strokeWidth=2;fontSize=13;fillColor=#2d4357;strokeColor=#7ea2bd;fontFamily=Intel Clear;fontColor=#e8f0f8;fontStyle=1&quot; value=&quot;Datagram&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;90&quot; x=&quot;715&quot; y=&quot;210&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;60&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;strokeColor=#75ca78;strokeWidth=2;fontColor=#f7fbff;fontSize=13;gradientColor=#174a24;shadow=1;&quot; value=&quot;Intel XL710&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;75&quot; x=&quot;465&quot; y=&quot;860&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;61&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;strokeColor=#75ca78;strokeWidth=2;fontColor=#f7fbff;fontSize=13;gradientColor=#174a24;shadow=1;&quot; value=&quot;Intel I225/I226 / X540-AT2 / X550T&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;195&quot; x=&quot;545&quot; y=&quot;860&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;62&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;strokeColor=#75ca78;strokeWidth=2;fontColor=#f7fbff;fontSize=13;gradientColor=#174a24;shadow=1;&quot; value=&quot;Intel E810 / E830 / E835&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;235&quot; x=&quot;225&quot; y=&quot;860&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;63&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;strokeColor=#75ca78;strokeWidth=2;fontColor=#f7fbff;fontSize=13;gradientColor=#174a24;shadow=1;&quot; value=&quot;Others&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;80&quot; x=&quot;745&quot; y=&quot;860&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;aTVBBa3LqSJ_dW22ANa4-69&quot; parent=&quot;1&quot; style=&quot;text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=20;fontFamily=Intel Clear;fontStyle=1;fontColor=#FFFFFF;&quot; value=&quot;Media Transport Library&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;310&quot; x=&quot;490&quot; y=&quot;600&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;aTVBBa3LqSJ_dW22ANa4-73&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;fontColor=#f7fbff;strokeColor=#75ca78;strokeWidth=2;gradientColor=#174a24;shadow=1;&quot; value=&quot;ST 2110-20&amp;#10;Conversion Plugin&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;110&quot; x=&quot;290&quot; y=&quot;270&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;aTVBBa3LqSJ_dW22ANa4-75&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;fontColor=#f7fbff;strokeColor=#75ca78;strokeWidth=2;gradientColor=#174a24;shadow=1;&quot; value=&quot;ST 2110-22&amp;#10;Codec Plugin&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;110&quot; x=&quot;415&quot; y=&quot;270&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;aTVBBa3LqSJ_dW22ANa4-79&quot; parent=&quot;1&quot; style=&quot;rounded=0;strokeWidth=2;fontSize=13;fillColor=#2d4357;strokeColor=#7ea2bd;fontFamily=Intel Clear;fontStyle=1;fontColor=#e8f0f8;&quot; value=&quot;Frames&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;90&quot; x=&quot;360&quot; y=&quot;210&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pOTrq5qmDiVOLXqQ1Eg2-67&quot; parent=&quot;1&quot; style=&quot;rounded=0;strokeWidth=2;fontSize=13;fillColor=#2d4357;strokeColor=#7ea2bd;fontFamily=Intel Clear;fontStyle=1;fontColor=#e8f0f8;&quot; value=&quot;RTP Passthrough&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;130&quot; x=&quot;510&quot; y=&quot;210&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pOTrq5qmDiVOLXqQ1Eg2-68&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Unified Tx &amp;amp; Rx&amp;#10;Burst Interface&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;50&quot; width=&quot;120&quot; x=&quot;330&quot; y=&quot;530&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;t8kSQP513iFXEnkyMyrE-66&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;fontColor=#f7fbff;strokeColor=#75ca78;strokeWidth=2;gradientColor=#174a24;shadow=1;&quot; value=&quot;ST 2110-20&amp;#10;Uncompressed&amp;#10;Video&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;90&quot; x=&quot;290&quot; y=&quot;360&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;t8kSQP513iFXEnkyMyrE-67&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;fontColor=#f7fbff;strokeColor=#75ca78;strokeWidth=2;gradientColor=#174a24;shadow=1;&quot; value=&quot;ST 2110-22&amp;#10;Compressed&amp;#10;Video&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;85&quot; x=&quot;395&quot; y=&quot;360&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;t8kSQP513iFXEnkyMyrE-68&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;fontColor=#f7fbff;strokeColor=#75ca78;strokeWidth=2;gradientColor=#174a24;shadow=1;&quot; value=&quot;ST 2110-30/31&amp;#10;(Un)compressed&amp;#10;Audio&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;90&quot; x=&quot;490&quot; y=&quot;360&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;_7KKFxFsnAOcWJKdn77d-66&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#2e7b38;fontColor=#f7fbff;strokeColor=#75ca78;strokeWidth=2;gradientColor=#174a24;shadow=1;&quot; value=&quot;ST 2110-41&amp;#10;Fast &amp;#10;Metadata&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;60&quot; width=&quot;86.25&quot; x=&quot;693.75&quot; y=&quot;360&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;_7KKFxFsnAOcWJKdn77d-67&quot; parent=&quot;1&quot; style=&quot;rounded=1;fontFamily=Intel Clear;fontStyle=1;fillColor=#d1d9e2;fontColor=#071018;strokeColor=#dce7ef;strokeWidth=2;fontSize=13;gradientColor=#8c9bab;shadow=1;&quot; value=&quot;Fast Metadata App&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;120&quot; x=&quot;665&quot; y=&quot;160&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;/root&gt;&#10;    &lt;/mxGraphModel&gt;&#10;  &lt;/diagram&gt;&#10;&lt;/mxfile&gt;">
+  <title>Media Transport Library architecture - concept 08 Neon Glass</title>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#07111c" />
+      <stop offset="0.48" stop-color="#030a12" />
+      <stop offset="1" stop-color="#010308" />
+    </linearGradient>
+    <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#173148" />
+      <stop offset="0.48" stop-color="#0b2032" />
+      <stop offset="1" stop-color="#07121f" />
+    </linearGradient>
+    <linearGradient id="cyan-band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#174667" />
+      <stop offset="0.48" stop-color="#0b2b43" />
+      <stop offset="1" stop-color="#071925" />
+    </linearGradient>
+    <linearGradient id="orange-band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff9e4a" />
+      <stop offset="0.48" stop-color="#d65b16" />
+      <stop offset="1" stop-color="#8b2c08" />
+    </linearGradient>
+    <linearGradient id="purple-band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#766ba7" />
+      <stop offset="0.48" stop-color="#514274" />
+      <stop offset="1" stop-color="#2d214a" />
+    </linearGradient>
+    <linearGradient id="green-band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4d9d5c" />
+      <stop offset="0.48" stop-color="#2d703e" />
+      <stop offset="1" stop-color="#153a22" />
+    </linearGradient>
+    <linearGradient id="blue-band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1897df" />
+      <stop offset="0.48" stop-color="#0873b9" />
+      <stop offset="1" stop-color="#073d78" />
+    </linearGradient>
+    <linearGradient id="green-card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#59aa5d" />
+      <stop offset="0.48" stop-color="#2e7b38" />
+      <stop offset="1" stop-color="#174a24" />
+    </linearGradient>
+    <linearGradient id="light-card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7f9fc" />
+      <stop offset="0.48" stop-color="#d1d9e2" />
+      <stop offset="1" stop-color="#8c9bab" />
+    </linearGradient>
+    <linearGradient id="purple-card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#846ab1" />
+      <stop offset="0.48" stop-color="#5b4382" />
+      <stop offset="1" stop-color="#32204f" />
+    </linearGradient>
+    <linearGradient id="orange-card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff8b30" />
+      <stop offset="0.48" stop-color="#df550d" />
+      <stop offset="1" stop-color="#a93300" />
+    </linearGradient>
+    <linearGradient id="brown-card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b76845" />
+      <stop offset="0.48" stop-color="#87402a" />
+      <stop offset="1" stop-color="#562215" />
+    </linearGradient>
+    <linearGradient id="hardware" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#132433" />
+      <stop offset="0.48" stop-color="#0a1722" />
+      <stop offset="1" stop-color="#050a11" />
+    </linearGradient>
+    <linearGradient id="title-pill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#169ee8" />
+      <stop offset="0.48" stop-color="#0878bf" />
+      <stop offset="1" stop-color="#06467f" />
+    </linearGradient>
+    <filter id="cyan-glow" x="-15%" y="-30%" width="130%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#28d9ff" flood-opacity="0.72" />
+    </filter>
+    <filter id="panel-shadow" x="-10%" y="-15%" width="120%" height="135%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000000" flood-opacity="0.72" />
+    </filter>
+    <filter id="card-shadow" x="-15%" y="-25%" width="130%" height="150%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.68" />
+    </filter>
+  </defs>
+  <rect fill="url(#background)" width="100%" height="100%" x="0" y="0" style="fill: url(#background);" />
+  <g>
+    <g data-cell-id="0">
+      <g data-cell-id="1">
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-1">
+          <g>
+            <rect x="1" y="1" width="990" height="720" fill="url(#background)" stroke="#142638" stroke-width="2" pointer-events="all" style="fill: url(#background); stroke: #142638;" rx="14" ry="14" />
+          </g>
+        </g>
+        <g data-cell-id="aTVBBa3LqSJ_dW22ANa4-66">
+          <g>
+            <rect x="31" y="121" width="930" height="400" fill="url(#shell)" stroke="#7beaff" stroke-width="2.5" pointer-events="all" style="fill: url(#shell); stroke: #7beaff;" rx="18" ry="18" filter="url(#cyan-glow)" />
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-2">
+          <g>
+            <rect x="51" y="531" width="890" height="150" fill="url(#green-band)" stroke="#69be78" stroke-width="2" pointer-events="all" style="fill: url(#green-band); stroke: #69be78;" rx="12" ry="12" filter="url(#panel-shadow)" />
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-3">
+          <g>
+            <rect x="51" y="231" width="590" height="80" fill="url(#orange-band)" stroke="#ffb168" stroke-width="2" pointer-events="all" style="fill: url(#orange-band); stroke: #ffb168;" rx="10" ry="10" filter="url(#panel-shadow)" />
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-4">
+          <g>
+            <rect x="51" y="256" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(0, 0, 0);">
+              <text x="81" y="277" fill="#f7fbff" style="fill: #f7fbff;">ST 2110</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-5">
+          <g>
+            <rect x="71" y="596" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#FFFFFF" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(255, 255, 255);">
+              <text x="101" y="608.5" fill="#f7fbff" style="fill: #f7fbff;">Network</text>
+              <text x="101" y="625.5" fill="#f7fbff" style="fill: #f7fbff;">Backend</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-11">
+          <g>
+            <rect x="441" y="241" width="90" height="60" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(255, 255, 255);">
+              <text x="486" y="262" fill="#f7fbff" style="fill: #f7fbff;">ST 2110-40</text>
+              <text x="486" y="276" fill="#f7fbff" style="fill: #f7fbff;">Ancillary</text>
+              <text x="486" y="290" fill="#f7fbff" style="fill: #f7fbff;">Data</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-12">
+          <g>
+            <rect x="156" y="541" width="170" height="130" rx="12" ry="12" fill="url(#purple-card)" stroke="#9f83cf" stroke-width="2" pointer-events="all" style="fill: url(#purple-card); stroke: #9f83cf;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(255, 255, 255);">
+              <text x="241" y="595" fill="#f7fbff" style="fill: #f7fbff;">DPDK PMD</text>
+              <text x="241" y="629" fill="#f7fbff" style="fill: #f7fbff;">Linux &amp; Windows</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-15">
+          <g>
+            <rect x="51" y="321" width="890" height="70" fill="url(#purple-band)" stroke="#aa9bdc" stroke-width="2" pointer-events="all" style="fill: url(#purple-band); stroke: #aa9bdc;" rx="10" ry="10" filter="url(#panel-shadow)" />
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-16">
+          <g>
+            <rect x="71" y="341" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(0, 0, 0);">
+              <text x="101" y="362" fill="#f7fbff" style="fill: #f7fbff;">Management</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-17">
+          <g>
+            <rect x="181" y="331" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="241" y="353.5" fill="#071018" style="fill: #071018;">Pacing</text>
+              <text x="241" y="369.5" fill="#071018" style="fill: #071018;">(TSN, RL, TSC)</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-18">
+          <g>
+            <rect x="331" y="331" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="391" y="353.5" fill="#071018" style="fill: #071018;">Tasklet</text>
+              <text x="391" y="369.5" fill="#071018" style="fill: #071018;">Scheduler</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-19">
+          <g>
+            <rect x="481" y="331" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="541" y="353.5" fill="#071018" style="fill: #071018;">Flow Director</text>
+              <text x="541" y="369.5" fill="#071018" style="fill: #071018;">/ RSS</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-20">
+          <g>
+            <rect x="661" y="141" width="280" height="170" fill="url(#purple-band)" stroke="#b2a4e3" stroke-width="2" pointer-events="all" style="fill: url(#purple-band); stroke: #b2a4e3;" rx="10" ry="10" filter="url(#panel-shadow)" />
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-21">
+          <g>
+            <rect x="691" y="151" width="90" height="40" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(51, 51, 51);">
+              <text x="736" y="176" fill="#071018" style="fill: #071018;">IGMP</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-22">
+          <g>
+            <rect x="811" y="201" width="90" height="40" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(51, 51, 51);">
+              <text x="856" y="226" fill="#071018" style="fill: #071018;">ARP</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-25">
+          <g>
+            <rect x="691" y="201" width="90" height="40" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(51, 51, 51);">
+              <text x="736" y="226" fill="#071018" style="fill: #071018;">DHCP</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-26">
+          <g>
+            <rect x="631" y="331" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="691" y="353.5" fill="#071018" style="fill: #071018;">PTP</text>
+              <text x="691" y="369.5" fill="#071018" style="fill: #071018;">Timesync</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-27">
+          <g>
+            <rect x="811" y="251" width="90" height="40" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(51, 51, 51);">
+              <text x="856" y="276" fill="#071018" style="fill: #071018;">RTCP</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-28">
+          <g>
+            <rect x="781" y="331" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="841" y="353.5" fill="#071018" style="fill: #071018;">DMA Memcpy</text>
+              <text x="841" y="369.5" fill="#071018" style="fill: #071018;">Helper</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-29">
+          <g>
+            <rect x="51" y="141" width="340" height="80" fill="url(#orange-band)" stroke="#ffb168" stroke-width="2" pointer-events="all" style="fill: url(#orange-band); stroke: #ffb168;" rx="10" ry="10" filter="url(#panel-shadow)" />
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-30">
+          <g>
+            <rect x="66" y="166" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(0, 0, 0);">
+              <text x="96" y="178.5" fill="#f7fbff" style="fill: #f7fbff;">Pipeline</text>
+              <text x="96" y="195.5" fill="#f7fbff" style="fill: #f7fbff;">API</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-35">
+          <g>
+            <rect x="401" y="141" width="240" height="80" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" rx="7" ry="7" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(0, 0, 0);">
+              <text x="521" y="178.5" fill="#071018" style="fill: #071018;">Color Format Conversion</text>
+              <text x="521" y="195.5" fill="#071018" style="fill: #071018;">Accelerated by SIMD (AVX512)</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-36">
+          <g>
+            <rect x="51" y="31" width="890" height="60" fill="url(#cyan-band)" stroke="#28d9ff" stroke-width="2.5" pointer-events="all" style="fill: url(#cyan-band); stroke: #28d9ff;" rx="12" ry="12" filter="url(#cyan-glow)" />
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-37">
+          <g>
+            <rect x="141" y="41" width="120" height="40" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="201" y="66.5" fill="#071018" style="fill: #071018;">Video App</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-38">
+          <g>
+            <rect x="61" y="51" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(0, 0, 0);">
+              <text x="91" y="72" fill="#f7fbff" style="fill: #f7fbff;">Apps</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-39">
+          <g>
+            <rect x="266" y="41" width="120" height="40" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="326" y="66.5" fill="#071018" style="fill: #071018;">Audio App</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-40">
+          <g>
+            <rect x="391" y="41" width="120" height="40" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="451" y="66.5" fill="#071018" style="fill: #071018;">Ancillary App</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-41">
+          <g>
+            <rect x="641" y="41" width="280" height="40" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="781" y="66.5" fill="#071018" style="fill: #071018;">Third-party Plugins: OBS, FFmpeg, GStreamer</text>
+            </g>
+          </g>
+        </g>
+        <path d="M 28 679 L 964 679 L 991 728 L 1 728 Z" fill="url(#hardware)" stroke="#536b7f" stroke-width="2" filter="url(#panel-shadow)" pointer-events="none" />
+        <g data-cell-id="4">
+          <g>
+            <rect x="1" y="731" width="680" height="60" fill="url(#hardware)" stroke="#607a8d" stroke-width="2" pointer-events="all" style="fill: url(#hardware); stroke: #607a8d;" rx="5" ry="5" filter="url(#panel-shadow)" />
+          </g>
+        </g>
+        <g data-cell-id="5">
+          <g>
+            <rect x="11" y="746" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(0, 0, 0);">
+              <text x="41" y="758.5" fill="#f7fbff" style="fill: #f7fbff;">NIC</text>
+              <text x="41" y="775.5" fill="#f7fbff" style="fill: #f7fbff;">Hardware</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="16">
+          <g>
+            <rect x="126" y="691" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="16px" style="fill: rgb(0, 0, 0);">
+              <text x="156" y="713" fill="#f7fbff" style="fill: #f7fbff;">Linux: Bare metal / VM / Container</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="17">
+          <g>
+            <rect x="421" y="691" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="16px" style="fill: rgb(0, 0, 0);">
+              <text x="451" y="713" fill="#f7fbff" style="fill: #f7fbff;">Windows: Bare metal / VM</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="19">
+          <g>
+            <rect x="351" y="541" width="410" height="130" rx="13" ry="13" fill="url(#blue-band)" stroke="#37b8ff" stroke-width="2" pointer-events="all" style="fill: url(#blue-band); stroke: #37b8ff;" filter="url(#panel-shadow)" />
+          </g>
+        </g>
+        <g data-cell-id="dc4D9y8Z-u1XLwbVgD6a-14">
+          <g>
+            <rect x="571" y="551" width="120" height="50" rx="8" ry="8" fill="url(#orange-card)" stroke="#ffad70" stroke-width="2" pointer-events="all" style="fill: url(#orange-card); stroke: #ffad70;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#FFFFFF" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(255, 255, 255);">
+              <text x="631" y="582" fill="#f7fbff" style="fill: #f7fbff;">AF_XDP</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="20">
+          <g>
+            <rect x="696" y="591" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#FFFFFF" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(255, 255, 255);">
+              <text x="726" y="603.5" fill="#f7fbff" style="fill: #f7fbff;">Linux</text>
+              <text x="726" y="620.5" fill="#f7fbff" style="fill: #f7fbff;">Kernel</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="25">
+          <g>
+            <rect x="376" y="551" width="140" height="60" rx="8" ry="8" fill="url(#brown-card)" stroke="#db8c68" stroke-width="2" pointer-events="all" style="fill: url(#brown-card); stroke: #db8c68;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(255, 255, 255);">
+              <text x="446" y="578.5" fill="#f7fbff" style="fill: #f7fbff;">Kernel</text>
+              <text x="446" y="594.5" fill="#f7fbff" style="fill: #f7fbff;">Network Stack</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="31">
+          <g transform="translate(0.5,0.5)">
+            <path d="M 516 641 L 560.9 641" fill="none" stroke="#ff9a65" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke" style="stroke: rgb(199, 53, 0);" filter="url(#cyan-glow)" />
+            <path d="M 567.65 641 L 558.65 645.5 L 560.9 641 L 558.65 636.5 Z" fill="#ff9a65" stroke="#ff9a65" stroke-width="3" stroke-miterlimit="10" pointer-events="all" style="fill: rgb(199, 53, 0); stroke: rgb(199, 53, 0);" filter="url(#cyan-glow)" />
+          </g>
+        </g>
+        <g data-cell-id="26">
+          <g>
+            <rect x="376" y="621" width="140" height="40" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(255, 255, 255);">
+              <text x="446" y="638.5" fill="#f7fbff" style="fill: #f7fbff;">NIC</text>
+              <text x="446" y="654.5" fill="#f7fbff" style="fill: #f7fbff;">Driver</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="66">
+          <g transform="translate(0.5,0.5)">
+            <path d="M 631 626 L 631 611.1" fill="none" stroke="#ff9a65" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke" style="stroke: rgb(199, 53, 0);" filter="url(#cyan-glow)" />
+            <path d="M 631 604.35 L 635.5 613.35 L 631 611.1 L 626.5 613.35 Z" fill="#ff9a65" stroke="#ff9a65" stroke-width="3" stroke-miterlimit="10" pointer-events="all" style="fill: rgb(199, 53, 0); stroke: rgb(199, 53, 0);" filter="url(#cyan-glow)" />
+          </g>
+        </g>
+        <g data-cell-id="30">
+          <g>
+            <rect x="571" y="626" width="120" height="30" rx="7" ry="7" fill="url(#orange-card)" stroke="#ff9c58" stroke-width="2" pointer-events="all" style="fill: url(#orange-card); stroke: #ff9c58;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#FFFFFF" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(255, 255, 255);">
+              <text x="631" y="646.5" fill="#f7fbff" style="fill: #f7fbff;">eBPF program</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="34">
+          <g>
+            <rect x="693.5" y="261" width="85" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(0, 0, 0);">
+              <text x="736" y="273.5" fill="#f7fbff" style="fill: #f7fbff;">Control</text>
+              <text x="736" y="290.5" fill="#f7fbff" style="fill: #f7fbff;">Plane Protocols</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="35">
+          <g>
+            <rect x="811" y="151" width="90" height="40" rx="6" ry="6" fill="#18263a" stroke="#52677f" stroke-width="2" pointer-events="all" style="fill: rgb(245, 245, 245); stroke: rgb(102, 102, 102);" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(51, 51, 51);">
+              <text x="856" y="176" fill="#f7fbff" style="fill: #f7fbff;">PTP</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="36">
+          <g>
+            <rect x="51" y="401" width="890" height="70" fill="url(#green-band)" stroke="#83cc8b" stroke-width="2" pointer-events="all" style="fill: url(#green-band); stroke: #83cc8b;" rx="10" ry="10" filter="url(#panel-shadow)" />
+          </g>
+        </g>
+        <g data-cell-id="37">
+          <g>
+            <rect x="71" y="421" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(0, 0, 0);">
+              <text x="101" y="425" fill="#f7fbff" style="fill: #f7fbff;">Device</text>
+              <text x="101" y="442" fill="#f7fbff" style="fill: #f7fbff;">Abstraction</text>
+              <text x="101" y="459" fill="#f7fbff" style="fill: #f7fbff;">Layer</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="38">
+          <g>
+            <rect x="331" y="411" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="391" y="433.5" fill="#071018" style="fill: #071018;">Tx &amp; Rx Queue</text>
+              <text x="391" y="449.5" fill="#071018" style="fill: #071018;">Management</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="39">
+          <g>
+            <rect x="481" y="411" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="541" y="433.5" fill="#071018" style="fill: #071018;">Mbuf Pool/Ring</text>
+              <text x="541" y="449.5" fill="#071018" style="fill: #071018;">Management</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="40">
+          <g>
+            <rect x="691" y="731" width="300" height="60" fill="url(#hardware)" stroke="#607a8d" stroke-width="2" pointer-events="all" style="fill: url(#hardware); stroke: #607a8d;" rx="5" ry="5" filter="url(#panel-shadow)" />
+          </g>
+        </g>
+        <g data-cell-id="42">
+          <g>
+            <rect x="631" y="411" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="691" y="433.5" fill="#071018" style="fill: #071018;">Shared Queue</text>
+              <text x="691" y="449.5" fill="#071018" style="fill: #071018;">Management</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="43">
+          <g>
+            <rect x="781" y="411" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="841" y="433.5" fill="#071018" style="fill: #071018;">Virtio-user</text>
+              <text x="841" y="449.5" fill="#071018" style="fill: #071018;">Exception Path</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="44">
+          <g>
+            <rect x="791" y="541" width="120" height="130" rx="12" ry="12" fill="url(#hardware)" stroke="#a5b8c7" stroke-width="2" stroke-dasharray="6 6" pointer-events="all" style="fill: url(#hardware); stroke: #a5b8c7;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#bdcada" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(69, 69, 69);">
+              <text x="851" y="595.5" fill="#f7fbff" style="fill: #f7fbff;">Windows</text>
+              <text x="851" y="611.5" fill="#f7fbff" style="fill: #f7fbff;">Kernel</text>
+              <text x="851" y="627.5" fill="#f7fbff" style="fill: #f7fbff;">(Not supported)</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="48">
+          <g>
+            <rect x="701" y="746" width="60" height="30" fill="none" stroke="none" pointer-events="all" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="14px" style="fill: rgb(0, 0, 0);">
+              <text x="731" y="758.5" fill="#f7fbff" style="fill: #f7fbff;">DMA</text>
+              <text x="731" y="775.5" fill="#f7fbff" style="fill: #f7fbff;">Hardware</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="49">
+          <g>
+            <rect x="871" y="741" width="100" height="40" rx="8" ry="8" fill="url(#blue-band)" stroke="#6bc7ff" stroke-width="2" pointer-events="all" style="fill: url(#blue-band); stroke: #6bc7ff;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(255, 255, 255);">
+              <text x="921" y="766.5" fill="#f7fbff" style="fill: #f7fbff;">CBDMA (IOAT)</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="50">
+          <g>
+            <rect x="771" y="741" width="90" height="40" rx="8" ry="8" fill="url(#blue-band)" stroke="#6bc7ff" stroke-width="2" pointer-events="all" style="fill: url(#blue-band); stroke: #6bc7ff;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(255, 255, 255);">
+              <text x="816" y="766.5" fill="#f7fbff" style="fill: #f7fbff;">DSA (IDXD)</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="54">
+          <g>
+            <path d="M 335.33 119.96 L 346.33 119.87 L 329.99 140 L 313.33 120.13 L 324.33 120.04 L 324.24 108.2 L 313.24 108.29 L 329.58 88.16 L 346.24 108.03 L 335.24 108.12 Z" fill="#58e2f0" stroke="#7beaff" stroke-width="2" stroke-linejoin="round" stroke-miterlimit="10" pointer-events="all" style="fill: rgb(176, 227, 230); stroke: rgb(14, 128, 136);" filter="url(#cyan-glow)" />
+          </g>
+        </g>
+        <g data-cell-id="57">
+          <g>
+            <rect x="566" y="91" width="90" height="30" fill="#2d4357" stroke="#7ea2bd" stroke-width="2" pointer-events="all" style="fill: rgb(186, 200, 211); stroke: rgb(35, 68, 93);" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(0, 0, 0);">
+              <text x="611" y="111.5" fill="#f7fbff" style="fill: #f7fbff;">Datagram</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="60">
+          <g>
+            <rect x="316" y="741" width="75" height="40" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(255, 255, 255);">
+              <text x="353.5" y="766.5" fill="#f7fbff" style="fill: #f7fbff;">Intel XL710</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="61">
+          <g>
+            <rect x="396" y="741" width="195" height="40" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(255, 255, 255);">
+              <text x="493.5" y="766.5" font-size="11px" fill="#f7fbff" style="fill: #f7fbff;">Intel I225/I226 / X540-AT2 / X550T</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="62">
+          <g>
+            <rect x="76" y="741" width="235" height="40" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(255, 255, 255);">
+              <text x="193.5" y="766.5" fill="#f7fbff" style="fill: #f7fbff;">Intel E810 / E830 / E835</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="63">
+          <g>
+            <rect x="596" y="741" width="80" height="40" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(255, 255, 255);">
+              <text x="636" y="766.5" fill="#f7fbff" style="fill: #f7fbff;">Others</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="aTVBBa3LqSJ_dW22ANa4-69">
+          <g transform="translate(0.5,0.5)">
+            <rect x="341" y="481" width="310" height="40" fill="url(#title-pill)" stroke="#7beaff" pointer-events="all" stroke-width="2" rx="18" ry="18" filter="url(#cyan-glow)" style="fill: url(#title-pill); stroke: #7beaff;" />
+          </g>
+          <g>
+            <g fill="#FFFFFF" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="20px" style="fill: rgb(255, 255, 255);">
+              <text x="496" y="510" fill="#f7fbff" style="fill: #f7fbff;">Media Transport Library</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="aTVBBa3LqSJ_dW22ANa4-73">
+          <g>
+            <rect x="141" y="151" width="110" height="60" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(255, 255, 255);">
+              <text x="196" y="179" fill="#f7fbff" style="fill: #f7fbff;">ST 2110-20</text>
+              <text x="196" y="193" fill="#f7fbff" style="fill: #f7fbff;">Conversion Plugin</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="aTVBBa3LqSJ_dW22ANa4-75">
+          <g>
+            <rect x="266" y="151" width="110" height="60" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(255, 255, 255);">
+              <text x="321" y="179" fill="#f7fbff" style="fill: #f7fbff;">ST 2110-22</text>
+              <text x="321" y="193" fill="#f7fbff" style="fill: #f7fbff;">Codec Plugin</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="aTVBBa3LqSJ_dW22ANa4-79">
+          <g>
+            <rect x="211" y="91" width="90" height="30" fill="#2d4357" stroke="#7ea2bd" stroke-width="2" pointer-events="all" style="fill: rgb(186, 200, 211); stroke: rgb(35, 68, 93);" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(0, 0, 0);">
+              <text x="256" y="111.5" fill="#f7fbff" style="fill: #f7fbff;">Frames</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="pOTrq5qmDiVOLXqQ1Eg2-67">
+          <g>
+            <rect x="361" y="91" width="130" height="30" fill="#2d4357" stroke="#7ea2bd" stroke-width="2" pointer-events="all" style="fill: rgb(186, 200, 211); stroke: rgb(35, 68, 93);" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(0, 0, 0);">
+              <text x="426" y="111.5" fill="#f7fbff" style="fill: #f7fbff;">RTP Passthrough</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="pOTrq5qmDiVOLXqQ1Eg2-68">
+          <g>
+            <rect x="181" y="411" width="120" height="50" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="241" y="433.5" fill="#071018" style="fill: #071018;">Unified Tx &amp; Rx</text>
+              <text x="241" y="449.5" fill="#071018" style="fill: #071018;">Burst Interface</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="t8kSQP513iFXEnkyMyrE-66">
+          <g>
+            <rect x="141" y="241" width="90" height="60" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(255, 255, 255);">
+              <text x="186" y="262" fill="#f7fbff" style="fill: #f7fbff;">ST 2110-20</text>
+              <text x="186" y="276" fill="#f7fbff" style="fill: #f7fbff;">Uncompressed</text>
+              <text x="186" y="290" fill="#f7fbff" style="fill: #f7fbff;">Video</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="t8kSQP513iFXEnkyMyrE-67">
+          <g>
+            <rect x="246" y="241" width="85" height="60" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(255, 255, 255);">
+              <text x="288.5" y="262" fill="#f7fbff" style="fill: #f7fbff;">ST 2110-22</text>
+              <text x="288.5" y="276" fill="#f7fbff" style="fill: #f7fbff;">Compressed</text>
+              <text x="288.5" y="290" fill="#f7fbff" style="fill: #f7fbff;">Video</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="t8kSQP513iFXEnkyMyrE-68">
+          <g>
+            <rect x="341" y="241" width="90" height="60" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(255, 255, 255);">
+              <text x="386" y="262" fill="#f7fbff" style="fill: #f7fbff;">ST 2110-30/31</text>
+              <text x="386" y="276" fill="#f7fbff" style="fill: #f7fbff;">(Un)compressed</text>
+              <text x="386" y="290" fill="#f7fbff" style="fill: #f7fbff;">Audio</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="_7KKFxFsnAOcWJKdn77d-66">
+          <g>
+            <rect x="544.75" y="241" width="86.25" height="60" rx="7" ry="7" fill="url(#green-card)" stroke="#75ca78" stroke-width="2" pointer-events="all" style="fill: url(#green-card); stroke: #75ca78;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#ffffff" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="12px" style="fill: rgb(255, 255, 255);">
+              <text x="587.88" y="262" fill="#f7fbff" style="fill: #f7fbff;">ST 2110-41</text>
+              <text x="587.88" y="276" fill="#f7fbff" style="fill: #f7fbff;">Fast </text>
+              <text x="587.88" y="290" fill="#f7fbff" style="fill: #f7fbff;">Metadata</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="_7KKFxFsnAOcWJKdn77d-67">
+          <g>
+            <rect x="516" y="41" width="120" height="40" rx="7" ry="7" fill="url(#light-card)" stroke="#dce7ef" stroke-width="2" pointer-events="all" style="fill: url(#light-card); stroke: #dce7ef;" filter="url(#card-shadow)" />
+          </g>
+          <g>
+            <g fill="#e8f0f8" font-family="'Intel Clear'" font-weight="bold" text-anchor="middle" font-size="13px" style="fill: rgb(51, 51, 51);">
+              <text x="576" y="66.5" fill="#071018" style="fill: #071018;">Fast Metadata App</text>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

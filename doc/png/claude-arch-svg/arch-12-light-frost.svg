@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1155" viewBox="0 0 1280 1155" role="img" aria-label="Media Transport Library architecture">
+<title>Media Transport Library architecture</title>
+<defs>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#1e3a5f" flood-opacity="0.12"/></filter>
+<marker id="m0" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="11" markerHeight="11" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#0e7490"/></marker>
+<marker id="m1" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="11" markerHeight="11" orient="auto" markerUnits="userSpaceOnUse"><path d="M10,0 L0,5 L10,10 z" fill="#0e7490"/></marker>
+<marker id="m2" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="11" markerHeight="11" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker>
+<linearGradient id="bg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f8fc"/><stop offset="1" stop-color="#e6edf6"/></linearGradient>
+</defs>
+<rect width="1280" height="1155" fill="url(#bg3)"/>
+<rect x="32.0" y="32.0" width="1216.0" height="107.6" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="32.0" y="32.0" width="1216.0" height="107.6" rx="14.0" fill="#ffffff"/>
+<rect x="32.0" y="32.0" width="1216.0" height="107.6" rx="14.0" fill="#0891b2" fill-opacity="0.060" stroke="#0891b2" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="48.0" y="57.5" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#066d86" text-anchor="start" letter-spacing="1.40">APPLICATIONS</text>
+<rect x="48.0" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#0891b2" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="48.0" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#0891b2" fill-opacity="0.070"/>
+<text x="162.4" y="101.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Video App</text>
+<rect x="286.8" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#0891b2" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="286.8" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#0891b2" fill-opacity="0.070"/>
+<text x="401.2" y="101.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Audio App</text>
+<rect x="525.6" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#0891b2" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="525.6" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#0891b2" fill-opacity="0.070"/>
+<text x="640.0" y="101.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Ancillary App</text>
+<rect x="764.4" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#0891b2" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="764.4" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#0891b2" fill-opacity="0.070"/>
+<text x="878.8" y="101.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Fast Metadata App</text>
+<rect x="1003.2" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#0891b2" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="1003.2" y="69.5" width="228.8" height="54.1" rx="11.0" fill="#0891b2" fill-opacity="0.070"/>
+<text x="1117.6" y="93.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">3rd-party Plugins</text>
+<text x="1117.6" y="110.7" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#06667d" text-anchor="middle">OBS · FFmpeg · GStreamer</text>
+<rect x="32.0" y="197.6" width="1216.0" height="552.5" rx="18.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="32.0" y="197.6" width="1216.0" height="552.5" rx="18.0" fill="#ffffff"/>
+<rect x="32.0" y="197.6" width="1216.0" height="552.5" rx="18.0" fill="#2563eb" fill-opacity="0.030" stroke="#2563eb" stroke-width="1.96" stroke-opacity="0.550"/>
+<text x="640.0" y="237.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="24.0" font-weight="700" fill="#1c4ab0" text-anchor="middle">Media Transport Library</text>
+<line x1="226.6" y1="142.6" x2="226.6" y2="194.6" stroke="#0e7490" stroke-width="2.20" stroke-linecap="round" marker-end="url(#m0)" marker-start="url(#m1)"/>
+<rect x="186.9" y="156.6" width="79.3" height="24.0" rx="12.0" fill="#eef3f9"/>
+<rect x="186.9" y="156.6" width="79.3" height="24.0" rx="12.0" fill="#0e7490" fill-opacity="0.120" stroke="#0e7490" stroke-width="1.30"/>
+<text x="226.6" y="173.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="12.5" font-weight="700" fill="#094b5e" text-anchor="middle">Frames</text>
+<line x1="542.7" y1="142.6" x2="542.7" y2="194.6" stroke="#0e7490" stroke-width="2.20" stroke-linecap="round" marker-end="url(#m0)" marker-start="url(#m1)"/>
+<rect x="468.9" y="156.6" width="147.6" height="24.0" rx="12.0" fill="#eef3f9"/>
+<rect x="468.9" y="156.6" width="147.6" height="24.0" rx="12.0" fill="#0e7490" fill-opacity="0.120" stroke="#0e7490" stroke-width="1.30"/>
+<text x="542.7" y="173.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="12.5" font-weight="700" fill="#094b5e" text-anchor="middle">RTP Passthrough</text>
+<line x1="858.9" y1="142.6" x2="858.9" y2="194.6" stroke="#0e7490" stroke-width="2.20" stroke-linecap="round" marker-end="url(#m0)" marker-start="url(#m1)"/>
+<rect x="810.0" y="156.6" width="97.8" height="24.0" rx="12.0" fill="#eef3f9"/>
+<rect x="810.0" y="156.6" width="97.8" height="24.0" rx="12.0" fill="#0e7490" fill-opacity="0.120" stroke="#0e7490" stroke-width="1.30"/>
+<text x="858.9" y="173.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="12.5" font-weight="700" fill="#094b5e" text-anchor="middle">Datagram</text>
+<rect x="52.0" y="251.6" width="508.0" height="107.6" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="52.0" y="251.6" width="508.0" height="107.6" rx="14.0" fill="#ffffff"/>
+<rect x="52.0" y="251.6" width="508.0" height="107.6" rx="14.0" fill="#ea580c" fill-opacity="0.060" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="68.0" y="277.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#b04209" text-anchor="start" letter-spacing="1.40">PIPELINE API</text>
+<rect x="68.0" y="289.1" width="233.0" height="54.1" rx="11.0" fill="#ffffff" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="68.0" y="289.1" width="233.0" height="54.1" rx="11.0" fill="#ea580c" fill-opacity="0.070"/>
+<text x="184.5" y="312.7" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">ST 2110-20</text>
+<text x="184.5" y="330.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#a43e08" text-anchor="middle">Conversion Plugin</text>
+<rect x="311.0" y="289.1" width="233.0" height="54.1" rx="11.0" fill="#ffffff" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="311.0" y="289.1" width="233.0" height="54.1" rx="11.0" fill="#ea580c" fill-opacity="0.070"/>
+<text x="427.5" y="312.7" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">ST 2110-22</text>
+<text x="427.5" y="330.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#a43e08" text-anchor="middle">Codec Plugin</text>
+<rect x="576.0" y="251.6" width="323.0" height="107.6" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="576.0" y="251.6" width="323.0" height="107.6" rx="14.0" fill="#ffffff"/>
+<rect x="576.0" y="251.6" width="323.0" height="107.6" rx="14.0" fill="#ca8a04" fill-opacity="0.060" stroke="#ca8a04" stroke-width="1.40" stroke-opacity="0.350"/>
+<rect x="592.0" y="267.6" width="291.0" height="75.6" rx="11.0" fill="#ffffff" stroke="#ca8a04" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="592.0" y="267.6" width="291.0" height="75.6" rx="11.0" fill="#ca8a04" fill-opacity="0.070"/>
+<text x="737.5" y="301.9" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Color Format Conversion</text>
+<text x="737.5" y="319.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#8d6103" text-anchor="middle">Accelerated by SIMD (AVX512)</text>
+<rect x="52.0" y="375.2" width="847.0" height="107.6" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="52.0" y="375.2" width="847.0" height="107.6" rx="14.0" fill="#ffffff"/>
+<rect x="52.0" y="375.2" width="847.0" height="107.6" rx="14.0" fill="#ea580c" fill-opacity="0.060" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="68.0" y="400.7" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#b04209" text-anchor="start" letter-spacing="1.40">ST 2110 SESSIONS</text>
+<rect x="68.0" y="412.7" width="171.2" height="54.1" rx="11.0" fill="#ffffff" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="68.0" y="412.7" width="171.2" height="54.1" rx="11.0" fill="#ea580c" fill-opacity="0.070"/>
+<text x="153.6" y="436.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">ST 2110-20</text>
+<text x="153.6" y="454.0" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#a43e08" text-anchor="middle">Uncompressed Video</text>
+<rect x="249.2" y="412.7" width="154.9" height="54.1" rx="11.0" fill="#ffffff" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="249.2" y="412.7" width="154.9" height="54.1" rx="11.0" fill="#ea580c" fill-opacity="0.070"/>
+<text x="326.7" y="436.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">ST 2110-22</text>
+<text x="326.7" y="454.0" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#a43e08" text-anchor="middle">Compressed Video</text>
+<rect x="414.1" y="412.7" width="182.2" height="54.1" rx="11.0" fill="#ffffff" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="414.1" y="412.7" width="182.2" height="54.1" rx="11.0" fill="#ea580c" fill-opacity="0.070"/>
+<text x="505.2" y="436.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">ST 2110-30/31</text>
+<text x="505.2" y="454.0" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#a43e08" text-anchor="middle">(Un)compressed Audio</text>
+<rect x="606.3" y="412.7" width="133.3" height="54.1" rx="11.0" fill="#ffffff" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="606.3" y="412.7" width="133.3" height="54.1" rx="11.0" fill="#ea580c" fill-opacity="0.070"/>
+<text x="673.0" y="436.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">ST 2110-40</text>
+<text x="673.0" y="454.0" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#a43e08" text-anchor="middle">Ancillary Data</text>
+<rect x="749.7" y="412.7" width="133.3" height="54.1" rx="11.0" fill="#ffffff" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="749.7" y="412.7" width="133.3" height="54.1" rx="11.0" fill="#ea580c" fill-opacity="0.070"/>
+<text x="816.3" y="436.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">ST 2110-41</text>
+<text x="816.3" y="454.0" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#a43e08" text-anchor="middle">Fast Metadata</text>
+<rect x="915.0" y="251.6" width="313.0" height="231.2" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="915.0" y="251.6" width="313.0" height="231.2" rx="14.0" fill="#ffffff"/>
+<rect x="915.0" y="251.6" width="313.0" height="231.2" rx="14.0" fill="#9333ea" fill-opacity="0.060" stroke="#9333ea" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="931.0" y="277.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#6e26b0" text-anchor="start" letter-spacing="1.40">CONTROL PLANE PROTOCOLS</text>
+<rect x="931.0" y="289.1" width="135.5" height="52.6" rx="11.0" fill="#ffffff" stroke="#9333ea" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="931.0" y="289.1" width="135.5" height="52.6" rx="11.0" fill="#9333ea" fill-opacity="0.070"/>
+<text x="998.8" y="320.4" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">IGMP</text>
+<rect x="1076.5" y="289.1" width="135.5" height="52.6" rx="11.0" fill="#ffffff" stroke="#9333ea" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="1076.5" y="289.1" width="135.5" height="52.6" rx="11.0" fill="#9333ea" fill-opacity="0.070"/>
+<text x="1144.2" y="320.4" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">PTP</text>
+<rect x="931.0" y="351.7" width="135.5" height="52.6" rx="11.0" fill="#ffffff" stroke="#9333ea" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="931.0" y="351.7" width="135.5" height="52.6" rx="11.0" fill="#9333ea" fill-opacity="0.070"/>
+<text x="998.8" y="383.0" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">DHCP</text>
+<rect x="1076.5" y="351.7" width="135.5" height="52.6" rx="11.0" fill="#ffffff" stroke="#9333ea" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="1076.5" y="351.7" width="135.5" height="52.6" rx="11.0" fill="#9333ea" fill-opacity="0.070"/>
+<text x="1144.2" y="383.0" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">ARP</text>
+<rect x="931.0" y="414.3" width="281.0" height="52.6" rx="11.0" fill="#ffffff" stroke="#9333ea" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="931.0" y="414.3" width="281.0" height="52.6" rx="11.0" fill="#9333ea" fill-opacity="0.070"/>
+<text x="1071.5" y="445.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">RTCP</text>
+<rect x="52.0" y="498.8" width="1176.0" height="107.6" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="52.0" y="498.8" width="1176.0" height="107.6" rx="14.0" fill="#ffffff"/>
+<rect x="52.0" y="498.8" width="1176.0" height="107.6" rx="14.0" fill="#7c3aed" fill-opacity="0.060" stroke="#7c3aed" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="68.0" y="524.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#5d2cb2" text-anchor="start" letter-spacing="1.40">MANAGEMENT</text>
+<rect x="68.0" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#7c3aed" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="68.0" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#7c3aed" fill-opacity="0.070"/>
+<text x="178.4" y="559.9" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Pacing</text>
+<text x="178.4" y="577.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#5729a6" text-anchor="middle">TSN · RL · TSC</text>
+<rect x="298.8" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#7c3aed" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="298.8" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#7c3aed" fill-opacity="0.070"/>
+<text x="409.2" y="568.4" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Tasklet Scheduler</text>
+<rect x="529.6" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#7c3aed" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="529.6" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#7c3aed" fill-opacity="0.070"/>
+<text x="640.0" y="568.4" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Flow Director / RSS</text>
+<rect x="760.4" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#7c3aed" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="760.4" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#7c3aed" fill-opacity="0.070"/>
+<text x="870.8" y="568.4" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">PTP Timesync</text>
+<rect x="991.2" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#ffffff" stroke="#7c3aed" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="991.2" y="536.3" width="220.8" height="54.1" rx="11.0" fill="#7c3aed" fill-opacity="0.070"/>
+<text x="1101.6" y="568.4" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">DMA Memcpy Helper</text>
+<rect x="52.0" y="622.4" width="1176.0" height="107.7" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="52.0" y="622.4" width="1176.0" height="107.7" rx="14.0" fill="#ffffff"/>
+<rect x="52.0" y="622.4" width="1176.0" height="107.7" rx="14.0" fill="#059669" fill-opacity="0.060" stroke="#059669" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="68.0" y="647.9" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#04704f" text-anchor="start" letter-spacing="1.40">DEVICE ABSTRACTION LAYER</text>
+<rect x="68.0" y="659.9" width="237.0" height="54.2" rx="11.0" fill="#ffffff" stroke="#059669" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="68.0" y="659.9" width="237.0" height="54.2" rx="11.0" fill="#059669" fill-opacity="0.070"/>
+<text x="186.5" y="683.5" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Unified Tx &amp; Rx</text>
+<text x="186.5" y="700.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Burst Interface</text>
+<rect x="315.0" y="659.9" width="218.4" height="54.2" rx="11.0" fill="#ffffff" stroke="#059669" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="315.0" y="659.9" width="218.4" height="54.2" rx="11.0" fill="#059669" fill-opacity="0.070"/>
+<text x="424.2" y="683.5" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Tx &amp; Rx Queue</text>
+<text x="424.2" y="700.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Management</text>
+<rect x="543.4" y="659.9" width="230.3" height="54.2" rx="11.0" fill="#ffffff" stroke="#059669" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="543.4" y="659.9" width="230.3" height="54.2" rx="11.0" fill="#059669" fill-opacity="0.070"/>
+<text x="658.6" y="683.5" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Mbuf Pool / Ring</text>
+<text x="658.6" y="700.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Management</text>
+<rect x="783.7" y="659.9" width="214.6" height="54.2" rx="11.0" fill="#ffffff" stroke="#059669" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="783.7" y="659.9" width="214.6" height="54.2" rx="11.0" fill="#059669" fill-opacity="0.070"/>
+<text x="891.0" y="683.5" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Shared Queue</text>
+<text x="891.0" y="700.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Management</text>
+<rect x="1008.3" y="659.9" width="203.7" height="54.2" rx="11.0" fill="#ffffff" stroke="#059669" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="1008.3" y="659.9" width="203.7" height="54.2" rx="11.0" fill="#059669" fill-opacity="0.070"/>
+<text x="1110.1" y="683.5" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Virtio-user</text>
+<text x="1110.1" y="700.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Exception Path</text>
+<rect x="32.0" y="768.1" width="1216.0" height="181.5" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="32.0" y="768.1" width="1216.0" height="181.5" rx="14.0" fill="#ffffff"/>
+<rect x="32.0" y="768.1" width="1216.0" height="181.5" rx="14.0" fill="#16a34a" fill-opacity="0.060" stroke="#16a34a" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="48.0" y="793.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#107a38" text-anchor="start" letter-spacing="1.40">NETWORK BACKEND</text>
+<rect x="48.0" y="805.6" width="260.0" height="128.0" rx="11.0" fill="#ffffff" stroke="#7c3aed" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="48.0" y="805.6" width="260.0" height="128.0" rx="11.0" fill="#7c3aed" fill-opacity="0.070"/>
+<text x="178.0" y="866.6" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="18.2" font-weight="700" fill="#0f1b2d" text-anchor="middle">DPDK PMD</text>
+<text x="178.0" y="887.0" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="13.2" font-weight="500" fill="#5729a6" text-anchor="middle">Linux &amp; Windows</text>
+<rect x="324.0" y="805.6" width="691.0" height="128.0" rx="14.0" fill="none"/>
+<rect x="324.0" y="805.6" width="691.0" height="128.0" rx="14.0" fill="#0284c7" fill-opacity="0.050" stroke="#0284c7" stroke-width="1.40" stroke-opacity="0.400"/>
+<text x="338.0" y="826.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#026395" text-anchor="start" letter-spacing="1.40">LINUX KERNEL</text>
+<rect x="338.0" y="836.1" width="299.5" height="30.8" rx="11.0" fill="#ffffff" stroke="#db2777" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="338.0" y="836.1" width="299.5" height="30.8" rx="11.0" fill="#db2777" fill-opacity="0.070"/>
+<text x="487.8" y="856.5" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Kernel Network Stack</text>
+<rect x="338.0" y="888.9" width="299.5" height="30.8" rx="11.0" fill="#ffffff" stroke="#16a34a" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="338.0" y="888.9" width="299.5" height="30.8" rx="11.0" fill="#16a34a" fill-opacity="0.070"/>
+<text x="487.8" y="909.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">NIC Driver</text>
+<rect x="701.5" y="836.1" width="299.5" height="30.8" rx="11.0" fill="#ffffff" stroke="#ea580c" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="701.5" y="836.1" width="299.5" height="30.8" rx="11.0" fill="#ea580c" fill-opacity="0.070"/>
+<text x="851.2" y="856.5" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">AF_XDP</text>
+<rect x="701.5" y="888.9" width="299.5" height="30.8" rx="11.0" fill="#ffffff" stroke="#ca8a04" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="701.5" y="888.9" width="299.5" height="30.8" rx="11.0" fill="#ca8a04" fill-opacity="0.070"/>
+<text x="851.2" y="909.3" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">eBPF program</text>
+<line x1="641.5" y1="904.2" x2="697.5" y2="904.2" stroke="#ea580c" stroke-width="2.40" stroke-linecap="round" marker-end="url(#m2)"/>
+<line x1="851.2" y1="886.9" x2="851.2" y2="868.9" stroke="#ea580c" stroke-width="2.40" stroke-linecap="round" marker-end="url(#m2)"/>
+<rect x="1031.0" y="805.6" width="201.0" height="128.0" rx="11.0" fill="#ffffff" stroke="#94a3b8" stroke-width="1.40" stroke-opacity="0.750" stroke-dasharray="5 4"/>
+<rect x="1031.0" y="805.6" width="201.0" height="128.0" rx="11.0" fill="#94a3b8" fill-opacity="0.070"/>
+<text x="1131.5" y="866.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#5b6b80" text-anchor="middle">Windows Kernel</text>
+<text x="1131.5" y="883.8" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="500" fill="#5b6b80" text-anchor="middle">Not supported</text>
+<rect x="32.0" y="961.6" width="1216.0" height="46.0" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="32.0" y="961.6" width="1216.0" height="46.0" rx="14.0" fill="#ffffff"/>
+<rect x="32.0" y="961.6" width="1216.0" height="46.0" rx="14.0" fill="#475569" fill-opacity="0.060" stroke="#475569" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="48.0" y="988.4" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#35404f" text-anchor="start" letter-spacing="1.40">PLATFORMS</text>
+<rect x="161.0" y="967.6" width="275.5" height="34.0" rx="17.0" fill="#ffffff" stroke="#475569" stroke-width="1.20" stroke-opacity="0.800"/>
+<rect x="173.0" y="980.6" width="8.0" height="8.0" rx="4.0" fill="#475569"/>
+<text x="189.0" y="989.2" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="13.5" font-weight="700" fill="#0f1b2d" text-anchor="start">Linux</text>
+<text x="236.2" y="989.2" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="13.0" font-weight="500" fill="#5b6b80" text-anchor="start">Bare metal / VM / Container</text>
+<rect x="450.5" y="967.6" width="226.7" height="34.0" rx="17.0" fill="#ffffff" stroke="#475569" stroke-width="1.20" stroke-opacity="0.800"/>
+<rect x="462.5" y="980.6" width="8.0" height="8.0" rx="4.0" fill="#475569"/>
+<text x="478.5" y="989.2" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="13.5" font-weight="700" fill="#0f1b2d" text-anchor="start">Windows</text>
+<text x="553.1" y="989.2" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="13.0" font-weight="500" fill="#5b6b80" text-anchor="start">Bare metal / VM</text>
+<rect x="32.0" y="1025.6" width="851.0" height="97.5" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="32.0" y="1025.6" width="851.0" height="97.5" rx="14.0" fill="#ffffff"/>
+<rect x="32.0" y="1025.6" width="851.0" height="97.5" rx="14.0" fill="#16a34a" fill-opacity="0.060" stroke="#16a34a" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="48.0" y="1051.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#107a38" text-anchor="start" letter-spacing="1.40">NIC HARDWARE</text>
+<rect x="48.0" y="1063.1" width="229.2" height="44.0" rx="11.0" fill="#ffffff" stroke="#16a34a" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="48.0" y="1063.1" width="229.2" height="44.0" rx="11.0" fill="#16a34a" fill-opacity="0.070"/>
+<text x="162.6" y="1090.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Intel E810 / E830 / E835</text>
+<rect x="287.2" y="1063.1" width="124.7" height="44.0" rx="11.0" fill="#ffffff" stroke="#16a34a" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="287.2" y="1063.1" width="124.7" height="44.0" rx="11.0" fill="#16a34a" fill-opacity="0.070"/>
+<text x="349.5" y="1090.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Intel XL710</text>
+<rect x="421.9" y="1063.1" width="162.1" height="44.0" rx="11.0" fill="#ffffff" stroke="#16a34a" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="421.9" y="1063.1" width="162.1" height="44.0" rx="11.0" fill="#16a34a" fill-opacity="0.070"/>
+<text x="502.9" y="1090.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Intel I225 / I226</text>
+<rect x="594.0" y="1063.1" width="177.7" height="44.0" rx="11.0" fill="#ffffff" stroke="#16a34a" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="594.0" y="1063.1" width="177.7" height="44.0" rx="11.0" fill="#16a34a" fill-opacity="0.070"/>
+<text x="682.9" y="1090.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">X540-AT2 / X550T</text>
+<rect x="781.7" y="1063.1" width="85.3" height="44.0" rx="11.0" fill="#ffffff" stroke="#16a34a" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="781.7" y="1063.1" width="85.3" height="44.0" rx="11.0" fill="#16a34a" fill-opacity="0.070"/>
+<text x="824.4" y="1090.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">Others</text>
+<rect x="899.0" y="1025.6" width="349.0" height="97.5" rx="14.0" fill="#ffffff" filter="url(#shadow)"/>
+<rect x="899.0" y="1025.6" width="349.0" height="97.5" rx="14.0" fill="#ffffff"/>
+<rect x="899.0" y="1025.6" width="349.0" height="97.5" rx="14.0" fill="#0284c7" fill-opacity="0.060" stroke="#0284c7" stroke-width="1.40" stroke-opacity="0.350"/>
+<text x="915.0" y="1051.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="700" fill="#026395" text-anchor="start" letter-spacing="1.40">DMA HARDWARE</text>
+<rect x="915.0" y="1063.1" width="153.5" height="44.0" rx="11.0" fill="#ffffff" stroke="#0284c7" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="915.0" y="1063.1" width="153.5" height="44.0" rx="11.0" fill="#0284c7" fill-opacity="0.070"/>
+<text x="991.8" y="1090.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">DSA (IDXD)</text>
+<rect x="1078.5" y="1063.1" width="153.5" height="44.0" rx="11.0" fill="#ffffff" stroke="#0284c7" stroke-width="1.40" stroke-opacity="0.750"/>
+<rect x="1078.5" y="1063.1" width="153.5" height="44.0" rx="11.0" fill="#0284c7" fill-opacity="0.070"/>
+<text x="1155.2" y="1090.1" font-family="'Intel One Display','Intel Clear',Inter,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="14.0" font-weight="700" fill="#0f1b2d" text-anchor="middle">CBDMA (IOAT)</text>
+</svg>

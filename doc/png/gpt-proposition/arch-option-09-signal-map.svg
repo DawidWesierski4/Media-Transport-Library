@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1500" viewBox="0 0 1600 1500" role="img" aria-labelledby="title desc">
+  <title id="title">Media Transport Library architecture - option 09 Signal Map</title>
+  <desc id="desc">Layered architecture of applications, ST 2110 processing, management, device abstraction, network backends, and supported hardware.</desc>
+  <defs>
+    <marker id="arrow-09-signal-map" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#00d4ff" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1600" height="1500" rx="0" fill="#0b0d10" stroke="#0b0d10" stroke-width="0" vector-effect="non-scaling-stroke" data-role="background" />
+  <text x="1540" y="20.0" fill="#b6bbc2" font-family="Intel Clear, Segoe UI, sans-serif" font-size="13" font-weight="700" text-anchor="end" letter-spacing="0">
+    <tspan x="1540" dy="0">OPTION 09 / SIGNAL MAP</tspan>
+  </text>
+  <rect x="60" y="35" width="1480" height="105" rx="0" fill="#1e2c36" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="section" />
+  <text x="135.0" y="87.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="135.0" dy="0">Apps</tspan>
+  </text>
+  <rect x="210" y="52" width="206.06557377049182" height="71" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="313.0327868852459" y="88.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="313.0327868852459" dy="0">Video App</tspan>
+  </text>
+  <rect x="430.0655737704918" y="52" width="206.06557377049182" height="71" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="533.0983606557377" y="88.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="533.0983606557377" dy="0">Audio App</tspan>
+  </text>
+  <rect x="650.1311475409836" y="52" width="216.36885245901644" height="71" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="758.3155737704918" y="88.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="758.3155737704918" dy="0">Ancillary App</tspan>
+  </text>
+  <rect x="880.5000000000001" y="52" width="236.97540983606558" height="71" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="998.9877049180329" y="88.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="998.9877049180329" dy="0">Fast Metadata App</tspan>
+  </text>
+  <rect x="1131.4754098360656" y="52" width="391.5245901639344" height="71" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1327.237704918033" y="78.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1327.237704918033" dy="0">Third-party Plugins</tspan>
+    <tspan x="1327.237704918033" dy="20">OBS, FFmpeg, GStreamer</tspan>
+  </text>
+  <rect x="300" y="158" width="250" height="52" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="425.0" y="185.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="425.0" dy="0">Frames</tspan>
+  </text>
+  <rect x="650" y="158" width="250" height="52" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="775.0" y="185.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="775.0" dy="0">RTP Passthrough</tspan>
+  </text>
+  <rect x="1050" y="158" width="250" height="52" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1175.0" y="185.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1175.0" dy="0">Datagram</tspan>
+  </text>
+  <line x1="800" y1="145" x2="800" y2="218" stroke="#00d4ff" stroke-width="5" marker-start="url(#arrow-09-signal-map)" marker-end="url(#arrow-09-signal-map)" />
+  <rect x="40" y="225" width="1520" height="735" rx="5" fill="#111418" stroke="#e7eaee" stroke-width="3" vector-effect="non-scaling-stroke" data-role="mtl-shell" />
+  <rect x="70" y="250" width="1450" height="120" rx="0" fill="#853f11" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="section" />
+  <text x="160.0" y="310.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="160.0" dy="0">Pipeline API</tspan>
+  </text>
+  <rect x="250" y="264" width="322.10526315789474" height="92" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="411.0526315789474" y="301.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="411.0526315789474" dy="0">ST 2110-20</tspan>
+    <tspan x="411.0526315789474" dy="20">Conversion Plugin</tspan>
+  </text>
+  <rect x="588.1052631578948" y="264" width="322.10526315789474" height="92" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="749.1578947368422" y="301.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="749.1578947368422" dy="0">ST 2110-22</tspan>
+    <tspan x="749.1578947368422" dy="20">Codec Plugin</tspan>
+  </text>
+  <rect x="926.2105263157896" y="264" width="579.7894736842105" height="92" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1216.1052631578948" y="301.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1216.1052631578948" dy="0">Color Format Conversion</tspan>
+    <tspan x="1216.1052631578948" dy="20">Accelerated by SIMD (AVX512)</tspan>
+  </text>
+  <rect x="70" y="390" width="1450" height="125" rx="0" fill="#6f3510" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="section" />
+  <text x="160.0" y="452.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="160.0" dy="0">ST 2110</tspan>
+  </text>
+  <rect x="250" y="404" width="231.45631067961165" height="97" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="365.7281553398058" y="444.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="365.7281553398058" dy="0">ST 2110-20</tspan>
+    <tspan x="365.7281553398058" dy="19">Uncompressed Video</tspan>
+  </text>
+  <rect x="497.45631067961165" y="404" width="231.45631067961165" height="97" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="613.1844660194174" y="444.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="613.1844660194174" dy="0">ST 2110-22</tspan>
+    <tspan x="613.1844660194174" dy="19">Compressed Video</tspan>
+  </text>
+  <rect x="744.9126213592233" y="404" width="266.17475728155335" height="97" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="878.0" y="444.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="878.0" dy="0">ST 2110-30/31</tspan>
+    <tspan x="878.0" dy="19">(Un)compressed Audio</tspan>
+  </text>
+  <rect x="1027.0873786407767" y="404" width="231.45631067961165" height="97" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1142.8155339805826" y="444.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1142.8155339805826" dy="0">ST 2110-40</tspan>
+    <tspan x="1142.8155339805826" dy="19">Ancillary Data</tspan>
+  </text>
+  <rect x="1274.5436893203882" y="404" width="231.45631067961165" height="97" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1390.2718446601941" y="444.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1390.2718446601941" dy="0">ST 2110-41</tspan>
+    <tspan x="1390.2718446601941" dy="19">Fast Metadata</tspan>
+  </text>
+  <rect x="70" y="535" width="1450" height="115" rx="0" fill="#3a344f" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="section" />
+  <text x="160.0" y="592.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="160.0" dy="0">Control Plane</tspan>
+  </text>
+  <rect x="250" y="549" width="238.4" height="87" rx="0" fill="#f4f4f4" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="369.2" y="593.5" fill="#0b0d10" font-family="Intel Clear, Segoe UI, sans-serif" font-size="18" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="369.2" dy="0">IGMP</tspan>
+  </text>
+  <rect x="504.4" y="549" width="238.4" height="87" rx="0" fill="#f4f4f4" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="623.6" y="593.5" fill="#0b0d10" font-family="Intel Clear, Segoe UI, sans-serif" font-size="18" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="623.6" dy="0">PTP</tspan>
+  </text>
+  <rect x="758.8" y="549" width="238.4" height="87" rx="0" fill="#f4f4f4" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="878.0" y="593.5" fill="#0b0d10" font-family="Intel Clear, Segoe UI, sans-serif" font-size="18" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="878.0" dy="0">DHCP</tspan>
+  </text>
+  <rect x="1013.1999999999999" y="549" width="238.4" height="87" rx="0" fill="#f4f4f4" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1132.3999999999999" y="593.5" fill="#0b0d10" font-family="Intel Clear, Segoe UI, sans-serif" font-size="18" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1132.3999999999999" dy="0">ARP</tspan>
+  </text>
+  <rect x="1267.6" y="549" width="238.4" height="87" rx="0" fill="#f4f4f4" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1386.8" y="593.5" fill="#0b0d10" font-family="Intel Clear, Segoe UI, sans-serif" font-size="18" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1386.8" dy="0">RTCP</tspan>
+  </text>
+  <rect x="70" y="670" width="1450" height="140" rx="0" fill="#292e35" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="section" />
+  <text x="160.0" y="740.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="160.0" dy="0">Management</tspan>
+  </text>
+  <rect x="250" y="688" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="368.8" y="731.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="368.8" dy="0">Pacing</tspan>
+    <tspan x="368.8" dy="20">(TSN, RL, TSC)</tspan>
+  </text>
+  <rect x="503.6" y="688" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="622.4" y="731.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="622.4" dy="0">Tasklet</tspan>
+    <tspan x="622.4" dy="20">Scheduler</tspan>
+  </text>
+  <rect x="757.2" y="688" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="876.0" y="731.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="876.0" dy="0">Flow Director</tspan>
+    <tspan x="876.0" dy="20">/ RSS</tspan>
+  </text>
+  <rect x="1010.8000000000001" y="688" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1129.6000000000001" y="731.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1129.6000000000001" dy="0">PTP</tspan>
+    <tspan x="1129.6000000000001" dy="20">Timesync</tspan>
+  </text>
+  <rect x="1264.4" y="688" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1383.2" y="731.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1383.2" dy="0">DMA Memcpy</tspan>
+    <tspan x="1383.2" dy="20">Helper</tspan>
+  </text>
+  <rect x="70" y="805" width="1450" height="140" rx="0" fill="#294033" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="section" />
+  <text x="160.0" y="851.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="160.0" dy="0">Device</tspan>
+    <tspan x="160.0" dy="24">Abstraction</tspan>
+    <tspan x="160.0" dy="24">Layer</tspan>
+  </text>
+  <rect x="250" y="823" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="368.8" y="866.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="368.8" dy="0">Unified Tx &amp; Rx</tspan>
+    <tspan x="368.8" dy="20">Burst Interface</tspan>
+  </text>
+  <rect x="503.6" y="823" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="622.4" y="866.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="622.4" dy="0">Tx &amp; Rx Queue</tspan>
+    <tspan x="622.4" dy="20">Management</tspan>
+  </text>
+  <rect x="757.2" y="823" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="876.0" y="866.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="876.0" dy="0">Mbuf Pool/Ring</tspan>
+    <tspan x="876.0" dy="20">Management</tspan>
+  </text>
+  <rect x="1010.8000000000001" y="823" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1129.6000000000001" y="866.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1129.6000000000001" dy="0">Shared Queue</tspan>
+    <tspan x="1129.6000000000001" dy="20">Management</tspan>
+  </text>
+  <rect x="1264.4" y="823" width="237.6" height="104" rx="0" fill="#1c2025" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1383.2" y="866.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1383.2" dy="0">Virtio-user</tspan>
+    <tspan x="1383.2" dy="20">Exception Path</tspan>
+  </text>
+  <rect x="440" y="910" width="720" height="70" rx="8" fill="#00d4ff" stroke="#e7eaee" stroke-width="3" vector-effect="non-scaling-stroke" data-role="title" />
+  <text x="800" y="947.0" fill="#0b0d10" font-family="Intel Clear, Segoe UI, sans-serif" font-size="30" font-weight="800" text-anchor="middle" letter-spacing="0">
+    <tspan x="800" dy="0">MEDIA TRANSPORT LIBRARY</tspan>
+  </text>
+  <rect x="60" y="1000" width="1480" height="240" rx="2" fill="#29462d" stroke="#e7eaee" stroke-width="3" vector-effect="non-scaling-stroke" data-role="backend" />
+  <text x="135" y="1107.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="22" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="135" dy="0">Network</tspan>
+    <tspan x="135" dy="26">Backend</tspan>
+  </text>
+  <rect x="220" y="1030" width="260" height="180" rx="0" fill="#3a344f" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="350.0" y="1097.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="20" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="350.0" dy="0">DPDK PMD</tspan>
+    <tspan x="350.0" dy="24" />
+    <tspan x="350.0" dy="24">Linux &amp; Windows</tspan>
+  </text>
+  <rect x="520" y="1030" width="680" height="180" rx="0" fill="#1e2c36" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="linux-kernel" />
+  <rect x="555" y="1048" width="260" height="72" rx="0" fill="#853f11" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="685.0" y="1085.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="685.0" dy="0">Kernel Network Stack</tspan>
+  </text>
+  <rect x="555" y="1132" width="260" height="60" rx="0" fill="#294033" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="685.0" y="1163.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="685.0" dy="0">NIC Driver</tspan>
+  </text>
+  <rect x="880" y="1048" width="220" height="60" rx="0" fill="#853f11" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="990.0" y="1079.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="18" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="990.0" dy="0">AF_XDP</tspan>
+  </text>
+  <rect x="880" y="1132" width="220" height="60" rx="0" fill="#853f11" stroke="#f0f2f4" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="990.0" y="1163.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="17" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="990.0" dy="0">eBPF Program</tspan>
+  </text>
+  <text x="1150" y="1108.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="19" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="1150" dy="0">Linux</tspan>
+    <tspan x="1150" dy="23">Kernel</tspan>
+  </text>
+  <path d="M 815 1162 H 862 V 1162 H 880" fill="none" stroke="#00d4ff" stroke-width="5" />
+  <rect x="1260" y="1030" width="220" height="180" rx="0" fill="#171a1e" stroke="#b6bbc2" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1370.0" y="1086.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="19" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1370.0" dy="0">Windows</tspan>
+    <tspan x="1370.0" dy="23">Kernel</tspan>
+    <tspan x="1370.0" dy="23" />
+    <tspan x="1370.0" dy="23">Not supported</tspan>
+  </text>
+  <text x="350" y="1270.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="350" dy="0">Linux: Bare metal / VM / Container</tspan>
+  </text>
+  <text x="900" y="1270.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="20" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="900" dy="0">Windows: Bare metal / VM</tspan>
+  </text>
+  <rect x="30" y="1305" width="1080" height="130" rx="0" fill="#171a1e" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="nic-hardware" />
+  <text x="95" y="1358.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="19" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="95" dy="0">NIC</tspan>
+    <tspan x="95" dy="23">Hardware</tspan>
+  </text>
+  <rect x="165" y="1330" width="288.5267175572519" height="80" rx="0" fill="#294033" stroke="#00d4ff" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="309.26335877862596" y="1371.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="309.26335877862596" dy="0">Intel E810 / E830 / E835</tspan>
+  </text>
+  <rect x="465.5267175572519" y="1330" width="134.19847328244276" height="80" rx="0" fill="#294033" stroke="#00d4ff" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="532.6259541984733" y="1371.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="532.6259541984733" dy="0">Intel XL710</tspan>
+  </text>
+  <rect x="611.7251908396947" y="1330" width="342.206106870229" height="80" rx="0" fill="#294033" stroke="#00d4ff" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="782.8282442748092" y="1371.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="782.8282442748092" dy="0">Intel I225/I226 / X540-AT2 / X550T</tspan>
+  </text>
+  <rect x="965.9312977099237" y="1330" width="114.06870229007635" height="80" rx="0" fill="#294033" stroke="#00d4ff" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1022.9656488549618" y="1371.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1022.9656488549618" dy="0">Others</tspan>
+  </text>
+  <rect x="1130" y="1305" width="440" height="130" rx="0" fill="#171a1e" stroke="#e7eaee" stroke-width="2" vector-effect="non-scaling-stroke" data-role="dma-hardware" />
+  <text x="1185" y="1359.5" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="18" font-weight="700" text-anchor="middle" letter-spacing="0">
+    <tspan x="1185" dy="0">DMA</tspan>
+    <tspan x="1185" dy="21">Hardware</tspan>
+  </text>
+  <rect x="1245" y="1330" width="140" height="80" rx="0" fill="#1e2c36" stroke="#00d4ff" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1315.0" y="1371.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1315.0" dy="0">DSA (IDXD)</tspan>
+  </text>
+  <rect x="1400" y="1330" width="145" height="80" rx="0" fill="#1e2c36" stroke="#00d4ff" stroke-width="2" vector-effect="non-scaling-stroke" data-role="card" />
+  <text x="1472.5" y="1371.0" fill="#ffffff" font-family="Intel Clear, Segoe UI, sans-serif" font-size="16" font-weight="600" text-anchor="middle" letter-spacing="0">
+    <tspan x="1472.5" dy="0">CBDMA (IOAT)</tspan>
+  </text>
+</svg>
