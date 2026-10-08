@@ -241,6 +241,7 @@ is listed here explicitly, and runs in the `residual-linters` job of
 | `VALIDATE_RUST_*`, `VALIDATE_RUST_CLIPPY` | residual | rustfmt and clippy need a Rust toolchain per environment. Carried over unchanged rather than narrowed, since narrowing the edition list would be a rule change |
 | `VALIDATE_EDITORCONFIG` | **dropped** | it was default-on before, and enforced nothing: no `.editorconfig` existed. The one that exists now declares only `charset`, `end_of_line` and shfmt's shell indent, all of which the hooks or `.gitattributes` already cover |
 | commit-message style (gitlint) | own `commit-messages` job | a message is not a file, so `checkpatch.sh` cannot reach it. The job runs the same `commit-msg` hook over each PR commit that the git `commit-msg` hook runs locally, so version and rules stay in one place. Not in `residual-linters`: that is the super-linter allow-list, and MTL's capitalized, scope-free format is not one |
+| clang-tidy, on the C and C++ lines a pull request changes | own `clang-tidy` job in `code-scan.yml` | it needs the compile commands of configured builds, which `checkpatch.sh` has no part in. The checks are `.clang-tidy`'s; after `./build.sh`, `.github/scripts/ci/clang-tidy-changed.py clang-tidy-14 origin/main \| .github/scripts/ci/changed-lines.py origin/main` runs the same scan locally |
 
 That job was a deny-list of nine `VALIDATE_*: false` keys and is now an
 **allow-list**, so anything not named above is no longer enforced -- the two real
