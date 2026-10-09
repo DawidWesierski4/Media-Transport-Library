@@ -37,7 +37,9 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/cleanup
+    - name: Cleanup processes
+      shell: bash
+      run: task cleanup
 
     - name: Compute local source checksums
       id: local-checksums
