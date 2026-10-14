@@ -37,12 +37,13 @@ measurement is enabled:
   (`false` in JSON) with all time counters at zero.
 
 The API counters are cumulative. The tool keeps the previous sample per scheduler and
-tasklet and prints the difference per interval. `mtl_sch_get_stats()` reports at most
-`MTL_SCH_MAX_TASKLETS` (64) tasklets per scheduler; `nb_tasklets_total` tells when a
-scheduler has more. `min_ns` and `max_ns` have no per-interval
-form in the API, so they are the values since `mtl_init()` or the last reset. Pass
-`--reset_each_interval` to call `mtl_sch_reset_stats()` after each sample; then `min_ns`
-and `max_ns` are per interval too.
+tasklet and prints the difference per interval. It takes the first sample after the
+sessions start, so the first interval does not hold the session create time.
+`mtl_sch_get_stats()` reports at most `MTL_SCH_MAX_TASKLETS` (64) tasklets per
+scheduler; `nb_tasklets_total` tells when a scheduler has more. `min_ns` and `max_ns`
+have no per-interval form in the API, so they are the values since `mtl_init()` or the
+last reset. Pass `--reset_each_interval` to call `mtl_sch_reset_stats()` before the
+first interval and after each sample; then `min_ns` and `max_ns` are per interval too.
 
 ## Build
 

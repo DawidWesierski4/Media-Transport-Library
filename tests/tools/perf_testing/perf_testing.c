@@ -526,7 +526,8 @@ static void perf_print_sch(struct perf_cfg* cfg, double ts, int sch_idx,
     /* a new name or a smaller count means a new tasklet in this slot: no delta base */
     same = prev->valid && i < prev->stats.nb_tasklets &&
            !strcmp(t->name, prev->stats.tasklets[i].name) &&
-           t->time.cnt >= prev->stats.tasklets[i].time.cnt;
+           t->time.cnt >= prev->stats.tasklets[i].time.cnt &&
+           t->work.cnt >= prev->stats.tasklets[i].work.cnt;
     perf_time_delta(&t->time, same ? &prev->stats.tasklets[i].time : &zero, &d);
     perf_time_delta(&t->work, same ? &prev->stats.tasklets[i].work : &zero, &w);
     if (!strcmp(t->name, PERF_RX_TASKLET_NAME)) *rx_work_ns += w.sum_ns;
@@ -541,6 +542,14 @@ static void perf_print_sch(struct perf_cfg* cfg, double ts, int sch_idx,
     }
   }
   if (cfg->json) printf("]}");
+}
+
+static uint64_t perf_rx_pkts(struct perf_session* s) {
+  struct st20_rx_user_stats rx;
+
+  memset(&rx, 0, sizeof(rx));
+  st20p_rx_get_session_stats(s->rx, &rx);
+  return rx.common.stat_pkts_received;
 }
 
 static uint64_t perf_print_session(struct perf_cfg* cfg, double ts,
@@ -629,7 +638,8 @@ static void perf_sample(struct perf_cfg* cfg, mtl_handle mt,
   for (int i = 0; i < cfg->sessions; i++)
     rx_pkts += perf_print_session(cfg, ts, &sessions[i], &first);
   if (cfg->json) printf("]");
-  perf_print_rx_cost(cfg, ts, rx_pkts - *rx_pkts_prev, rx_work_ns, interval_ns);
+  uint64_t pkts = rx_pkts >= *rx_pkts_prev ? rx_pkts - *rx_pkts_prev : 0;
+  perf_print_rx_cost(cfg, ts, pkts, rx_work_ns, interval_ns);
   *rx_pkts_prev = rx_pkts;
   if (cfg->json) printf("}\n");
   fflush(stdout);
@@ -722,6 +732,15 @@ int main(int argc, char** argv) {
     printf("# session: ts,kind,dir,idx,frames,pkts,lost,unrecovered\n");
     printf("# rxcost: ts,kind,scope,rx_pkts,rx_work_ns,ns_per_pkt,rx_work_busy_pct\n");
   }
+
+  /* the first interval starts here, not at mtl_start() */
+  for (int i = 0; i < sch_count; i++) {
+    if (cfg.reset_each_interval)
+      mtl_sch_reset_stats(mt, i);
+    else
+      prev[i].valid = !mtl_sch_get_stats(mt, i, &prev[i].stats);
+  }
+  for (int i = 0; i < cfg.sessions; i++) rx_pkts_prev += perf_rx_pkts(&sessions[i]);
 
   uint64_t start_ns = perf_now_ns(CLOCK_MONOTONIC);
   uint64_t end_ns =
