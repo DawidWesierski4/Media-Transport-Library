@@ -2,7 +2,7 @@
  * Copyright(c) 2026 Intel Corporation
  *
  * Runs N identical st20p RX sessions, with optional TX loopback sessions on a second
- * port, and prints the scheduler and tasklet timing from mtl_sch_get_stats() plus the
+ * port, or N TX sessions only, and prints the mtl_sch_get_stats() timing plus the
  * session counters at a fixed interval, as CSV or JSON lines.
  */
 
@@ -42,6 +42,11 @@ struct perf_cfg {
   enum st_fps fps;
   enum st20_fmt fmt;
   bool tx;
+  bool tx_only;
+  enum st20_packing packing;
+  bool has_dst_mac;
+  uint8_t dst_mac[MTL_MAC_ADDR_LEN];
+  uint32_t sch_quota;
   bool hdr_split;
   char dma[MTL_DMA_DEV_MAX][MTL_PORT_MAX_LEN];
   uint8_t num_dma;
@@ -100,6 +105,10 @@ static void perf_usage(const char* prog) {
       "  --tx                  Also create TX sessions on --t_port\n"
       "  --t_port <pci>        TX port, with --tx\n"
       "  --t_sip <ip>          TX port IP, with --tx\n"
+      "  --tx_only             Only TX sessions on --p_port, sent to --rx_ip\n"
+      "  --packing <bpm|gpm|gpm_sl>  TX packing mode [bpm]\n"
+      "  --tx_dst_mac <mac>    TX destination MAC, skips ARP (aa:bb:cc:dd:ee:ff)\n"
+      "  --sch_quota <mbs>     data_quota_mbs_per_sch in Mbit/s, 0 keeps the default\n"
       "  --hdr_split           Request header split RX queues\n"
       "  --dma <pci>           DMA device, repeat for more\n"
       "  --time_measure        Set MTL_FLAG_TASKLET_TIME_MEASURE\n"
@@ -155,6 +164,39 @@ static int perf_parse_fmt(const char* s, enum st20_fmt* fmt) {
   return 0;
 }
 
+static int perf_parse_packing(const char* s, enum st20_packing* packing) {
+  if (!strcmp(s, "bpm"))
+    *packing = ST20_PACKING_BPM;
+  else if (!strcmp(s, "gpm"))
+    *packing = ST20_PACKING_GPM;
+  else if (!strcmp(s, "gpm_sl"))
+    *packing = ST20_PACKING_GPM_SL;
+  else {
+    fprintf(stderr, "invalid packing %s\n", s);
+    return -EINVAL;
+  }
+  return 0;
+}
+
+static int perf_parse_mac(const char* s, uint8_t* mac) {
+  unsigned int m[MTL_MAC_ADDR_LEN];
+  char tail;
+
+  if (sscanf(s, "%x:%x:%x:%x:%x:%x%c", &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &tail) !=
+      MTL_MAC_ADDR_LEN) {
+    fprintf(stderr, "invalid mac %s\n", s);
+    return -EINVAL;
+  }
+  for (int i = 0; i < MTL_MAC_ADDR_LEN; i++) {
+    if (m[i] > 0xFF) {
+      fprintf(stderr, "invalid mac %s\n", s);
+      return -EINVAL;
+    }
+    mac[i] = (uint8_t)m[i];
+  }
+  return 0;
+}
+
 static int perf_parse_log_level(const char* s, enum mtl_log_level* level) {
   if (!strcmp(s, "debug"))
     *level = MTL_LOG_LEVEL_DEBUG;
@@ -186,6 +228,10 @@ enum perf_opt {
   OPT_TX,
   OPT_T_PORT,
   OPT_T_SIP,
+  OPT_TX_ONLY,
+  OPT_PACKING,
+  OPT_TX_DST_MAC,
+  OPT_SCH_QUOTA,
   OPT_HDR_SPLIT,
   OPT_DMA,
   OPT_TIME_MEASURE,
@@ -212,6 +258,10 @@ static int perf_parse_args(struct perf_cfg* cfg, int argc, char** argv) {
       {"tx", no_argument, 0, OPT_TX},
       {"t_port", required_argument, 0, OPT_T_PORT},
       {"t_sip", required_argument, 0, OPT_T_SIP},
+      {"tx_only", no_argument, 0, OPT_TX_ONLY},
+      {"packing", required_argument, 0, OPT_PACKING},
+      {"tx_dst_mac", required_argument, 0, OPT_TX_DST_MAC},
+      {"sch_quota", required_argument, 0, OPT_SCH_QUOTA},
       {"hdr_split", no_argument, 0, OPT_HDR_SPLIT},
       {"dma", required_argument, 0, OPT_DMA},
       {"time_measure", no_argument, 0, OPT_TIME_MEASURE},
@@ -283,6 +333,19 @@ static int perf_parse_args(struct perf_cfg* cfg, int argc, char** argv) {
         ret = perf_parse_ip(optarg, cfg->t_sip);
         has_t_sip = true;
         break;
+      case OPT_TX_ONLY:
+        cfg->tx_only = true;
+        break;
+      case OPT_PACKING:
+        ret = perf_parse_packing(optarg, &cfg->packing);
+        break;
+      case OPT_TX_DST_MAC:
+        ret = perf_parse_mac(optarg, cfg->dst_mac);
+        cfg->has_dst_mac = true;
+        break;
+      case OPT_SCH_QUOTA:
+        cfg->sch_quota = (uint32_t)atoi(optarg);
+        break;
       case OPT_HDR_SPLIT:
         cfg->hdr_split = true;
         break;
@@ -335,6 +398,10 @@ static int perf_parse_args(struct perf_cfg* cfg, int argc, char** argv) {
     fprintf(stderr, "--tx needs --t_port and --t_sip\n");
     return -EINVAL;
   }
+  if (cfg->tx && cfg->tx_only) {
+    fprintf(stderr, "--tx and --tx_only exclude each other\n");
+    return -EINVAL;
+  }
   if (cfg->sessions < 1 || cfg->interval_s < 1 || cfg->duration_s < 0) {
     fprintf(stderr, "sessions and interval must be >= 1, duration >= 0\n");
     return -EINVAL;
@@ -381,7 +448,9 @@ static int perf_session_create(struct perf_cfg* cfg, mtl_handle mt,
   bool mcast = perf_ip_is_mcast(cfg->rx_ip);
   /* a unicast RX session filters on the sender IP, which is the TX port with --tx */
   const uint8_t* rx_src = (mcast || !cfg->tx) ? cfg->rx_ip : cfg->t_sip;
-  const uint8_t* tx_dst = mcast ? cfg->rx_ip : cfg->p_sip;
+  /* --tx_only sends to --rx_ip, the IP of the RX process */
+  const uint8_t* tx_dst = (mcast || cfg->tx_only) ? cfg->rx_ip : cfg->p_sip;
+  const char* tx_port = cfg->tx_only ? cfg->p_port : cfg->t_port;
 
   memset(&rx_ops, 0, sizeof(rx_ops));
   snprintf(name, sizeof(name), "perf_rx_%d", s->idx);
@@ -403,13 +472,15 @@ static int perf_session_create(struct perf_cfg* cfg, mtl_handle mt,
   if (cfg->num_dma) rx_ops.flags |= ST20P_RX_FLAG_DMA_OFFLOAD;
   if (cfg->hdr_split) rx_ops.flags |= ST20P_RX_FLAG_HDR_SPLIT;
 
-  s->rx = st20p_rx_create(mt, &rx_ops);
-  if (!s->rx) {
-    fprintf(stderr, "st20p_rx_create(%d) fail\n", s->idx);
-    return -EIO;
+  if (!cfg->tx_only) {
+    s->rx = st20p_rx_create(mt, &rx_ops);
+    if (!s->rx) {
+      fprintf(stderr, "st20p_rx_create(%d) fail\n", s->idx);
+      return -EIO;
+    }
   }
 
-  if (!cfg->tx) return 0;
+  if (!cfg->tx && !cfg->tx_only) return 0;
 
   struct st20p_tx_ops tx_ops;
   memset(&tx_ops, 0, sizeof(tx_ops));
@@ -418,7 +489,7 @@ static int perf_session_create(struct perf_cfg* cfg, mtl_handle mt,
   tx_ops.priv = s;
   tx_ops.port.num_port = 1;
   memcpy(tx_ops.port.dip_addr[MTL_SESSION_PORT_P], tx_dst, MTL_IP_ADDR_LEN);
-  snprintf(tx_ops.port.port[MTL_SESSION_PORT_P], MTL_PORT_MAX_LEN, "%s", cfg->t_port);
+  snprintf(tx_ops.port.port[MTL_SESSION_PORT_P], MTL_PORT_MAX_LEN, "%s", tx_port);
   tx_ops.port.udp_port[MTL_SESSION_PORT_P] = cfg->udp_port + s->idx;
   tx_ops.port.payload_type = PERF_PAYLOAD_TYPE;
   tx_ops.width = cfg->width;
@@ -428,7 +499,12 @@ static int perf_session_create(struct perf_cfg* cfg, mtl_handle mt,
   tx_ops.input_fmt = st_frame_fmt_from_transport(cfg->fmt);
   tx_ops.device = ST_PLUGIN_DEVICE_AUTO;
   tx_ops.framebuff_cnt = PERF_FRAMEBUFF_CNT;
+  tx_ops.transport_packing = cfg->packing;
   tx_ops.flags = ST20P_TX_FLAG_BLOCK_GET;
+  if (cfg->has_dst_mac) {
+    memcpy(tx_ops.tx_dst_mac[MTL_SESSION_PORT_P], cfg->dst_mac, MTL_MAC_ADDR_LEN);
+    tx_ops.flags |= ST20P_TX_FLAG_USER_P_MAC;
+  }
 
   s->tx = st20p_tx_create(mt, &tx_ops);
   if (!s->tx) {
@@ -439,8 +515,10 @@ static int perf_session_create(struct perf_cfg* cfg, mtl_handle mt,
 }
 
 static int perf_session_start(struct perf_session* s) {
-  if (pthread_create(&s->rx_thread, NULL, perf_rx_thread, s)) return -EIO;
-  s->rx_thread_up = true;
+  if (s->rx) {
+    if (pthread_create(&s->rx_thread, NULL, perf_rx_thread, s)) return -EIO;
+    s->rx_thread_up = true;
+  }
   if (!s->tx) return 0;
   if (pthread_create(&s->tx_thread, NULL, perf_tx_thread, s)) return -EIO;
   s->tx_thread_up = true;
@@ -548,7 +626,7 @@ static uint64_t perf_rx_pkts(struct perf_session* s) {
   struct st20_rx_user_stats rx;
 
   memset(&rx, 0, sizeof(rx));
-  st20p_rx_get_session_stats(s->rx, &rx);
+  if (s->rx) st20p_rx_get_session_stats(s->rx, &rx);
   return rx.common.stat_pkts_received;
 }
 
@@ -560,30 +638,34 @@ static uint64_t perf_print_session(struct perf_cfg* cfg, double ts,
   uint64_t tx_frames = __atomic_load_n(&s->tx_frames, __ATOMIC_RELAXED);
 
   memset(&rx, 0, sizeof(rx));
-  st20p_rx_get_session_stats(s->rx, &rx);
-  if (cfg->json) {
-    printf("%s{\"dir\":\"rx\",\"idx\":%d,\"frames\":%" PRIu64 ",\"pkts\":%" PRIu64
-           ",\"lost\":%" PRIu64 ",\"unrecovered\":%" PRIu64 "}",
-           *first ? "" : ",", s->idx, rx_frames, rx.common.stat_pkts_received,
-           rx.common.stat_lost_packets, rx.common.stat_pkts_unrecovered);
-  } else {
-    printf("%.3f,session,rx,%d,%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 "\n", ts,
-           s->idx, rx_frames, rx.common.stat_pkts_received, rx.common.stat_lost_packets,
-           rx.common.stat_pkts_unrecovered);
+  if (s->rx) {
+    st20p_rx_get_session_stats(s->rx, &rx);
+    if (cfg->json) {
+      printf("%s{\"dir\":\"rx\",\"idx\":%d,\"frames\":%" PRIu64 ",\"pkts\":%" PRIu64
+             ",\"lost\":%" PRIu64 ",\"unrecovered\":%" PRIu64 "}",
+             *first ? "" : ",", s->idx, rx_frames, rx.common.stat_pkts_received,
+             rx.common.stat_lost_packets, rx.common.stat_pkts_unrecovered);
+    } else {
+      printf("%.3f,session,rx,%d,%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 "\n", ts,
+             s->idx, rx_frames, rx.common.stat_pkts_received, rx.common.stat_lost_packets,
+             rx.common.stat_pkts_unrecovered);
+    }
+    *first = false;
   }
-  *first = false;
 
   if (!s->tx) return rx.common.stat_pkts_received;
   memset(&tx, 0, sizeof(tx));
   st20p_tx_get_session_stats(s->tx, &tx);
   if (cfg->json) {
-    printf(",{\"dir\":\"tx\",\"idx\":%d,\"frames\":%" PRIu64 ",\"pkts\":%" PRIu64
+    printf("%s{\"dir\":\"tx\",\"idx\":%d,\"frames\":%" PRIu64 ",\"pkts\":%" PRIu64
            ",\"lost\":0,\"unrecovered\":0}",
-           s->idx, tx_frames, tx.common.port[MTL_SESSION_PORT_P].packets);
+           *first ? "" : ",", s->idx, tx_frames,
+           tx.common.port[MTL_SESSION_PORT_P].packets);
   } else {
     printf("%.3f,session,tx,%d,%" PRIu64 ",%" PRIu64 ",0,0\n", ts, s->idx, tx_frames,
            tx.common.port[MTL_SESSION_PORT_P].packets);
   }
+  *first = false;
   return rx.common.stat_pkts_received;
 }
 
@@ -670,7 +752,8 @@ int main(int argc, char** argv) {
   snprintf(p.port[MTL_PORT_P], MTL_PORT_MAX_LEN, "%s", cfg.p_port);
   memcpy(p.sip_addr[MTL_PORT_P], cfg.p_sip, MTL_IP_ADDR_LEN);
   p.pmd[MTL_PORT_P] = MTL_PMD_DPDK_USER;
-  p.rx_queues_cnt[MTL_PORT_P] = cfg.sessions;
+  p.rx_queues_cnt[MTL_PORT_P] = cfg.tx_only ? 0 : cfg.sessions;
+  if (cfg.tx_only) p.tx_queues_cnt[MTL_PORT_P] = cfg.sessions;
   p.num_ports = 1;
   if (cfg.tx) {
     snprintf(p.port[MTL_PORT_R], MTL_PORT_MAX_LEN, "%s", cfg.t_port);
@@ -683,6 +766,7 @@ int main(int argc, char** argv) {
   for (int i = 0; i < cfg.num_dma; i++)
     snprintf(p.dma_dev_port[i], MTL_PORT_MAX_LEN, "%s", cfg.dma[i]);
   p.num_dma_dev_port = cfg.num_dma;
+  p.data_quota_mbs_per_sch = cfg.sch_quota;
   p.flags = MTL_FLAG_BIND_NUMA;
   if (cfg.time_measure) p.flags |= MTL_FLAG_TASKLET_TIME_MEASURE;
   p.log_level = cfg.log_level;

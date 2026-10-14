@@ -106,8 +106,39 @@ sudo tests/tools/perf_testing/build/perf_testing \
 support header split; when they do not, `st20p_rx_create()` fails and the tool exits with
 status 1.
 
+`--tx_dst_mac` sets `ST20P_TX_FLAG_USER_P_MAC` and the destination MAC, so a unicast TX
+session sends at once and does not wait for ARP. A switch that does not flood unknown
+unicast then drops the stream until it learns the MAC of the RX port, so the RX port has
+to send a frame first; the ARP exchange does that when `--tx_dst_mac` is not set.
+
 `--duration 0` runs until SIGINT. The tool stops the sessions, frees them, and calls
 `mtl_stop()` and `mtl_uninit()` on SIGINT and at the end of the duration.
+
+### Sessions per core
+
+`--sch_quota` sets `mtl_init_params.data_quota_mbs_per_sch`, the data rate in Mbit/s
+that one scheduler takes before the library starts a new one. A quota above the sum of
+all sessions puts all RX sessions on one scheduler, so its `busy_pct` shows how many
+sessions one core can receive. With `--tx` the TX sessions of the same process can share
+that scheduler, so send from a second process with `--tx_only`. That process creates only
+TX sessions, on its `--p_port`, and sends to `--rx_ip`, the `--p_sip` of the RX process.
+The RX process uses the `--p_sip` of the TX process as its `--rx_ip`. Start the RX
+process first, because a unicast TX session waits for the ARP reply of the RX port.
+
+16 sessions of 1080p59 (about 2.6 Gbps each) on one scheduler:
+
+```bash
+sudo tests/tools/perf_testing/build/perf_testing \
+  --p_port 0000:af:01.0 --p_sip 192.168.85.80 --rx_ip 192.168.85.81 \
+  --sessions 16 --sch_quota 100000 --lcores 4,5 --time_measure --duration 70
+
+sudo tests/tools/perf_testing/build/perf_testing \
+  --p_port 0000:af:01.1 --p_sip 192.168.85.81 --rx_ip 192.168.85.80 \
+  --tx_only --sessions 16 --lcores 8,9,10,11 --duration 60
+```
+
+Give the two processes different `--lcores`. MTL starts DPDK with `--in-memory`, so the
+two processes share no DPDK files.
 
 ## Options
 
@@ -122,6 +153,10 @@ status 1.
 | `--fps` | `p59` | `p59`, `p50`, `p29`, `p25`, `p60`, `p30` |
 | `--fmt` | `YUV_422_10bit` | Transport format; the output format is the same, so no conversion runs |
 | `--tx` | off | Also create TX sessions on `--t_port` / `--t_sip` |
+| `--tx_only` | off | Only TX sessions, on `--p_port`, sent to `--rx_ip`; excludes `--tx` |
+| `--packing` | `bpm` | TX `transport_packing`: `bpm`, `gpm`, `gpm_sl` |
+| `--tx_dst_mac <mac>` | none | TX destination MAC, sets `ST20P_TX_FLAG_USER_P_MAC` and skips ARP |
+| `--sch_quota <mbs>` | `0` | `mtl_init_params.data_quota_mbs_per_sch`; `0` keeps the library default |
 | `--hdr_split` | off | Header split RX queues |
 | `--dma <pci>` | none | DMA device, repeat for more; sets `ST20P_RX_FLAG_DMA_OFFLOAD` |
 | `--time_measure` | off | Set `MTL_FLAG_TASKLET_TIME_MEASURE` |
@@ -170,7 +205,8 @@ ts,kind,dir,idx,frames,pkts,lost,unrecovered
 `frames` is the count of frames the tool got from `st20p_rx_get_frame()` or put with
 `st20p_tx_put_frame()`. The tool never reads or writes frame data; the TX frames carry
 the zero fill of the library. `pkts`, `lost` and `unrecovered` come from the session
-stats; a TX record has `lost` and `unrecovered` at `0`.
+stats; a TX record has `lost` and `unrecovered` at `0`. With `--tx_only` each session
+has only a TX record.
 
 One RX cost record (`kind` is `rxcost`) per interval, after the session records:
 
