@@ -57,6 +57,11 @@ int ut_dev_free_ports(ut_dev_ctx* ctx);
  * timestamp offload on or off and rx_desc_lim.nb_max. Returns the RX ring size chosen. */
 int ut_dev_config_port_nb_rx_desc(ut_dev_ctx* ctx, bool iavf, bool hw_timestamp,
                                   uint16_t nb_rx_desc, uint16_t nb_max);
+/* Runs mt_dev_get_rx_queue() for a hdr split flow on a port with or without the buffer
+ * split offload, whose one RX queue has or lacks a payload pool. True if it got a queue.
+ */
+bool ut_dev_get_hdr_split_rx_queue(ut_dev_ctx* ctx, bool has_hdr_split,
+                                   bool payload_pool);
 
 /* EAL argv builder. rte_eal_init() is stubbed out and fails, which keeps dev_eal_init()'s
  * one-shot guard unlatched, so these may be called repeatedly in one process. */

@@ -1760,6 +1760,12 @@ struct mt_rx_queue* mt_dev_get_rx_queue(struct mtl_main_impl* impl, enum mtl_por
     return NULL;
   }
 
+  if (flow && (flow->flags & MT_RXQ_FLOW_F_HDR_SPLIT) &&
+      !mt_if_has_hdr_split(impl, port)) {
+    err("%s(%d), port has no hdr split feature\n", __func__, port);
+    return NULL;
+  }
+
   mt_pthread_mutex_lock(&inf->rx_queues_mutex);
   for (uint16_t q = 0; q < inf->nb_rx_q; q++) {
     rx_queue = &inf->rx_queues[q];

@@ -436,6 +436,22 @@ int ut_dev_config_port_nb_rx_desc(ut_dev_ctx* ctx, bool iavf, bool hw_timestamp,
   return ret < 0 ? ret : inf->nb_rx_desc;
 }
 
+bool ut_dev_get_hdr_split_rx_queue(ut_dev_ctx* ctx, bool has_hdr_split,
+                                   bool payload_pool) {
+  struct mt_interface* inf = &ctx->impl.inf[MTL_PORT_P];
+  struct mt_rxq_flow flow;
+
+  if (has_hdr_split) inf->feature |= MT_IF_FEATURE_RXQ_OFFLOAD_BUFFER_SPLIT;
+  ctx->rx_queue.mbuf_payload_pool =
+      payload_pool ? (struct rte_mempool*)(uintptr_t)1 : NULL;
+  inf->nb_rx_desc = 0; /* no ring to flush, the port is not started */
+  memset(&flow, 0, sizeof(flow));
+  /* MT_RXQ_FLOW_F_SYS_QUEUE skips the rte_flow rule, the harness has no flow stub */
+  flow.flags = MT_RXQ_FLOW_F_HDR_SPLIT | MT_RXQ_FLOW_F_SYS_QUEUE;
+  ut_active_ctx = ctx;
+  return mt_dev_get_rx_queue(&ctx->impl, MTL_PORT_P, &flow) != NULL;
+}
+
 int ut_dev_create_ports(ut_dev_ctx* ctx) {
   ut_active_ctx = ctx;
   return mt_dev_create(&ctx->impl);
