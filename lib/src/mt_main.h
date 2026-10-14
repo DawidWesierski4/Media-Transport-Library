@@ -476,9 +476,10 @@ struct mt_sch_tasklet_impl {
   bool request_exit;
   bool ack_exit;
 
-  /* time measure: stat_time resets on each stats dump, user_stat_time on user request */
+  /* time measure: stat_time resets on each stats dump, user_stat_* on user request */
   struct mt_stat_u64 stat_time;
   struct mt_stat_u64 user_stat_time;
+  struct mt_stat_u64 user_stat_work;
 };
 
 enum mt_sch_type {

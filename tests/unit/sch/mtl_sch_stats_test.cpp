@@ -16,6 +16,7 @@
  * sample is at least this long minus nothing. */
 static const unsigned int kSpinUs = 50;
 static const uint64_t kSpinFloorNs = 40000;
+static const unsigned int kWorkEvery = 4;
 
 class MtlSchStatsTest : public testing::Test {
  protected:
@@ -28,8 +29,8 @@ class MtlSchStatsTest : public testing::Test {
     if (mt_) ut_sch_stats_main_destroy(mt_);
   }
 
-  void Create(uint64_t flags) {
-    mt_ = ut_sch_stats_main_create(flags, kSpinUs);
+  void Create(uint64_t flags, unsigned int work_every = 0) {
+    mt_ = ut_sch_stats_main_create(flags, kSpinUs, work_every);
     ASSERT_NE(mt_, nullptr);
   }
 
@@ -107,8 +108,8 @@ TEST_F(MtlSchStatsTest, ReportsTheTotalWhenTaskletsExceedTheArray) {
 }
 
 TEST_F(MtlSchStatsTest, CountersStayZeroWhileMeasureIsOff) {
-  Create(0);
-  RunCalls(20);
+  Create(0, kWorkEvery);
+  RunCalls(kWorkEvery * 20);
 
   ASSERT_EQ(mtl_sch_get_stats(mt_, 0, &stats_), 0);
   EXPECT_FALSE(stats_.time_measure_enabled);
@@ -117,6 +118,8 @@ TEST_F(MtlSchStatsTest, CountersStayZeroWhileMeasureIsOff) {
   ASSERT_EQ(stats_.nb_tasklets, 1);
   EXPECT_EQ(stats_.tasklets[0].time.cnt, 0u);
   EXPECT_EQ(stats_.tasklets[0].time.min_ns, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.cnt, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.min_ns, 0u);
 }
 
 TEST_F(MtlSchStatsTest, MeasuresASpinningTasklet) {
@@ -140,6 +143,39 @@ TEST_F(MtlSchStatsTest, MeasuresASpinningTasklet) {
   EXPECT_GE(stats_.loop_time.min_ns, kSpinFloorNs);
 }
 
+TEST_F(MtlSchStatsTest, WorkCountsOnlyTheCallsThatReportPending) {
+  Create(MTL_FLAG_TASKLET_TIME_MEASURE, kWorkEvery);
+  RunCalls(kWorkEvery * 20);
+  Stop();
+
+  ASSERT_EQ(mtl_sch_get_stats(mt_, 0, &stats_), 0);
+  ASSERT_EQ(stats_.nb_tasklets, 1);
+  const struct mtl_time_stats& t = stats_.tasklets[0].time;
+  const struct mtl_time_stats& w = stats_.tasklets[0].work;
+  ASSERT_GT(w.cnt, 0u);
+  EXPECT_LT(w.cnt, t.cnt);
+  EXPECT_EQ(w.cnt, t.cnt / kWorkEvery);
+  EXPECT_GE(w.min_ns, kSpinFloorNs);
+  EXPECT_LE(w.sum_ns, t.sum_ns);
+  EXPECT_LE(w.max_ns, t.max_ns);
+  /* the idle calls are in time only, so they pull its min below the spin */
+  EXPECT_LT(t.min_ns, kSpinFloorNs);
+}
+
+TEST_F(MtlSchStatsTest, WorkStaysZeroForATaskletThatReportsIdle) {
+  Create(MTL_FLAG_TASKLET_TIME_MEASURE);
+  RunCalls(20);
+  Stop();
+
+  ASSERT_EQ(mtl_sch_get_stats(mt_, 0, &stats_), 0);
+  ASSERT_EQ(stats_.nb_tasklets, 1);
+  EXPECT_GT(stats_.tasklets[0].time.cnt, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.cnt, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.sum_ns, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.min_ns, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.max_ns, 0u);
+}
+
 TEST_F(MtlSchStatsTest, DumpResetsOnlyThePerDumpCounters) {
   Create(MTL_FLAG_TASKLET_TIME_MEASURE);
   RunCalls(20);
@@ -161,11 +197,12 @@ TEST_F(MtlSchStatsTest, DumpResetsOnlyThePerDumpCounters) {
 }
 
 TEST_F(MtlSchStatsTest, ResetClearsTheCumulativeCounters) {
-  Create(MTL_FLAG_TASKLET_TIME_MEASURE);
-  RunCalls(20);
+  Create(MTL_FLAG_TASKLET_TIME_MEASURE, kWorkEvery);
+  RunCalls(kWorkEvery * 20);
   Stop();
   ASSERT_EQ(mtl_sch_get_stats(mt_, 0, &stats_), 0);
   ASSERT_GT(stats_.tasklets[0].time.cnt, 0u);
+  ASSERT_GT(stats_.tasklets[0].work.cnt, 0u);
 
   EXPECT_EQ(mtl_sch_reset_stats(mt_, 0), 0);
 
@@ -178,4 +215,8 @@ TEST_F(MtlSchStatsTest, ResetClearsTheCumulativeCounters) {
   EXPECT_EQ(stats_.tasklets[0].time.sum_ns, 0u);
   EXPECT_EQ(stats_.tasklets[0].time.min_ns, 0u);
   EXPECT_EQ(stats_.tasklets[0].time.max_ns, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.cnt, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.sum_ns, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.min_ns, 0u);
+  EXPECT_EQ(stats_.tasklets[0].work.max_ns, 0u);
 }

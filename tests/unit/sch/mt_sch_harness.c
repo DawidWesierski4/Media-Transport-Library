@@ -162,20 +162,26 @@ struct ut_sch_stats_ctx {
   struct mt_sch_tasklet_impl* tasklets[UT_SCH_STATS_SLOTS];
   struct mt_sch_tasklet_impl idle[UT_SCH_STATS_SLOTS];
   unsigned int spin_us;
+  unsigned int work_every;
   _Atomic uint64_t calls;
 };
 
 static int ut_sch_spin_handler(void* priv) {
   struct ut_sch_stats_ctx* ctx = priv;
-  uint64_t end = mt_get_tsc(&ctx->impl) + (uint64_t)ctx->spin_us * NS_PER_US;
+  uint64_t call = atomic_load_explicit(&ctx->calls, memory_order_relaxed) + 1;
+  bool work = ctx->work_every && call % ctx->work_every == 0;
 
-  while (mt_get_tsc(&ctx->impl) < end) {
+  if (work || !ctx->work_every) {
+    uint64_t end = mt_get_tsc(&ctx->impl) + (uint64_t)ctx->spin_us * NS_PER_US;
+    while (mt_get_tsc(&ctx->impl) < end) {
+    }
   }
-  atomic_fetch_add_explicit(&ctx->calls, 1, memory_order_relaxed);
-  return MTL_TASKLET_ALL_DONE;
+  atomic_store_explicit(&ctx->calls, call, memory_order_relaxed);
+  return work ? MTL_TASKLET_HAS_PENDING : MTL_TASKLET_ALL_DONE;
 }
 
-mtl_handle ut_sch_stats_main_create(uint64_t flags, unsigned int spin_us) {
+mtl_handle ut_sch_stats_main_create(uint64_t flags, unsigned int spin_us,
+                                    unsigned int work_every) {
   struct ut_sch_stats_ctx* ctx = calloc(1, sizeof(*ctx));
   if (!ctx) return NULL;
 
@@ -184,6 +190,7 @@ mtl_handle ut_sch_stats_main_create(uint64_t flags, unsigned int spin_us) {
   impl->user_para.flags = flags;
   impl->tsc_hz = rte_get_tsc_hz();
   ctx->spin_us = spin_us;
+  ctx->work_every = work_every;
 
   ctx->tasklet.ops.handler = ut_sch_spin_handler;
   ctx->tasklet.ops.priv = ctx;
@@ -191,6 +198,7 @@ mtl_handle ut_sch_stats_main_create(uint64_t flags, unsigned int spin_us) {
   ctx->tasklet.idx = 1;
   mt_stat_u64_init(&ctx->tasklet.stat_time);
   mt_stat_u64_init(&ctx->tasklet.user_stat_time);
+  mt_stat_u64_init(&ctx->tasklet.user_stat_work);
   ctx->tasklets[1] = &ctx->tasklet;
 
   struct mtl_sch_impl* sch = mt_sch_instance(impl, 0);
@@ -231,6 +239,7 @@ int ut_sch_stats_add_idle_tasklets(mtl_handle mt, int count) {
     tasklet->idx = slot;
     mt_stat_u64_init(&tasklet->stat_time);
     mt_stat_u64_init(&tasklet->user_stat_time);
+    mt_stat_u64_init(&tasklet->user_stat_work);
     ctx->tasklets[slot] = tasklet;
     sch->max_tasklet_idx = slot + 1;
   }

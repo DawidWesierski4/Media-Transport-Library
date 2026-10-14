@@ -27,6 +27,7 @@
 #define PERF_PAYLOAD_TYPE (112)
 #define PERF_FRAMEBUFF_CNT (3)
 #define PERF_NS_PER_S (1000000000ULL)
+#define PERF_RX_TASKLET_NAME "rvs_pkt_rx"
 
 struct perf_cfg {
   char p_port[MTL_PORT_MAX_LEN];
@@ -472,32 +473,38 @@ static void perf_time_delta(const struct mtl_time_stats* now,
   d->max_ns = now->max_ns;
 }
 
+static uint64_t perf_avg_ns(const struct mtl_time_stats* d) {
+  return d->cnt ? d->sum_ns / d->cnt : 0;
+}
+
+static double perf_busy_pct(uint64_t sum_ns, uint64_t interval_ns) {
+  return interval_ns ? 100.0 * (double)sum_ns / (double)interval_ns : 0;
+}
+
 static void perf_print_time_csv(double ts, const struct mtl_sch_stats* st, int sch_idx,
                                 int tasklet_idx, const char* kind, const char* name,
-                                const struct mtl_time_stats* d, uint64_t interval_ns) {
-  uint64_t avg = d->cnt ? d->sum_ns / d->cnt : 0;
-  double busy = interval_ns ? 100.0 * (double)d->sum_ns / (double)interval_ns : 0;
-
+                                const struct mtl_time_stats* d,
+                                const struct mtl_time_stats* w, uint64_t interval_ns) {
   printf("%.3f,%s,%d,%s,%d,%d,%d,%s,%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64
-         ",%.2f,%" PRIu64 "\n",
+         ",%.2f,%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%.2f\n",
          ts, kind, sch_idx, st->name, (int)st->lcore, st->time_measure_enabled,
-         tasklet_idx, name, d->cnt, avg, d->min_ns, d->max_ns, busy, st->avg_ns_per_loop);
+         tasklet_idx, name, d->cnt, perf_avg_ns(d), d->min_ns, d->max_ns,
+         perf_busy_pct(d->sum_ns, interval_ns), st->avg_ns_per_loop, w->cnt,
+         perf_avg_ns(w), perf_busy_pct(w->sum_ns, interval_ns));
 }
 
 static void perf_print_time_json(const struct mtl_time_stats* d, uint64_t interval_ns) {
-  uint64_t avg = d->cnt ? d->sum_ns / d->cnt : 0;
-  double busy = interval_ns ? 100.0 * (double)d->sum_ns / (double)interval_ns : 0;
-
   printf("{\"cnt\":%" PRIu64 ",\"avg_ns\":%" PRIu64 ",\"min_ns\":%" PRIu64
          ",\"max_ns\":%" PRIu64 ",\"busy_pct\":%.2f}",
-         d->cnt, avg, d->min_ns, d->max_ns, busy);
+         d->cnt, perf_avg_ns(d), d->min_ns, d->max_ns,
+         perf_busy_pct(d->sum_ns, interval_ns));
 }
 
 static void perf_print_sch(struct perf_cfg* cfg, double ts, int sch_idx,
                            const struct mtl_sch_stats* st, struct perf_sch_sample* prev,
-                           uint64_t interval_ns, bool* first) {
+                           uint64_t interval_ns, bool* first, uint64_t* rx_work_ns) {
   static const struct mtl_time_stats zero = {0};
-  struct mtl_time_stats d;
+  struct mtl_time_stats d, w;
 
   bool same = prev->valid && st->loop_time.cnt >= prev->stats.loop_time.cnt;
   perf_time_delta(&st->loop_time, same ? &prev->stats.loop_time : &zero, &d);
@@ -510,7 +517,7 @@ static void perf_print_sch(struct perf_cfg* cfg, double ts, int sch_idx,
     perf_print_time_json(&d, interval_ns);
     printf(",\"tasklets\":[");
   } else {
-    perf_print_time_csv(ts, st, sch_idx, -1, "loop", "loop", &d, interval_ns);
+    perf_print_time_csv(ts, st, sch_idx, -1, "loop", "loop", &d, &zero, interval_ns);
   }
   *first = false;
 
@@ -521,19 +528,23 @@ static void perf_print_sch(struct perf_cfg* cfg, double ts, int sch_idx,
            !strcmp(t->name, prev->stats.tasklets[i].name) &&
            t->time.cnt >= prev->stats.tasklets[i].time.cnt;
     perf_time_delta(&t->time, same ? &prev->stats.tasklets[i].time : &zero, &d);
+    perf_time_delta(&t->work, same ? &prev->stats.tasklets[i].work : &zero, &w);
+    if (!strcmp(t->name, PERF_RX_TASKLET_NAME)) *rx_work_ns += w.sum_ns;
     if (cfg->json) {
       printf("%s{\"idx\":%d,\"name\":\"%s\",\"time\":", i ? "," : "", i, t->name);
       perf_print_time_json(&d, interval_ns);
+      printf(",\"work\":");
+      perf_print_time_json(&w, interval_ns);
       printf("}");
     } else {
-      perf_print_time_csv(ts, st, sch_idx, i, "tasklet", t->name, &d, interval_ns);
+      perf_print_time_csv(ts, st, sch_idx, i, "tasklet", t->name, &d, &w, interval_ns);
     }
   }
   if (cfg->json) printf("]}");
 }
 
-static void perf_print_session(struct perf_cfg* cfg, double ts, struct perf_session* s,
-                               bool* first) {
+static uint64_t perf_print_session(struct perf_cfg* cfg, double ts,
+                                   struct perf_session* s, bool* first) {
   struct st20_rx_user_stats rx;
   struct st20_tx_user_stats tx;
   uint64_t rx_frames = __atomic_load_n(&s->rx_frames, __ATOMIC_RELAXED);
@@ -553,7 +564,7 @@ static void perf_print_session(struct perf_cfg* cfg, double ts, struct perf_sess
   }
   *first = false;
 
-  if (!s->tx) return;
+  if (!s->tx) return rx.common.stat_pkts_received;
   memset(&tx, 0, sizeof(tx));
   st20p_tx_get_session_stats(s->tx, &tx);
   if (cfg->json) {
@@ -564,13 +575,30 @@ static void perf_print_session(struct perf_cfg* cfg, double ts, struct perf_sess
     printf("%.3f,session,tx,%d,%" PRIu64 ",%" PRIu64 ",0,0\n", ts, s->idx, tx_frames,
            tx.common.port[MTL_SESSION_PORT_P].packets);
   }
+  return rx.common.stat_pkts_received;
+}
+
+static void perf_print_rx_cost(struct perf_cfg* cfg, double ts, uint64_t pkts,
+                               uint64_t work_ns, uint64_t interval_ns) {
+  double ns_per_pkt = pkts ? (double)work_ns / (double)pkts : 0;
+  double busy = perf_busy_pct(work_ns, interval_ns);
+
+  if (cfg->json) {
+    printf(",\"rx_cost\":{\"pkts\":%" PRIu64 ",\"work_ns\":%" PRIu64
+           ",\"ns_per_pkt\":%.2f,\"work_busy_pct\":%.2f}",
+           pkts, work_ns, ns_per_pkt, busy);
+  } else {
+    printf("%.3f,rxcost,all,%" PRIu64 ",%" PRIu64 ",%.2f,%.2f\n", ts, pkts, work_ns,
+           ns_per_pkt, busy);
+  }
 }
 
 static void perf_sample(struct perf_cfg* cfg, mtl_handle mt,
                         struct perf_session* sessions, struct perf_sch_sample* prev,
-                        int sch_count, uint64_t interval_ns) {
+                        int sch_count, uint64_t interval_ns, uint64_t* rx_pkts_prev) {
   double ts = (double)perf_now_ns(CLOCK_REALTIME) / (double)PERF_NS_PER_S;
   bool first = true;
+  uint64_t rx_work_ns = 0, rx_pkts = 0;
 
   if (cfg->json)
     printf("{\"ts\":%.3f,\"interval_ns\":%" PRIu64 ",\"sch\":[", ts, interval_ns);
@@ -586,7 +614,7 @@ static void perf_sample(struct perf_cfg* cfg, mtl_handle mt,
       fprintf(stderr, "mtl_sch_get_stats(%d) fail %d\n", i, ret);
       continue;
     }
-    perf_print_sch(cfg, ts, i, &st, &prev[i], interval_ns, &first);
+    perf_print_sch(cfg, ts, i, &st, &prev[i], interval_ns, &first, &rx_work_ns);
     if (cfg->reset_each_interval) {
       mtl_sch_reset_stats(mt, i);
       prev[i].valid = false;
@@ -599,8 +627,11 @@ static void perf_sample(struct perf_cfg* cfg, mtl_handle mt,
   first = true;
   if (cfg->json) printf("],\"sessions\":[");
   for (int i = 0; i < cfg->sessions; i++)
-    perf_print_session(cfg, ts, &sessions[i], &first);
-  if (cfg->json) printf("]}\n");
+    rx_pkts += perf_print_session(cfg, ts, &sessions[i], &first);
+  if (cfg->json) printf("]");
+  perf_print_rx_cost(cfg, ts, rx_pkts - *rx_pkts_prev, rx_work_ns, interval_ns);
+  *rx_pkts_prev = rx_pkts;
+  if (cfg->json) printf("}\n");
   fflush(stdout);
 }
 
@@ -620,6 +651,7 @@ int main(int argc, char** argv) {
   struct perf_sch_sample* prev = NULL;
   mtl_handle mt = NULL;
   int ret, sch_count = 0, created = 0;
+  uint64_t rx_pkts_prev = 0;
 
   ret = perf_parse_args(&cfg, argc, argv);
   if (ret < 0) return 1;
@@ -663,19 +695,19 @@ int main(int argc, char** argv) {
     goto exit;
   }
 
+  /* before the sessions: the RX port answers the ARP of a unicast TX create only then */
+  ret = mtl_start(mt);
+  if (ret < 0) {
+    fprintf(stderr, "mtl_start fail %d\n", ret);
+    goto exit;
+  }
   for (created = 0; created < cfg.sessions; created++) {
     sessions[created].idx = created;
     ret = perf_session_create(&cfg, mt, &sessions[created]);
     if (ret < 0) {
       created++;
-      goto exit;
+      goto stop;
     }
-  }
-
-  ret = mtl_start(mt);
-  if (ret < 0) {
-    fprintf(stderr, "mtl_start fail %d\n", ret);
-    goto exit;
   }
   for (int i = 0; i < cfg.sessions; i++) {
     ret = perf_session_start(&sessions[i]);
@@ -685,8 +717,10 @@ int main(int argc, char** argv) {
   if (!cfg.json) {
     printf(
         "# sch: ts,kind,sch_idx,sch_name,lcore,time_measure,tasklet_idx,tasklet_name,"
-        "cnt,avg_ns,min_ns,max_ns,busy_pct,avg_ns_per_loop\n");
+        "cnt,avg_ns,min_ns,max_ns,busy_pct,avg_ns_per_loop,work_cnt,work_avg_ns,"
+        "work_busy_pct\n");
     printf("# session: ts,kind,dir,idx,frames,pkts,lost,unrecovered\n");
+    printf("# rxcost: ts,kind,scope,rx_pkts,rx_work_ns,ns_per_pkt,rx_work_busy_pct\n");
   }
 
   uint64_t start_ns = perf_now_ns(CLOCK_MONOTONIC);
@@ -697,7 +731,7 @@ int main(int argc, char** argv) {
   while (!g_stop) {
     perf_sleep_until(end_ns && end_ns < next_ns ? end_ns : next_ns);
     uint64_t now = perf_now_ns(CLOCK_MONOTONIC);
-    perf_sample(&cfg, mt, sessions, prev, sch_count, now - last_ns);
+    perf_sample(&cfg, mt, sessions, prev, sch_count, now - last_ns, &rx_pkts_prev);
     last_ns = now;
     next_ns += (uint64_t)cfg.interval_s * PERF_NS_PER_S;
     if (end_ns && now >= end_ns) break;
@@ -706,9 +740,9 @@ int main(int argc, char** argv) {
 
 stop:
   for (int i = 0; i < cfg.sessions; i++) perf_session_stop(&sessions[i]);
+  for (int i = created - 1; i >= 0; i--) perf_session_free(&sessions[i]);
   mtl_stop(mt);
 exit:
-  for (int i = created - 1; i >= 0; i--) perf_session_free(&sessions[i]);
   free(prev);
   free(sessions);
   mtl_uninit(mt);

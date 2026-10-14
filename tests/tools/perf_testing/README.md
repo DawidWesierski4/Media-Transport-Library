@@ -5,13 +5,20 @@ identical st20p RX sessions on one port, and with `--tx` also N TX sessions on a
 port, so one host can send traffic to itself. At each interval it reads
 `mtl_sch_get_stats()` for every scheduler slot and `st20p_rx_get_session_stats()` /
 `st20p_tx_get_session_stats()` for every session, and prints one record set. Run it once
-per RX path (CPU copy, `--dma`, `--hdr_split`) and compare the `busy_pct` and `avg_ns` of
-the RX video tasklet.
+per RX path (CPU copy, `--dma`, `--hdr_split`) and compare the `work_*` columns of the RX
+video tasklet `rvs_pkt_rx` and the `rxcost` record.
 
 ## What it measures
 
 The library measures each tasklet handler call and each pass over all tasklets of a
-scheduler. The counters move only while the measurement is enabled:
+scheduler. For each tasklet it keeps two distributions: `time` holds every call, `work`
+holds only the calls that returned `MTL_TASKLET_HAS_PENDING`. `rvs_pkt_rx` returns it
+exactly when `mt_rxq_burst()` got packets, and only those calls copy the payload, submit
+the DMA, or do the header split bookkeeping. The scheduler calls a polling tasklet
+millions of times per second, and almost all calls are idle, so `busy_pct` and `avg_ns`
+of all calls barely change with the load and cannot compare the RX paths. Compare
+`work_avg_ns`, `work_busy_pct` and `ns_per_pkt` instead. The counters move only while the
+measurement is enabled:
 
 - `--time_measure` sets `MTL_FLAG_TASKLET_TIME_MEASURE` at `mtl_init()`.
 - Without the flag, attach the USDT probe `sys:tasklet_time_measure` from
@@ -54,6 +61,9 @@ With a system install of the library (`./build.sh` as non-root installs to
 
 All runs need the hugepages and the VFs from `doc/run.md`. The TX port and the RX port
 must be two different VFs on the same link, or two ports with a cable between them.
+
+The tool calls `mtl_start()` before it creates the sessions, because the RX port answers
+the ARP request of a unicast TX session only after `mtl_start()`.
 
 `--rx_ip` selects the addressing. A multicast group (`224.0.0.0/4`, the default) is the
 destination of the TX sessions and the group the RX sessions join. A unicast address is
@@ -123,13 +133,13 @@ status 1.
 
 ### CSV
 
-Two header lines start with `#`. Each later line is one record; the second column tells
-the record kind.
+Three header lines start with `#`. Each later line is one record; the second column
+tells the record kind.
 
 Scheduler records (`kind` is `loop` or `tasklet`):
 
 ```text
-ts,kind,sch_idx,sch_name,lcore,time_measure,tasklet_idx,tasklet_name,cnt,avg_ns,min_ns,max_ns,busy_pct,avg_ns_per_loop
+ts,kind,sch_idx,sch_name,lcore,time_measure,tasklet_idx,tasklet_name,cnt,avg_ns,min_ns,max_ns,busy_pct,avg_ns_per_loop,work_cnt,work_avg_ns,work_busy_pct
 ```
 
 | Column | Meaning |
@@ -144,6 +154,9 @@ ts,kind,sch_idx,sch_name,lcore,time_measure,tasklet_idx,tasklet_name,cnt,avg_ns,
 | `min_ns`, `max_ns` | Since `mtl_init()` or the last reset |
 | `busy_pct` | `100 * sum_ns / interval_ns` |
 | `avg_ns_per_loop` | The scheduler's own loop average, always available |
+| `work_cnt` | Handler calls in the interval that returned `MTL_TASKLET_HAS_PENDING`; `0` for the loop record |
+| `work_avg_ns` | `work_sum_ns / work_cnt` over the interval |
+| `work_busy_pct` | `100 * work_sum_ns / interval_ns` |
 
 Session records (`kind` is `session`), cumulative since the session start:
 
@@ -156,14 +169,31 @@ ts,kind,dir,idx,frames,pkts,lost,unrecovered
 the zero fill of the library. `pkts`, `lost` and `unrecovered` come from the session
 stats; a TX record has `lost` and `unrecovered` at `0`.
 
+One RX cost record (`kind` is `rxcost`) per interval, after the session records:
+
+```text
+ts,kind,scope,rx_pkts,rx_work_ns,ns_per_pkt,rx_work_busy_pct
+```
+
+| Column | Meaning |
+| --- | --- |
+| `scope` | Always `all`: the sum over all schedulers and all RX sessions |
+| `rx_pkts` | RX packets of all sessions in the interval, from `pkts` of the session records |
+| `rx_work_ns` | Work time (`work_sum_ns`) of all `rvs_pkt_rx` tasklets in the interval |
+| `ns_per_pkt` | `rx_work_ns / rx_pkts`, `0` when `rx_pkts` is `0` |
+| `rx_work_busy_pct` | `100 * rx_work_ns / interval_ns`, the sum of `work_busy_pct` of the `rvs_pkt_rx` tasklets |
+
 ### JSON
 
-One object per interval:
+One object per interval. Each tasklet has a `time` and a `work` object with the same
+fields; `rx_cost` holds the fields of the `rxcost` CSV record:
 
 ```json
 {"ts":1760000000.123,"interval_ns":5000000000,
  "sch":[{"idx":0,"name":"sch_0","lcore":4,"time_measure":true,"avg_ns_per_loop":812,
          "loop":{"cnt":6150000,"avg_ns":812,"min_ns":90,"max_ns":45120,"busy_pct":99.9},
-         "tasklets":[{"idx":0,"name":"rx_video","time":{"cnt":6150000,"avg_ns":640,"min_ns":40,"max_ns":44000,"busy_pct":78.7}}]}],
- "sessions":[{"dir":"rx","idx":0,"frames":2996,"pkts":12500000,"lost":0,"unrecovered":0}]}
+         "tasklets":[{"idx":0,"name":"rvs_pkt_rx","time":{"cnt":6150000,"avg_ns":640,"min_ns":40,"max_ns":44000,"busy_pct":78.7},
+                      "work":{"cnt":1200000,"avg_ns":2100,"min_ns":300,"max_ns":44000,"busy_pct":50.4}}]}],
+ "sessions":[{"dir":"rx","idx":0,"frames":2996,"pkts":12500000,"lost":0,"unrecovered":0}],
+ "rx_cost":{"pkts":2580000,"work_ns":2520000000,"ns_per_pkt":976.74,"work_busy_pct":50.40}}
 ```

@@ -1155,6 +1155,8 @@ struct mtl_sch_tasklet_stats {
   char name[MTL_SCH_TASKLET_NAME_LEN];
   /** One sample per handler call. */
   struct mtl_time_stats time;
+  /** Calls that returned MTL_TASKLET_HAS_PENDING, the time the tasklet did work. */
+  struct mtl_time_stats work;
 };
 
 /**

@@ -51,9 +51,13 @@ int ut_sch_filelock_create_mode(unsigned int* mode);
 #define UT_SCH_SPIN_TASKLET_NAME "ut_spin"
 
 /* A main handle built with mtl_init_params flags whose sch 0 is active in thread mode
- * and holds one tasklet, UT_SCH_SPIN_TASKLET_NAME in slot 1, that spins spin_us per
- * call. Slot 0 stays empty. Caller frees with ut_sch_stats_main_destroy. */
-mtl_handle ut_sch_stats_main_create(uint64_t flags, unsigned int spin_us);
+ * and holds one tasklet, UT_SCH_SPIN_TASKLET_NAME in slot 1. With work_every 0 the
+ * tasklet spins spin_us on each call and returns MTL_TASKLET_ALL_DONE; with N it spins
+ * and returns MTL_TASKLET_HAS_PENDING on each Nth call only, and returns
+ * MTL_TASKLET_ALL_DONE at once on the others. Slot 0 stays empty. Caller frees with
+ * ut_sch_stats_main_destroy. */
+mtl_handle ut_sch_stats_main_create(uint64_t flags, unsigned int spin_us,
+                                    unsigned int work_every);
 void ut_sch_stats_main_destroy(mtl_handle mt);
 
 /* Fills the next count free slots of sch 0 with idle tasklets named ut_idle_<slot>.
