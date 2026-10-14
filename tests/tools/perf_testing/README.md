@@ -102,9 +102,13 @@ sudo tests/tools/perf_testing/build/perf_testing \
 ```
 
 `--hdr_split` sets `ST20P_RX_FLAG_HDR_SPLIT` on each session and
-`nb_rx_hdr_split_queues` to the session count. The build, the NIC and the driver must
-support header split; when they do not, `st20p_rx_create()` fails and the tool exits with
-status 1.
+`nb_rx_hdr_split_queues` to the session count. The RX session sizes its frame slots from
+`--packing`, so the TX side must send the same packing. A session uses
+(3 + 1) *packets per frame - 1 slots, as the tool keeps 3 frames. The default of 21600
+slots holds 1080p; 4K BPM needs 4* 16457 - 1 = 65827, so set `--hdr_split_slots 65827`
+or more. The port must support buffer
+split (the ice PF does); when it does not, `st20p_rx_create()` fails and the tool exits
+with status 1.
 
 `--tx_dst_mac` sets `ST20P_TX_FLAG_USER_P_MAC` and the destination MAC, so a unicast TX
 session sends at once and does not wait for ARP. A switch that does not flood unknown
@@ -162,10 +166,11 @@ two processes share no DPDK files.
 | `--fmt` | `YUV_422_10bit` | Transport format; the output format is the same, so no conversion runs |
 | `--tx` | off | Also create TX sessions on `--t_port` / `--t_sip` |
 | `--tx_only` | off | Only TX sessions, on `--p_port`, sent to `--rx_ip`; excludes `--tx`, `--hdr_split` and `--dma` |
-| `--packing` | `bpm` | TX `transport_packing`: `bpm`, `gpm`, `gpm_sl` |
+| `--packing` | `bpm` | TX and RX `transport_packing`: `bpm`, `gpm`, `gpm_sl` |
 | `--tx_dst_mac <mac>` | none | TX destination MAC, sets `ST20P_TX_FLAG_USER_P_MAC` and skips ARP |
 | `--sch_quota <mbs>` | `0` | `mtl_init_params.data_quota_mbs_per_sch`; `0` keeps the library default |
 | `--hdr_split` | off | Header split RX queues |
+| `--hdr_split_slots <n>` | `0` | `mtl_init_params.hdr_split_slots`, the payload mbufs of each header split queue; `0` keeps the library default, 21600 |
 | `--dma <pci>` | none | DMA device, repeat for more; sets `ST20P_RX_FLAG_DMA_OFFLOAD` |
 | `--time_measure` | off | Set `MTL_FLAG_TASKLET_TIME_MEASURE` |
 | `--interval <s>` | `5` | Sample interval |

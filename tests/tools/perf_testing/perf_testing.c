@@ -48,6 +48,7 @@ struct perf_cfg {
   uint8_t dst_mac[MTL_MAC_ADDR_LEN];
   uint32_t sch_quota;
   bool hdr_split;
+  uint32_t hdr_split_slots;
   char dma[MTL_DMA_DEV_MAX][MTL_PORT_MAX_LEN];
   uint8_t num_dma;
   bool time_measure;
@@ -110,10 +111,12 @@ static void perf_usage(const char* prog) {
       "  --t_sip <ip>          TX port IP, with --tx\n"
       "  --tx_only             Only TX sessions on --p_port, sent to --rx_ip;\n"
       "                        excludes --tx, --hdr_split and --dma\n"
-      "  --packing <bpm|gpm|gpm_sl>  TX packing mode [bpm]\n"
+      "  --packing <bpm|gpm|gpm_sl>  TX packing mode, also the RX one [bpm]\n"
       "  --tx_dst_mac <mac>    TX destination MAC, skips ARP (aa:bb:cc:dd:ee:ff)\n"
       "  --sch_quota <mbs>     data_quota_mbs_per_sch in Mbit/s, 0 keeps the default\n"
       "  --hdr_split           Request header split RX queues\n"
+      "  --hdr_split_slots <n> Payload mbufs of each header split queue, 0 keeps the "
+      "default\n"
       "  --dma <pci>           DMA device, repeat for more\n"
       "  --time_measure        Set MTL_FLAG_TASKLET_TIME_MEASURE\n"
       "  --interval <s>        Sample interval [5]\n"
@@ -238,6 +241,7 @@ enum perf_opt {
   OPT_TX_DST_MAC,
   OPT_SCH_QUOTA,
   OPT_HDR_SPLIT,
+  OPT_HDR_SPLIT_SLOTS,
   OPT_DMA,
   OPT_TIME_MEASURE,
   OPT_INTERVAL,
@@ -268,6 +272,7 @@ static int perf_parse_args(struct perf_cfg* cfg, int argc, char** argv) {
       {"tx_dst_mac", required_argument, 0, OPT_TX_DST_MAC},
       {"sch_quota", required_argument, 0, OPT_SCH_QUOTA},
       {"hdr_split", no_argument, 0, OPT_HDR_SPLIT},
+      {"hdr_split_slots", required_argument, 0, OPT_HDR_SPLIT_SLOTS},
       {"dma", required_argument, 0, OPT_DMA},
       {"time_measure", no_argument, 0, OPT_TIME_MEASURE},
       {"interval", required_argument, 0, OPT_INTERVAL},
@@ -353,6 +358,9 @@ static int perf_parse_args(struct perf_cfg* cfg, int argc, char** argv) {
         break;
       case OPT_HDR_SPLIT:
         cfg->hdr_split = true;
+        break;
+      case OPT_HDR_SPLIT_SLOTS:
+        cfg->hdr_split_slots = (uint32_t)atoi(optarg);
         break;
       case OPT_DMA:
         if (cfg->num_dma >= MTL_DMA_DEV_MAX) {
@@ -474,6 +482,7 @@ static int perf_session_create(struct perf_cfg* cfg, mtl_handle mt,
   rx_ops.height = cfg->height;
   rx_ops.fps = cfg->fps;
   rx_ops.transport_fmt = cfg->fmt;
+  rx_ops.transport_packing = cfg->packing;
   rx_ops.output_fmt = st_frame_fmt_from_transport(cfg->fmt);
   rx_ops.device = ST_PLUGIN_DEVICE_AUTO;
   rx_ops.framebuff_cnt = PERF_FRAMEBUFF_CNT;
@@ -776,6 +785,7 @@ int main(int argc, char** argv) {
     snprintf(p.dma_dev_port[i], MTL_PORT_MAX_LEN, "%s", cfg.dma[i]);
   p.num_dma_dev_port = cfg.num_dma;
   p.data_quota_mbs_per_sch = cfg.sch_quota;
+  p.hdr_split_slots = cfg.hdr_split_slots;
   p.flags = MTL_FLAG_BIND_NUMA;
   if (cfg.time_measure) p.flags |= MTL_FLAG_TASKLET_TIME_MEASURE;
   p.log_level = cfg.log_level;
