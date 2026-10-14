@@ -93,11 +93,14 @@ static uint64_t perf_now_ns(clockid_t clock) {
 static void perf_usage(const char* prog) {
   printf(
       "Usage: %s --p_port <pci> --p_sip <ip> [options]\n"
+      "  --p_port <pci>        RX port; the TX port with --tx_only\n"
+      "  --p_sip <ip>          IP of --p_port\n"
       "  --rx_ip <ip>          Multicast group, or the sender IP of a unicast stream;\n"
-      "                        with --tx a unicast stream runs t_sip -> p_sip "
-      "[239.168.85.20]\n"
+      "                        with --tx a unicast stream runs t_sip -> p_sip;\n"
+      "                        the destination IP with --tx_only [239.168.85.20]\n"
       "  --udp_port <n>        UDP port of session 0, session i uses n + i [20000]\n"
-      "  --sessions <n>        Number of RX sessions, and TX sessions with --tx [1]\n"
+      "  --sessions <n>        RX sessions, and TX sessions with --tx;\n"
+      "                        only TX sessions with --tx_only [1]\n"
       "  --width <n>           [1920]\n"
       "  --height <n>          [1080]\n"
       "  --fps <p59|p50|p29|p25|p60|p30>  [p59]\n"
@@ -105,7 +108,8 @@ static void perf_usage(const char* prog) {
       "  --tx                  Also create TX sessions on --t_port\n"
       "  --t_port <pci>        TX port, with --tx\n"
       "  --t_sip <ip>          TX port IP, with --tx\n"
-      "  --tx_only             Only TX sessions on --p_port, sent to --rx_ip\n"
+      "  --tx_only             Only TX sessions on --p_port, sent to --rx_ip;\n"
+      "                        excludes --tx, --hdr_split and --dma\n"
       "  --packing <bpm|gpm|gpm_sl>  TX packing mode [bpm]\n"
       "  --tx_dst_mac <mac>    TX destination MAC, skips ARP (aa:bb:cc:dd:ee:ff)\n"
       "  --sch_quota <mbs>     data_quota_mbs_per_sch in Mbit/s, 0 keeps the default\n"
@@ -115,7 +119,8 @@ static void perf_usage(const char* prog) {
       "  --interval <s>        Sample interval [5]\n"
       "  --duration <s>        Run time, 0 runs until SIGINT [30]\n"
       "  --json                One JSON object per interval; default is CSV\n"
-      "  --reset_each_interval Reset the scheduler counters after each sample\n"
+      "  --reset_each_interval Reset the scheduler counters before the first interval\n"
+      "                        and after each sample\n"
       "  --lcores <list>       Lcore list for MTL, e.g. 4,5,6\n"
       "  --log_level <debug|info|notice|warning|error>  [warning]\n",
       prog);
@@ -400,6 +405,10 @@ static int perf_parse_args(struct perf_cfg* cfg, int argc, char** argv) {
   }
   if (cfg->tx && cfg->tx_only) {
     fprintf(stderr, "--tx and --tx_only exclude each other\n");
+    return -EINVAL;
+  }
+  if (cfg->tx_only && (cfg->hdr_split || cfg->num_dma)) {
+    fprintf(stderr, "--hdr_split and --dma are RX options, not for --tx_only\n");
     return -EINVAL;
   }
   if (cfg->sessions < 1 || cfg->interval_s < 1 || cfg->duration_s < 0) {
@@ -721,7 +730,7 @@ static void perf_sample(struct perf_cfg* cfg, mtl_handle mt,
     rx_pkts += perf_print_session(cfg, ts, &sessions[i], &first);
   if (cfg->json) printf("]");
   uint64_t pkts = rx_pkts >= *rx_pkts_prev ? rx_pkts - *rx_pkts_prev : 0;
-  perf_print_rx_cost(cfg, ts, pkts, rx_work_ns, interval_ns);
+  if (!cfg->tx_only) perf_print_rx_cost(cfg, ts, pkts, rx_work_ns, interval_ns);
   *rx_pkts_prev = rx_pkts;
   if (cfg->json) printf("}\n");
   fflush(stdout);
@@ -814,7 +823,8 @@ int main(int argc, char** argv) {
         "cnt,avg_ns,min_ns,max_ns,busy_pct,avg_ns_per_loop,work_cnt,work_avg_ns,"
         "work_busy_pct\n");
     printf("# session: ts,kind,dir,idx,frames,pkts,lost,unrecovered\n");
-    printf("# rxcost: ts,kind,scope,rx_pkts,rx_work_ns,ns_per_pkt,rx_work_busy_pct\n");
+    if (!cfg.tx_only)
+      printf("# rxcost: ts,kind,scope,rx_pkts,rx_work_ns,ns_per_pkt,rx_work_busy_pct\n");
   }
 
   /* the first interval starts here, not at mtl_start() */

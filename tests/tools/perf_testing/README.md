@@ -2,7 +2,8 @@
 
 `perf_testing` measures the scheduler cost of the st20p RX payload paths. It starts N
 identical st20p RX sessions on one port, and with `--tx` also N TX sessions on a second
-port, so one host can send traffic to itself. At each interval it reads
+port, so one host can send traffic to itself. With `--tx_only` it starts only N TX
+sessions, to feed the RX sessions of a second process. At each interval it reads
 `mtl_sch_get_stats()` for every scheduler slot and `st20p_rx_get_session_stats()` /
 `st20p_tx_get_session_stats()` for every session, and prints one record set. Run it once
 per RX path (CPU copy, `--dma`, `--hdr_split`) and compare the `work_*` columns of the RX
@@ -16,11 +17,10 @@ holds only the calls that returned a value other than `MTL_TASKLET_ALL_DONE`.
 `rvs_pkt_rx` returns the sum over its sessions, and a session is not done when
 `mt_rxq_burst()` got packets or, with `--dma`, while DMA copies are in flight. Only the
 calls that got packets copy the payload, submit the DMA, or do the header split
-bookkeeping. The scheduler calls a polling tasklet
-millions of times per second, and almost all calls are idle, so `busy_pct` and `avg_ns`
-of all calls barely change with the load and cannot compare the RX paths. Compare
-`work_avg_ns`, `work_busy_pct` and `ns_per_pkt` instead. The counters move only while the
-measurement is enabled:
+bookkeeping. The scheduler calls a polling tasklet millions of times per second, and
+almost all calls are idle, so `busy_pct` and `avg_ns` of all calls barely change with the
+load and cannot compare the RX paths. Compare `work_avg_ns`, `work_busy_pct` and
+`ns_per_pkt` instead. The counters move only while the measurement is enabled:
 
 - `--time_measure` sets `MTL_FLAG_TASKLET_TIME_MEASURE` at `mtl_init()`.
 - Without the flag, attach the USDT probe `sys:tasklet_time_measure` from
@@ -118,12 +118,20 @@ to send a frame first; the ARP exchange does that when `--tx_dst_mac` is not set
 
 `--sch_quota` sets `mtl_init_params.data_quota_mbs_per_sch`, the data rate in Mbit/s
 that one scheduler takes before the library starts a new one. A quota above the sum of
-all sessions puts all RX sessions on one scheduler, so its `busy_pct` shows how many
-sessions one core can receive. With `--tx` the TX sessions of the same process can share
-that scheduler, so send from a second process with `--tx_only`. That process creates only
-TX sessions, on its `--p_port`, and sends to `--rx_ip`, the `--p_sip` of the RX process.
-The RX process uses the `--p_sip` of the TX process as its `--rx_ip`. Start the RX
-process first, because a unicast TX session waits for the ARP reply of the RX port.
+all sessions puts all RX sessions on one scheduler. Increase `--sessions` until that
+core cannot receive all frames. To find that point, divide the sum of the RX `frames` of
+the RX process by the sum of the TX `frames` of the TX process. Both counts are
+cumulative, so use the increase over the same interval. Do not use `busy_pct`: the loop
+record of a polling scheduler is at about 99.9% at all loads. Do not use `work_busy_pct`
+of `rvs_pkt_rx` or `rx_work_busy_pct` either: they stop at about 96% when almost every
+call gets a packet. A hardware test reached that point at about 12 sessions on one core.
+The work counters compare the RX cost only while the core is not saturated.
+
+With `--tx` the TX sessions of the same process can share that scheduler, so send from a
+second process with `--tx_only`. That process creates only TX sessions, on its
+`--p_port`, and sends to `--rx_ip`, the `--p_sip` of the RX process. The RX process uses
+the `--p_sip` of the TX process as its `--rx_ip`. Start the RX process first, because a
+unicast TX session waits for the ARP reply of the RX port.
 
 16 sessions of 1080p59 (about 2.6 Gbps each) on one scheduler:
 
@@ -144,16 +152,16 @@ two processes share no DPDK files.
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `--p_port <pci>` | required | RX port |
-| `--p_sip <ip>` | required | RX port IP |
-| `--rx_ip <ip>` | `239.168.85.20` | Multicast group, or the sender IP of a unicast stream |
+| `--p_port <pci>` | required | RX port; the TX port with `--tx_only` |
+| `--p_sip <ip>` | required | IP of `--p_port` |
+| `--rx_ip <ip>` | `239.168.85.20` | Multicast group, or the sender IP of a unicast stream; the destination IP with `--tx_only` |
 | `--udp_port <n>` | `20000` | UDP port of session 0; session i uses `n + i` |
-| `--sessions <n>` | `1` | RX sessions, and TX sessions with `--tx` |
+| `--sessions <n>` | `1` | RX sessions, and TX sessions with `--tx`; only TX sessions with `--tx_only` |
 | `--width`, `--height` | `1920`, `1080` | Resolution |
 | `--fps` | `p59` | `p59`, `p50`, `p29`, `p25`, `p60`, `p30` |
 | `--fmt` | `YUV_422_10bit` | Transport format; the output format is the same, so no conversion runs |
 | `--tx` | off | Also create TX sessions on `--t_port` / `--t_sip` |
-| `--tx_only` | off | Only TX sessions, on `--p_port`, sent to `--rx_ip`; excludes `--tx` |
+| `--tx_only` | off | Only TX sessions, on `--p_port`, sent to `--rx_ip`; excludes `--tx`, `--hdr_split` and `--dma` |
 | `--packing` | `bpm` | TX `transport_packing`: `bpm`, `gpm`, `gpm_sl` |
 | `--tx_dst_mac <mac>` | none | TX destination MAC, sets `ST20P_TX_FLAG_USER_P_MAC` and skips ARP |
 | `--sch_quota <mbs>` | `0` | `mtl_init_params.data_quota_mbs_per_sch`; `0` keeps the library default |
@@ -163,7 +171,7 @@ two processes share no DPDK files.
 | `--interval <s>` | `5` | Sample interval |
 | `--duration <s>` | `30` | Runtime, `0` runs until SIGINT |
 | `--json` | off | One JSON object per interval on one line |
-| `--reset_each_interval` | off | Call `mtl_sch_reset_stats()` after each sample |
+| `--reset_each_interval` | off | Call `mtl_sch_reset_stats()` before the first interval and after each sample |
 | `--lcores <list>` | none | `mtl_init_params.lcores` |
 | `--log_level` | `warning` | `debug`, `info`, `notice`, `warning`, `error` |
 
@@ -171,8 +179,8 @@ two processes share no DPDK files.
 
 ### CSV
 
-Three header lines start with `#`. Each later line is one record; the second column
-tells the record kind.
+Three header lines start with `#`, two with `--tx_only`. Each later line is one record;
+the second column tells the record kind.
 
 Scheduler records (`kind` is `loop` or `tasklet`):
 
@@ -208,7 +216,8 @@ the zero fill of the library. `pkts`, `lost` and `unrecovered` come from the ses
 stats; a TX record has `lost` and `unrecovered` at `0`. With `--tx_only` each session
 has only a TX record.
 
-One RX cost record (`kind` is `rxcost`) per interval, after the session records:
+One RX cost record (`kind` is `rxcost`) per interval, after the session records. With
+`--tx_only` the tool prints no RX cost record:
 
 ```text
 ts,kind,scope,rx_pkts,rx_work_ns,ns_per_pkt,rx_work_busy_pct
@@ -227,14 +236,16 @@ poll for DMA completions add to `rx_work_ns` and bring no packets, so `ns_per_pk
 DMA run includes that poll time.
 
 `rx_work_ns` holds only the tasklets named `rvs_pkt_rx` that `mtl_sch_get_stats()`
-reports. It does not hold the work of a separate packet lcore, which a session with
-`ST20_RX_FLAG_USE_MULTI_THREADS` or above 40 Gbps uses, or of a tasklet past
+reports. It does not hold the work of a separate packet lcore. A session uses that lcore
+with `ST20_RX_FLAG_USE_MULTI_THREADS`, or above 40 Gbps when it has no DMA device, but
+never with `--hdr_split`. It also does not hold the work of a tasklet past
 `MTL_SCH_MAX_TASKLETS` on its scheduler.
 
 ### JSON
 
 One object per interval. Each tasklet has a `time` and a `work` object with the same
-fields; `rx_cost` holds the fields of the `rxcost` CSV record:
+fields; `rx_cost` holds the fields of the `rxcost` CSV record and is absent with
+`--tx_only`:
 
 ```json
 {"ts":1760000000.123,"interval_ns":5000000000,
