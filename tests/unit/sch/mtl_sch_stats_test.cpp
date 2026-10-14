@@ -177,13 +177,14 @@ TEST_F(MtlSchStatsTest, WorkStaysZeroForATaskletThatReportsIdle) {
 }
 
 TEST_F(MtlSchStatsTest, DumpResetsOnlyThePerDumpCounters) {
-  Create(MTL_FLAG_TASKLET_TIME_MEASURE);
-  RunCalls(20);
+  Create(MTL_FLAG_TASKLET_TIME_MEASURE, kWorkEvery);
+  RunCalls(kWorkEvery * 20);
   Stop();
 
   struct mtl_sch_stats before = {};
   ASSERT_EQ(mtl_sch_get_stats(mt_, 0, &before), 0);
   ASSERT_GT(before.loop_time.cnt, 0u);
+  ASSERT_GT(before.tasklets[0].work.cnt, 0u);
   ASSERT_GT(ut_sch_stats_dump_loop_cnt(mt_), 0u);
 
   EXPECT_EQ(ut_sch_stats_dump(mt_), 0);
@@ -194,6 +195,8 @@ TEST_F(MtlSchStatsTest, DumpResetsOnlyThePerDumpCounters) {
   EXPECT_EQ(stats_.loop_time.sum_ns, before.loop_time.sum_ns);
   EXPECT_EQ(stats_.tasklets[0].time.cnt, before.tasklets[0].time.cnt);
   EXPECT_EQ(stats_.tasklets[0].time.sum_ns, before.tasklets[0].time.sum_ns);
+  EXPECT_EQ(stats_.tasklets[0].work.cnt, before.tasklets[0].work.cnt);
+  EXPECT_EQ(stats_.tasklets[0].work.sum_ns, before.tasklets[0].work.sum_ns);
 }
 
 TEST_F(MtlSchStatsTest, ResetClearsTheCumulativeCounters) {
