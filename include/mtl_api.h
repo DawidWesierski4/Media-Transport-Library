@@ -759,6 +759,13 @@ struct mtl_init_params {
 #else
   uint16_t rx_sessions_cnt_max __mtl_deprecated_msg("Use rx_queues_cnt instead");
 #endif
+  /**
+   * Optional for MTL_TRANSPORT_ST2110. Payload mbufs of each hdr split rx queue, the
+   * most packet slots a hdr split session can use, see ST20_RX_FLAG_HDR_SPLIT. Leave to
+   * zero for 21600, which holds 4 frames of 1080p GPM_SL. At least nb_rx_desc +
+   * rx_free_thresh + 32 when set.
+   */
+  uint32_t hdr_split_slots;
 };
 
 /**
