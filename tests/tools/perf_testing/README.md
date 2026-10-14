@@ -12,9 +12,11 @@ video tasklet `rvs_pkt_rx` and the `rxcost` record.
 
 The library measures each tasklet handler call and each pass over all tasklets of a
 scheduler. For each tasklet it keeps two distributions: `time` holds every call, `work`
-holds only the calls that returned `MTL_TASKLET_HAS_PENDING`. `rvs_pkt_rx` returns it
-exactly when `mt_rxq_burst()` got packets, and only those calls copy the payload, submit
-the DMA, or do the header split bookkeeping. The scheduler calls a polling tasklet
+holds only the calls that returned a value other than `MTL_TASKLET_ALL_DONE`.
+`rvs_pkt_rx` returns the sum over its sessions, and a session is not done when
+`mt_rxq_burst()` got packets or, with `--dma`, while DMA copies are in flight. Only the
+calls that got packets copy the payload, submit the DMA, or do the header split
+bookkeeping. The scheduler calls a polling tasklet
 millions of times per second, and almost all calls are idle, so `busy_pct` and `avg_ns`
 of all calls barely change with the load and cannot compare the RX paths. Compare
 `work_avg_ns`, `work_busy_pct` and `ns_per_pkt` instead. The counters move only while the
@@ -154,7 +156,7 @@ ts,kind,sch_idx,sch_name,lcore,time_measure,tasklet_idx,tasklet_name,cnt,avg_ns,
 | `min_ns`, `max_ns` | Since `mtl_init()` or the last reset |
 | `busy_pct` | `100 * sum_ns / interval_ns` |
 | `avg_ns_per_loop` | The scheduler's own loop average, always available |
-| `work_cnt` | Handler calls in the interval that returned `MTL_TASKLET_HAS_PENDING`; `0` for the loop record |
+| `work_cnt` | Handler calls in the interval that returned a value other than `MTL_TASKLET_ALL_DONE`; `0` for the loop record |
 | `work_avg_ns` | `work_sum_ns / work_cnt` over the interval |
 | `work_busy_pct` | `100 * work_sum_ns / interval_ns` |
 
@@ -182,6 +184,15 @@ ts,kind,scope,rx_pkts,rx_work_ns,ns_per_pkt,rx_work_busy_pct
 | `rx_work_ns` | Work time (`work_sum_ns`) of all `rvs_pkt_rx` tasklets in the interval |
 | `ns_per_pkt` | `rx_work_ns / rx_pkts`, `0` when `rx_pkts` is `0` |
 | `rx_work_busy_pct` | `100 * rx_work_ns / interval_ns`, the sum of `work_busy_pct` of the `rvs_pkt_rx` tasklets |
+
+With `--dma`, `work` means "got packets, or DMA copies in flight". The calls that only
+poll for DMA completions add to `rx_work_ns` and bring no packets, so `ns_per_pkt` of a
+DMA run includes that poll time.
+
+`rx_work_ns` holds only the tasklets named `rvs_pkt_rx` that `mtl_sch_get_stats()`
+reports. It does not hold the work of a separate packet lcore, which a session with
+`ST20_RX_FLAG_USE_MULTI_THREADS` or above 40 Gbps uses, or of a tasklet past
+`MTL_SCH_MAX_TASKLETS` on its scheduler.
 
 ### JSON
 
