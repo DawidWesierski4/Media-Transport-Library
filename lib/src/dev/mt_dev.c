@@ -2527,6 +2527,12 @@ int mt_dev_if_init(struct mtl_main_impl* impl) {
       dbg("%s(%d), has rxq hdr split\n", __func__, i);
     }
 #endif
+    /* hdr split queues only on a port that can split, a session asking for one fails */
+    if (!mt_if_has_hdr_split(impl, i) &&
+        (inf->hdr_split_rx_queues_end > inf->system_rx_queues_end)) {
+      info("%s(%d), no hdr split feature, no hdr split queues\n", __func__, i);
+      inf->hdr_split_rx_queues_end = inf->system_rx_queues_end;
+    }
 
     if (mt_has_virtio_user(impl, i)) {
       ret = dev_if_init_virtio_user(inf);
