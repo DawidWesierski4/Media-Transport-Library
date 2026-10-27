@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1190" height="672" viewBox="0 0 1190 672" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<rect width="1190" height="672" rx="12" fill="#fcfcfb"/>
+<text x="32" y="44" font-size="20" font-weight="600" fill="#0b0b0b">PR 1836: changed lines by commit and area</text>
+<text x="32" y="68" font-size="13" fill="#52514e">Inner ring: commit. Outer ring: the area that the commit changes. Angle: added plus removed lines.</text>
+<path d="M340.00,194.00 A176,176 0 0 1 422.10,525.68 L384.78,454.91 A96,96 0 0 0 340.00,274.00 Z" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<text x="472.0" y="343.3" font-size="17" font-weight="700" text-anchor="middle" fill="#ffffff">1</text>
+<path d="M340.00,118.00 A252,252 0 0 1 535.98,528.42 L479.99,483.16 A180,180 0 0 0 340.00,190.00 Z" fill="#9ec1ea" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M535.98,528.42 A252,252 0 0 1 484.61,576.38 L443.29,517.41 A180,180 0 0 0 479.99,483.16 Z" fill="#9ec1ea" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M484.61,576.38 A252,252 0 0 1 457.55,592.90 L423.97,529.22 A180,180 0 0 0 443.29,517.41 Z" fill="#9ec1ea" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M422.10,525.68 A176,176 0 0 1 359.77,544.89 L350.78,465.39 A96,96 0 0 0 384.78,454.91 Z" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"/>
+<text x="380.1" y="506.0" font-size="17" font-weight="700" text-anchor="middle" fill="#ffffff">2</text>
+<path d="M457.55,592.90 A252,252 0 0 1 417.47,609.80 L395.34,541.28 A180,180 0 0 0 423.97,529.22 Z" fill="#f4b9a1" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M417.47,609.80 A252,252 0 0 1 396.07,615.68 L380.05,545.49 A180,180 0 0 0 395.34,541.28 Z" fill="#f4b9a1" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M396.07,615.68 A252,252 0 0 1 378.82,618.99 L367.73,547.85 A180,180 0 0 0 380.05,545.49 Z" fill="#f4b9a1" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M378.82,618.99 A252,252 0 0 1 370.00,620.21 L361.43,548.72 A180,180 0 0 0 367.73,547.85 Z" fill="#f4b9a1" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M370.00,620.21 A252,252 0 0 1 368.30,620.41 L360.22,548.86 A180,180 0 0 0 361.43,548.72 Z" fill="#f4b9a1" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M359.77,544.89 A176,176 0 0 1 289.06,538.47 L312.22,461.89 A96,96 0 0 0 350.78,465.39 Z" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"/>
+<text x="327.7" y="511.4" font-size="17" font-weight="700" text-anchor="middle" fill="#ffffff">3</text>
+<path d="M368.30,620.41 A252,252 0 0 1 305.04,619.56 L315.03,548.26 A180,180 0 0 0 360.22,548.86 Z" fill="#97d9c1" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M305.04,619.56 A252,252 0 0 1 284.64,615.84 L300.46,545.60 A180,180 0 0 0 315.03,548.26 Z" fill="#97d9c1" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M284.64,615.84 A252,252 0 0 1 271.87,612.62 L291.34,543.30 A180,180 0 0 0 300.46,545.60 Z" fill="#97d9c1" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M271.87,612.62 A252,252 0 0 1 267.07,611.22 L287.91,542.30 A180,180 0 0 0 291.34,543.30 Z" fill="#97d9c1" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M289.06,538.47 A176,176 0 0 1 234.72,511.04 L282.58,446.93 A96,96 0 0 0 312.22,461.89 Z" fill="#eda100" stroke="#fcfcfb" stroke-width="2"/>
+<text x="278.7" y="497.4" font-size="17" font-weight="700" text-anchor="middle" fill="#0b0b0b">4</text>
+<path d="M267.07,611.22 A252,252 0 0 1 189.27,571.95 L232.33,514.25 A180,180 0 0 0 287.91,542.30 Z" fill="#f5d38a" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M234.72,511.04 A176,176 0 0 1 332.16,194.17 L335.73,274.10 A96,96 0 0 0 282.58,446.93 Z" fill="#e87ba4" stroke="#fcfcfb" stroke-width="2"/>
+<text x="210.0" y="336.0" font-size="17" font-weight="700" text-anchor="middle" fill="#ffffff">5</text>
+<path d="M189.27,571.95 A252,252 0 0 1 296.06,121.86 L308.62,192.76 A180,180 0 0 0 232.33,514.25 Z" fill="#f3c2d4" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M296.06,121.86 A252,252 0 0 1 327.44,118.31 L331.03,190.22 A180,180 0 0 0 308.62,192.76 Z" fill="#f3c2d4" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M327.44,118.31 A252,252 0 0 1 328.78,118.25 L331.99,190.18 A180,180 0 0 0 331.03,190.22 Z" fill="#f3c2d4" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M332.16,194.17 A176,176 0 0 1 340.00,194.00 L340.00,274.00 A96,96 0 0 0 335.73,274.10 Z" fill="#008300" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M328.78,118.25 A252,252 0 0 1 333.17,118.09 L335.12,190.07 A180,180 0 0 0 331.99,190.18 Z" fill="#8bc68a" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M333.17,118.09 A252,252 0 0 1 337.07,118.02 L337.91,190.01 A180,180 0 0 0 335.12,190.07 Z" fill="#8bc68a" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M337.07,118.02 A252,252 0 0 1 338.78,118.00 L339.13,190.00 A180,180 0 0 0 337.91,190.01 Z" fill="#8bc68a" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M338.78,118.00 A252,252 0 0 1 339.76,118.00 L339.83,190.00 A180,180 0 0 0 339.13,190.00 Z" fill="#8bc68a" stroke="#fcfcfb" stroke-width="2"/>
+<path d="M339.76,118.00 A252,252 0 0 1 340.00,118.00 L340.00,190.00 A180,180 0 0 0 339.83,190.00 Z" fill="#8bc68a" stroke="#fcfcfb" stroke-width="2"/>
+<polyline points="570.1,260.1 581.8,254.5 589.8,254.5" fill="none" stroke="#898781" stroke-width="1"/>
+<text x="593.8" y="258.5" font-size="12" text-anchor="start" fill="#52514e">User scripts</text>
+<polyline points="514.0,556.4 522.9,565.9 530.9,565.9" fill="none" stroke="#898781" stroke-width="1"/>
+<text x="534.9" y="569.9" font-size="12" text-anchor="start" fill="#52514e">CI</text>
+<polyline points="439.0,605.0 444.1,617.0 452.1,617.0" fill="none" stroke="#898781" stroke-width="1"/>
+<text x="456.1" y="621.0" font-size="12" text-anchor="start" fill="#52514e">Acceptance</text>
+<polyline points="336.6,625.0 336.4,638.0 328.4,638.0" fill="none" stroke="#898781" stroke-width="1"/>
+<text x="324.4" y="642.0" font-size="12" text-anchor="end" fill="#52514e">C tests</text>
+<polyline points="225.1,597.6 219.2,609.3 211.2,609.3" fill="none" stroke="#898781" stroke-width="1"/>
+<text x="207.2" y="613.3" font-size="12" text-anchor="end" fill="#52514e">Docs</text>
+<polyline points="91.9,311.1 79.2,308.1 71.2,308.1" fill="none" stroke="#898781" stroke-width="1"/>
+<text x="67.2" y="312.1" font-size="12" text-anchor="end" fill="#52514e">CI</text>
+<polyline points="334.3,115.1 334.0,102.1 326.0,102.1" fill="none" stroke="#898781" stroke-width="1"/>
+<text x="322.0" y="106.1" font-size="12" font-weight="700" text-anchor="end" fill="#52514e">6</text>
+<text x="340" y="364" font-size="30" font-weight="700" text-anchor="middle" fill="#0b0b0b">12 979</text>
+<text x="340" y="386" font-size="13" text-anchor="middle" fill="#52514e">changed lines</text>
+<text x="340" y="406" font-size="12" text-anchor="middle" fill="#898781">+7 361  −5 618</text>
+<text x="730" y="132" font-size="13" font-weight="600" fill="#52514e">Commits</text>
+<rect x="730" y="150" width="26" height="26" rx="4" fill="#2a78d6"/>
+<text x="743" y="168" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">1</text>
+<text x="768" y="162" font-size="13" font-weight="600" fill="#0b0b0b">Refactor</text>
+<text x="768" y="179" font-size="12.5" fill="#0b0b0b">Standardize the user scripts and the build</text>
+<text x="768" y="196" font-size="11.5" fill="#898781">5683fe00   +3807  −1680</text>
+<rect x="730" y="220" width="26" height="26" rx="4" fill="#eb6834"/>
+<text x="743" y="238" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">2</text>
+<text x="768" y="232" font-size="13" font-weight="600" fill="#0b0b0b">Fix</text>
+<text x="768" y="249" font-size="12.5" fill="#0b0b0b">Make a fresh host and a moved install work</text>
+<text x="768" y="266" font-size="11.5" fill="#898781">e53b830d   +475  −295</text>
+<rect x="730" y="290" width="26" height="26" rx="4" fill="#1baf7a"/>
+<text x="743" y="308" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">3</text>
+<text x="768" y="302" font-size="13" font-weight="600" fill="#0b0b0b">Feat</text>
+<text x="768" y="319" font-size="12.5" fill="#0b0b0b">Add MTL_FLAG_DMA_AUTO to find the DMA devices of the ports</text>
+<text x="768" y="336" font-size="11.5" fill="#898781">a7518833   +824  −15</text>
+<rect x="730" y="360" width="26" height="26" rx="4" fill="#eda100"/>
+<text x="743" y="378" font-size="14" font-weight="700" text-anchor="middle" fill="#0b0b0b">4</text>
+<text x="768" y="372" font-size="13" font-weight="600" fill="#0b0b0b">Docs</text>
+<text x="768" y="389" font-size="12.5" fill="#0b0b0b">Document the scripts, the DMA auto mode and the agent rules</text>
+<text x="768" y="406" font-size="11.5" fill="#898781">55703acc   +537  −181</text>
+<rect x="730" y="430" width="26" height="26" rx="4" fill="#e87ba4"/>
+<text x="743" y="448" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">5</text>
+<text x="768" y="442" font-size="13" font-weight="600" fill="#0b0b0b">Ci</text>
+<text x="768" y="459" font-size="12.5" fill="#0b0b0b">Sort the CI scripts and leave the host settings to the host</text>
+<text x="768" y="476" font-size="11.5" fill="#898781">6f1d4326   +1656  −3417</text>
+<rect x="730" y="500" width="26" height="26" rx="4" fill="#008300"/>
+<text x="743" y="518" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">6</text>
+<text x="768" y="512" font-size="13" font-weight="600" fill="#0b0b0b">Fix</text>
+<text x="768" y="529" font-size="12.5" fill="#0b0b0b">Correct review findings and the clang-tidy failure</text>
+<text x="768" y="546" font-size="11.5" fill="#898781">61d1deac   +62  −30</text>
+</svg>
