@@ -1662,6 +1662,84 @@ static uint64_t tv_rtp_required_tai(struct st_tx_video_session_impl* s,
   return tv_pacing_required_tai(s, ST10_TIMESTAMP_FMT_TAI, tai);
 }
 
+/* pr-1957-demo only, do not merge: tell which start time an RTP-level USER_PACING
+ * frame got. Logs the first 3 frames of a session, then the first frame of each other
+ * path. The reason of an EXACT refusal is read again here, a few us after
+ * tv_pacing_required_tai() decided, so a TAI on a limit can show the other reason. */
+enum tv_rtp_demo_path {
+  TV_RTP_DEMO_EXACT = 0,
+  TV_RTP_DEMO_NEAREST,
+  TV_RTP_DEMO_NEAREST_PAST,
+  TV_RTP_DEMO_NEAREST_AHEAD,
+  TV_RTP_DEMO_NO_TAI,
+  TV_RTP_DEMO_REFUSED_PAST,
+  TV_RTP_DEMO_REFUSED_AHEAD,
+  TV_RTP_DEMO_REFUSED_LEAD,
+};
+
+static void tv_rtp_demo_log(struct mtl_main_impl* impl,
+                            struct st_tx_video_session_impl* s, struct rte_mbuf* app_pkt,
+                            uint64_t required_tai) {
+  if (!(s->ops.flags & ST20_TX_FLAG_USER_PACING)) return;
+
+  struct st_tx_video_pacing* pacing = &s->pacing;
+  uint64_t app_tai = *RTE_MBUF_DYNFIELD(app_pkt, s->user_tai_offset, uint64_t*);
+  uint64_t now = mt_get_ptp_time(impl, MTL_PORT_P);
+  bool exact = s->ops.flags & ST20_TX_FLAG_EXACT_USER_PACING;
+  enum tv_rtp_demo_path path;
+  const char* why;
+
+  if (!app_tai) {
+    path = TV_RTP_DEMO_NO_TAI;
+    why = "no TAI on the first packet -> default pacing";
+  } else if (exact && required_tai) {
+    path = TV_RTP_DEMO_EXACT;
+    why = "EXACT -> first packet at the app TAI";
+  } else if (exact && app_tai < now) {
+    path = TV_RTP_DEMO_REFUSED_PAST;
+    why = "EXACT refused, TAI in the past -> default pacing";
+  } else if (exact && app_tai - now > NS_PER_S) {
+    path = TV_RTP_DEMO_REFUSED_AHEAD;
+    why = "EXACT refused, TAI more than 1 s ahead -> default pacing";
+  } else if (exact) {
+    path = TV_RTP_DEMO_REFUSED_LEAD;
+    why = "EXACT refused, TAI inside the warm-up lead -> default pacing";
+  } else if (pacing->ptp_time_cursor < now) {
+    path = TV_RTP_DEMO_NEAREST_PAST;
+    why = "nearest epoch, its start is in the past -> sent at once";
+  } else if (pacing->ptp_time_cursor - now > NS_PER_S) {
+    path = TV_RTP_DEMO_NEAREST_AHEAD;
+    why = "nearest epoch, its start is more than 1 s ahead -> the transmitter must wait";
+  } else {
+    path = TV_RTP_DEMO_NEAREST;
+    why = "nearest epoch -> first packet at epoch + tr_offset - vrx * trs";
+  }
+
+  if (s->demo_frames_logged >= 3 && (s->demo_paths_logged & MTL_BIT32(path))) return;
+  s->demo_frames_logged++;
+  s->demo_paths_logged |= MTL_BIT32(path);
+
+  uint64_t epoch_tai = tai_from_frame_count(s, pacing->cur_epochs);
+  uint64_t first_pkt = pacing->ptp_time_cursor;
+  info("%s(%d), [demo] %s\n", __func__, s->idx, why);
+  if (app_tai)
+    info("%s(%d), [demo]   app tai %" PRIu64 ", now %" PRIu64
+         ", app tai - now %+.1f us\n",
+         __func__, s->idx, app_tai, now, (double)(int64_t)(app_tai - now) / 1000.0);
+  else
+    info("%s(%d), [demo]   app tai none, now %" PRIu64 "\n", __func__, s->idx, now);
+  info("%s(%d), [demo]   epoch %" PRIu64 " starts at tai %" PRIu64
+       ", app tai - epoch %+.1f us, stat_error_user_timestamp %" PRIu64 "\n",
+       __func__, s->idx, pacing->cur_epochs, epoch_tai,
+       app_tai ? (double)(int64_t)(app_tai - epoch_tai) / 1000.0 : 0.0,
+       s->port_user_stats.common.stat_error_user_timestamp);
+  info("%s(%d), [demo]   first packet tai %" PRIu64
+       ", first packet - app tai %+.1f us, first packet - now %+.1f us\n",
+       __func__, s->idx, first_pkt,
+       app_tai ? (double)(int64_t)(first_pkt - app_tai) / 1000.0 : 0.0,
+       (double)(int64_t)(first_pkt - now) / 1000.0);
+}
+
 static int tv_build_rtp(struct mtl_main_impl* impl, struct st_tx_video_session_impl* s,
                         struct rte_mbuf* pkt) {
   struct mt_udp_hdr* hdr;
@@ -1704,7 +1782,9 @@ static int tv_build_rtp(struct mtl_main_impl* impl, struct st_tx_video_session_i
         s->port_user_stats.stat_interlace_first_field++;
       }
     }
-    tv_sync_pacing(impl, s, tv_rtp_required_tai(s, pkt), second_field);
+    uint64_t required_tai = tv_rtp_required_tai(s, pkt);
+    tv_sync_pacing(impl, s, required_tai, second_field);
+    tv_rtp_demo_log(impl, s, pkt, required_tai);
     if (s->ops.flags & ST20_TX_FLAG_USER_TIMESTAMP) {
       s->pacing.rtp_time_stamp = ntohl(rtp->tmstamp);
     } else {
@@ -1778,7 +1858,9 @@ static int tv_build_rtp_chain(struct mtl_main_impl* impl,
         s->port_user_stats.stat_interlace_first_field++;
       }
     }
-    tv_sync_pacing(impl, s, tv_rtp_required_tai(s, pkt_chain), second_field);
+    uint64_t required_tai = tv_rtp_required_tai(s, pkt_chain);
+    tv_sync_pacing(impl, s, required_tai, second_field);
+    tv_rtp_demo_log(impl, s, pkt_chain, required_tai);
     if (s->ops.flags & ST20_TX_FLAG_USER_TIMESTAMP) {
       s->pacing.rtp_time_stamp = ntohl(rtp->tmstamp);
     } else {
@@ -5326,6 +5408,12 @@ int st20_tx_put_mbuf_tai(st20_tx_handle handle, void* mbuf, uint16_t len, uint64
 
   if (s->ops.flags & ST20_TX_FLAG_USER_PACING)
     *RTE_MBUF_DYNFIELD(pkt, s->user_tai_offset, uint64_t*) = tai;
+  if (tai && (s->ops.flags & ST20_TX_FLAG_USER_PACING) && !s->demo_tai_store_logged) {
+    /* pr-1957-demo only */
+    info("%s(%d), [demo] first tai %" PRIu64 " stored in mbuf dynfield offset %d\n",
+         __func__, s->idx, tai, s->user_tai_offset);
+    s->demo_tai_store_logged = true;
+  }
   pkt->data_len = pkt->pkt_len = len;
   ret = rte_ring_sp_enqueue(packet_ring, (void*)pkt);
   if (ret < 0) {
@@ -5814,6 +5902,12 @@ int st22_tx_put_mbuf_tai(st22_tx_handle handle, void* mbuf, uint16_t len, uint64
 
   if (s->ops.flags & ST20_TX_FLAG_USER_PACING)
     *RTE_MBUF_DYNFIELD(pkt, s->user_tai_offset, uint64_t*) = tai;
+  if (tai && (s->ops.flags & ST20_TX_FLAG_USER_PACING) && !s->demo_tai_store_logged) {
+    /* pr-1957-demo only */
+    info("%s(%d), [demo] first tai %" PRIu64 " stored in mbuf dynfield offset %d\n",
+         __func__, s->idx, tai, s->user_tai_offset);
+    s->demo_tai_store_logged = true;
+  }
   pkt->data_len = pkt->pkt_len = len;
   ret = rte_ring_sp_enqueue(packet_ring, (void*)pkt);
   if (ret < 0) {

@@ -314,6 +314,10 @@ struct st_tx_video_session_impl {
   struct rte_ring* packet_ring; /* rtp ring */
   int user_tai_offset;          /* dynfield of st20_/st22_tx_put_mbuf_tai() tai */
   bool user_tai_missing_logged;
+  /* pr-1957-demo only: tv_rtp_demo_log() and st20_/st22_tx_put_mbuf_tai() */
+  int demo_frames_logged;
+  uint32_t demo_paths_logged;
+  bool demo_tai_store_logged;
   struct mt_txq_entry* queue[MTL_SESSION_PORT_MAX];
   int idx; /* index for current tx_session */
   uint64_t advice_sleep_us;
