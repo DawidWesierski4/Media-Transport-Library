@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 950" width="1200" height="950" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="6" height="6" fill="#fff4d6"/>
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#e0a800" stroke-width="2"/>
+    </pattern>
+    <style>
+      .box { fill: #ffffff; stroke: #5a6b7d; stroke-width: 1.4; rx: 6; }
+      .app { fill: #e8f1fb; }
+      .lib { fill: #eef7ee; }
+      .dec { fill: #fff8e6; }
+      .bad { fill: #fdecec; }
+      .t { fill: #1d2731; }
+      .s { fill: #4a5866; font-size: 11.5px; }
+      .h { font-size: 17px; font-weight: bold; fill: #1d2731; }
+      .code { font-family: DejaVu Sans Mono, Consolas, monospace; font-size: 12px; fill: #12324f; }
+      .line { stroke: #444; stroke-width: 1.4; fill: none; marker-end: url(#arr); }
+      .dash { stroke: #888; stroke-width: 1; stroke-dasharray: 4 3; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="950" fill="#fbfcfd"/>
+  <text x="20" y="30" class="h">RTP-level TX with user pacing: st20_tx_put_mbuf_tai() (PR #1957)</text>
+  <text x="20" y="50" class="s">ST20_TYPE_RTP_LEVEL session with ST20_TX_FLAG_USER_PACING. The TAI of the first packet of a frame sets the send time of that frame.</text>
+
+  <!-- ===================== panel A: data path ===================== -->
+  <text x="20" y="84" class="h">A. Where the TAI goes</text>
+
+  <!-- app -->
+  <rect x="20" y="100" width="250" height="118" class="box app"/>
+  <text x="32" y="122" class="t" font-weight="bold">App thread (producer)</text>
+  <text x="32" y="144" class="code">st20_tx_get_mbuf()</text>
+  <text x="32" y="162" class="code">fill the RTP header + payload</text>
+  <text x="32" y="184" class="code">1st pkt: put_mbuf_tai(.., tai)</text>
+  <text x="32" y="202" class="code">others:  put_mbuf()  (tai 0)</text>
+
+  <!-- dynfield -->
+  <rect x="310" y="100" width="250" height="118" class="box app"/>
+  <text x="322" y="122" class="t" font-weight="bold">mbuf dynfield, per packet</text>
+  <text x="322" y="144" class="code">"mtl_tx_video_user_tai"</text>
+  <text x="322" y="164" class="s">uint64, registered in</text>
+  <text x="322" y="180" class="s">tv_init_packet_ring() with USER_PACING;</text>
+  <text x="322" y="196" class="s">written before the ring enqueue</text>
+
+  <!-- ring -->
+  <rect x="600" y="100" width="250" height="118" class="box"/>
+  <text x="612" y="122" class="t" font-weight="bold">packet_ring (SP / SC rte_ring)</text>
+  <g transform="translate(615,134)">
+    <rect x="0" y="0" width="26" height="22" fill="#d8e6f5" stroke="#5a6b7d"/>
+    <rect x="28" y="0" width="26" height="22" fill="#f3f3f3" stroke="#5a6b7d"/>
+    <rect x="56" y="0" width="26" height="22" fill="#f3f3f3" stroke="#5a6b7d"/>
+    <rect x="84" y="0" width="26" height="22" fill="#f3f3f3" stroke="#5a6b7d"/>
+    <rect x="112" y="0" width="26" height="22" fill="#d8e6f5" stroke="#5a6b7d"/>
+    <rect x="140" y="0" width="26" height="22" fill="#f3f3f3" stroke="#5a6b7d"/>
+    <text x="6" y="16" class="s">N</text>
+    <text x="115" y="16" class="s">N+1</text>
+  </g>
+  <text x="612" y="174" class="s">The TAI travels with its packet. One value</text>
+  <text x="612" y="189" class="s">per session would race: the app can put</text>
+  <text x="612" y="204" class="s">frame N+1 before the tasklet reads frame N.</text>
+
+  <!-- builder -->
+  <rect x="890" y="100" width="290" height="118" class="box lib"/>
+  <text x="902" y="122" class="t" font-weight="bold">Builder tasklet</text>
+  <text x="902" y="144" class="code">tv_build_rtp() / _chain()</text>
+  <text x="902" y="166" class="s">RTP timestamp differs from the last packet?</text>
+  <text x="902" y="182" class="s">-> a new frame: read the TAI of this packet.</text>
+  <text x="902" y="198" class="s">The TAI of any other packet is not read.</text>
+
+  <path d="M270,159 L308,159" class="line"/>
+  <path d="M560,159 L598,159" class="line"/>
+  <path d="M850,159 L888,159" class="line"/>
+
+  <!-- decision chain -->
+  <path d="M1035,218 L1035,246" class="line"/>
+  <rect x="790" y="248" width="390" height="100" class="box dec"/>
+  <text x="802" y="270" class="code" font-weight="bold">tv_rtp_required_tai()</text>
+  <text x="802" y="292" class="s">tai == 0  -> stat_error_user_timestamp++, one warning</text>
+  <text x="802" y="308" class="s">               per session, default pacing</text>
+  <text x="802" y="330" class="s">else -> tv_pacing_required_tai(TAI), as frame level</text>
+
+  <path d="M790,298 L752,298" class="line"/>
+  <rect x="360" y="248" width="390" height="100" class="box dec"/>
+  <text x="372" y="270" class="code" font-weight="bold">tv_pacing_required_tai()</text>
+  <text x="372" y="292" class="s">EXACT and TAI in the past, &gt; 1 s ahead, or closer</text>
+  <text x="372" y="308" class="s">than the warm-up lead (warm_pkts x TRS)</text>
+  <text x="372" y="324" class="s">  -> stat_error_user_timestamp++, 0 = default pacing</text>
+  <text x="372" y="340" class="s">else -> the TAI</text>
+
+  <path d="M360,298 L322,298" class="line"/>
+  <rect x="20" y="248" width="300" height="140" class="box lib"/>
+  <text x="32" y="270" class="code" font-weight="bold">tv_sync_pacing()</text>
+  <text x="32" y="292" class="t" font-weight="bold">EXACT:</text>
+  <text x="90" y="292" class="code">start = TAI</text>
+  <text x="32" y="314" class="t" font-weight="bold">else:</text>
+  <text x="90" y="314" class="code">N = nearest epoch(TAI)</text>
+  <text x="90" y="332" class="code">start = N*TFRAME</text>
+  <text x="90" y="348" class="code">  + TROFFSET - VRX*TRS</text>
+  <text x="32" y="372" class="s">no TAI / refused: N = next free epoch</text>
+
+  <path d="M170,388 L170,416" class="line"/>
+  <rect x="20" y="418" width="300" height="70" class="box lib"/>
+  <text x="32" y="440" class="t" font-weight="bold">Transmitter tasklet (TSC or RL)</text>
+  <text x="32" y="460" class="s">waits until the start, then paces at TRS</text>
+  <text x="32" y="476" class="s">to the NIC.</text>
+
+  <rect x="360" y="418" width="820" height="70" class="box bad"/>
+  <text x="372" y="440" class="t" font-weight="bold">Seen on the wire (E830 VF, TSC pacing): a wait of more than 1 s is not honored</text>
+  <text x="372" y="460" class="s">Without EXACT a TAI 1.5 s ahead gives a start 1.5 s ahead. video_trs_tsc_tasklet() refuses a target &gt; 1 s</text>
+  <text x="372" y="476" class="s">("invalid tsc cur .. target ..", one err() per bulk, 1080 lines for one frame) and sends the frame at once.</text>
+  <path d="M320,453 L358,453" class="dash"/>
+
+  <!-- ===================== panel B: timeline ===================== -->
+  <text x="20" y="532" class="h">B. When the first packet leaves (1080p59.94: TFRAME = 16 683.3 us, TROFFSET = 43/1125 x TFRAME = 637.7 us)</text>
+
+  <!-- axis: x = 80 + t_us * 0.034  (t from epoch N - 8000 us) ; scale 34 px per ms -->
+  <!-- epoch N at x=352, N+1 at x=919 -->
+  <line x1="60" y1="700" x2="1170" y2="700" stroke="#1d2731" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="1120" y="722" class="s">PTP time (TAI)</text>
+
+  <!-- fallback zones -->
+  <rect x="60" y="560" width="200" height="140" fill="#fdecec"/>
+  <text x="70" y="580" class="s" fill="#a02020">TAI in the past</text>
+  <text x="70" y="596" class="s">EXACT: refused,</text>
+  <text x="70" y="612" class="s">default pacing</text>
+  <text x="70" y="628" class="s">no EXACT: nearest epoch;</text>
+  <text x="70" y="644" class="s">if its start is past,</text>
+  <text x="70" y="660" class="s">sent at once</text>
+  <line x1="260" y1="556" x2="260" y2="712" stroke="#a02020" stroke-width="2"/>
+  <text x="246" y="728" class="s" fill="#a02020">now</text>
+  <rect x="260" y="560" width="24" height="140" fill="url(#hatch)"/>
+  <text x="266" y="553" class="s">warm-up lead: EXACT refused</text>
+
+  <!-- epochs -->
+  <line x1="352" y1="600" x2="352" y2="712" stroke="#2c5d8f" stroke-width="2"/>
+  <text x="330" y="728" class="t" font-weight="bold">epoch N</text>
+  <text x="330" y="744" class="s">N x TFRAME</text>
+  <line x1="919" y1="600" x2="919" y2="712" stroke="#2c5d8f" stroke-width="2"/>
+  <text x="895" y="728" class="t" font-weight="bold">epoch N+1</text>
+  <text x="880" y="744" class="s">N x TFRAME + 16.68 ms</text>
+  <path d="M352,610 L917,610" class="dash"/>
+  <text x="560" y="604" class="s">TFRAME, one frame period</text>
+
+  <!-- TVD -->
+  <line x1="374" y1="640" x2="374" y2="700" stroke="#2c5d8f" stroke-width="1.2" stroke-dasharray="3 2"/>
+  <text x="380" y="628" class="s">TVD = N x TFRAME + TROFFSET</text>
+
+  <!-- app TAI at 0.37 TFRAME: 6172.8 us after N => x = 352 + 6.1728*34 = 562 -->
+  <line x1="562" y1="642" x2="562" y2="700" stroke="#d9480f" stroke-width="2.2"/>
+  <circle cx="562" cy="700" r="5" fill="#d9480f"/>
+  <text x="556" y="660" class="t" font-weight="bold" fill="#d9480f" text-anchor="end">app TAI</text>
+  <text x="568" y="676" class="s">N x TFRAME + 0.37 TFRAME</text>
+
+  <!-- EXACT marker -->
+  <path d="M562,700 L562,780" class="dash"/>
+  <rect x="460" y="782" width="290" height="70" class="box app"/>
+  <text x="472" y="802" class="t" font-weight="bold">EXACT_USER_PACING</text>
+  <text x="472" y="818" class="s">1st packet at the app TAI.</text>
+  <text x="472" y="833" class="s">Arrival - app TAI: median +6.4 us,</text>
+  <text x="472" y="847" class="s">min +5.6 us (469 frames)</text>
+
+  <!-- nearest marker: 0.37 rounds down to N; start at N + 615 us => x = 352+0.615*34 = 373 -->
+  <path d="M372,700 L372,782" class="dash"/>
+  <rect x="20" y="782" width="420" height="70" class="box lib"/>
+  <text x="32" y="802" class="t" font-weight="bold">USER_PACING without EXACT</text>
+  <text x="32" y="818" class="s">0.37 TFRAME rounds down to epoch N; 1st packet at TVD - VRX x TRS.</text>
+  <text x="32" y="833" class="s">Arrival - epoch N: median +621.9 us (470 frames),</text>
+  <text x="32" y="847" class="s">so 5.55 ms before the app TAI.</text>
+
+  <!-- > 1 s zone, off scale at right -->
+  <rect x="1000" y="560" width="160" height="140" fill="#eeeeee"/>
+  <text x="1010" y="580" class="s" font-weight="bold">&gt; now + 1 s</text>
+  <text x="1010" y="596" class="s">(not to scale)</text>
+  <text x="1010" y="616" class="s">EXACT: refused,</text>
+  <text x="1010" y="632" class="s">default pacing</text>
+  <text x="1010" y="652" class="s">no EXACT: the</text>
+  <text x="1010" y="668" class="s">transmitter refuses</text>
+  <text x="1010" y="684" class="s">the wait, sends at once</text>
+  <path d="M990,700 l6,-8 l6,16 l6,-8" stroke="#1d2731" fill="none" stroke-width="1.6"/>
+
+  <rect x="770" y="782" width="410" height="70" class="box bad"/>
+  <text x="782" y="802" class="t" font-weight="bold">No TAI on the 1st packet</text>
+  <text x="782" y="818" class="s">stat_error_user_timestamp++, one warning per session,</text>
+  <text x="782" y="833" class="s">default pacing on the next free epoch</text>
+
+  <!-- footnotes -->
+  <text x="20" y="882" class="s">ST 2110-21:2022 §6.2 (p6): TVD = (N x TFRAME) + TROFFSET, time from the SMPTE Epoch of ST 2059-1; TPR0 = TVD.</text>
+  <text x="20" y="898" class="s">ST 2110-21:2022 §6.3.2 (p7): TRODEFAULT = (43/1125) x TFRAME for an image height of 1080 lines or more. MTL starts VRX x TRS before TVD.</text>
+  <text x="20" y="914" class="s">Measured 2026-11-23: app/sample/low_level/tx_rtp_user_pacing_sample.c, E830 VFs 15:01.0 -&gt; 15:01.1, --pacing_way tsc,</text>
+  <text x="20" y="930" class="s">software arrival time (mtl_ptp_read_time() at RX dequeue, includes the RX poll). Panel B: the epochs, TROFFSET and the app TAI are to scale; the warm-up lead is drawn wider.</text>
+</svg>

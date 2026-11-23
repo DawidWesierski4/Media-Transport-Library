@@ -425,6 +425,13 @@ executable('TxRtpVideoSample', video_tx_rtp_sample_sources,
   dependencies: [asan_dep, mtl, libpthread, ws2_32_dep]
 )
 
+executable('TxRtpUserPacingSample', video_tx_rtp_user_pacing_sample_sources,
+  c_args : app_c_args,
+  link_args: app_ld_args,
+  # asan should be always the first dep
+  dependencies: [asan_dep, mtl, libpthread, ws2_32_dep]
+)
+
 executable('RxRtpVideoSample', video_rx_rtp_sample_sources,
   c_args : app_c_args,
   link_args: app_ld_args,

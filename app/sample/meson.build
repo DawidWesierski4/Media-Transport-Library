@@ -39,6 +39,7 @@ rx_st20_tx_st20_fwd_sources = files('legacy/rx_st20_tx_st20_fwd.c', 'sample_util
 
 # low level
 video_tx_rtp_sample_sources = files('low_level/tx_rtp_video_sample.c', 'sample_util.c')
+video_tx_rtp_user_pacing_sample_sources = files('low_level/tx_rtp_user_pacing_sample.c', 'sample_util.c')
 video_rx_rtp_sample_sources = files('low_level/rx_rtp_video_sample.c', 'sample_util.c')
 video_rx_slice_sample_sources = files('low_level/rx_slice_video_sample.c', 'sample_util.c')
 video_tx_slice_sample_sources = files('low_level/tx_slice_video_sample.c', 'sample_util.c')
