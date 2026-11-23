@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <style>
+      .t { fill: #1d2731; }
+      .s { fill: #4a5866; font-size: 11.5px; }
+      .h { font-size: 17px; font-weight: bold; fill: #1d2731; }
+      .code { font-family: DejaVu Sans Mono, Consolas, monospace; font-size: 11.5px; fill: #12324f; }
+      .row { fill: #ffffff; stroke: #d5dbe1; }
+      .alt { fill: #f4f7f9; stroke: #d5dbe1; }
+      .ok { fill: #2f7d32; font-weight: bold; }
+      .bad { fill: #b02a2a; font-weight: bold; }
+      .box { fill: #ffffff; stroke: #5a6b7d; stroke-width: 1.3; }
+      .warn { fill: #fdecec; stroke: #b02a2a; stroke-width: 1.3; }
+      .line { stroke: #444; stroke-width: 1.4; fill: none; marker-end: url(#arr); }
+    </style>
+  </defs>
+  <rect width="1200" height="900" fill="#fbfcfd"/>
+  <text x="20" y="30" class="h">PR #1909: replace an unused smaller lcore table in mtl_init — states tested on the host table</text>
+  <text x="20" y="50" class="s">Two builds of the PR: RTE_MAX_LCORE 128 (table 22532 B, /usr/local DPDK) and 256 (table 45060 B). Probe = mtl_init + mtl_start on kernel:lo, as root. Key 0x15050005.</text>
+
+  <!-- table header -->
+  <rect x="20" y="64" width="1160" height="24" fill="#e3e9ef" stroke="#c4ccd4"/>
+  <text x="30" y="81" class="t" font-weight="bold">#</text>
+  <text x="60" y="81" class="t" font-weight="bold">State before mtl_init</text>
+  <text x="560" y="81" class="t" font-weight="bold">What the PR did</text>
+  <text x="1070" y="81" class="t" font-weight="bold">Result</text>
+
+  <g>
+    <rect x="20" y="88" width="1160" height="24" class="row"/>
+    <text x="30" y="105" class="t">A</text><text x="60" y="105" class="s">128 build SIGKILLed: 22532 B table, nattch 0, stale entry. Then a 256 build.</text>
+    <text x="560" y="105" class="s">removed it, made the 45060 B table, took lcore 1</text><text x="1070" y="105" class="ok">as intended</text>
+    <rect x="20" y="112" width="1160" height="24" class="alt"/>
+    <text x="30" y="129" class="t">B</text><text x="60" y="129" class="s">128 build alive (nattch 1). Then a 256 build.</text>
+    <text x="560" y="129" class="s">refused "in use, nattch 1"; the live table and its entry stay</text><text x="1070" y="129" class="ok">as intended</text>
+    <rect x="20" y="136" width="1160" height="24" class="row"/>
+    <text x="30" y="153" class="t">C</text><text x="60" y="153" class="s">256 build SIGKILLed: 45060 B table, nattch 0. Then a 128 build, then a 256 build.</text>
+    <text x="560" y="153" class="s">nothing to replace; the 128 build uses the first 128 entries</text><text x="1070" y="153" class="ok">as intended</text>
+    <rect x="20" y="160" width="1160" height="24" class="alt"/>
+    <text x="30" y="177" class="t">D</text><text x="60" y="177" class="s">256 build alive. A 128 build joins.</text>
+    <text x="560" y="177" class="s">both on one table, lcore 1 and lcore 2</text><text x="1070" y="177" class="ok">as intended</text>
+    <rect x="20" y="184" width="1160" height="24" class="row"/>
+    <text x="30" y="201" class="t">K</text><text x="60" y="201" class="s">128 stale table. Two 256 builds call mtl_init at the same time.</text>
+    <text x="560" y="201" class="s">the lock file orders them: one replaces, the other attaches; lcore 1 and 2</text><text x="1070" y="201" class="ok">as intended</text>
+    <rect x="20" y="208" width="1160" height="24" class="alt"/>
+    <text x="30" y="225" class="t">E</text><text x="60" y="225" class="s">128 stale table of root. A 256 build as a user that is not root.</text>
+    <text x="560" y="225" class="s">"can not remove ..., Operation not permitted"; the table stays</text><text x="1070" y="225" class="ok">as doc says</text>
+    <rect x="20" y="232" width="1160" height="24" class="row"/>
+    <text x="30" y="249" class="t">H1</text><text x="60" y="249" class="s">128 stale table, MtlManager up. A 256 build.</text>
+    <text x="560" y="249" class="s">connects to MtlManager, does not touch the table</text><text x="1070" y="249" class="ok">as intended</text>
+    <rect x="20" y="256" width="1160" height="24" class="alt"/>
+    <text x="30" y="273" class="t">H4</text><text x="60" y="273" class="s">128 stale table, MtlManager stopped. A 256 build.</text>
+    <text x="560" y="273" class="s">removed it, made the 45060 B table</text><text x="1070" y="273" class="ok">as intended</text>
+    <rect x="20" y="280" width="1160" height="24" class="row"/>
+    <text x="30" y="297" class="t">L2</text><text x="60" y="297" class="s">128 stale table; LcoreMgr --info (128) holds it 1 s for its CPU sample. A 256 build.</text>
+    <text x="560" y="297" class="s">refused "in use, nattch 1": mtl_init fails, LcoreMgr then removes the table</text><text x="1070" y="297" class="t">transient</text>
+  </g>
+  <text x="20" y="324" class="s">Unit: the 3 MtSchLcoreShm cases of the PR pass, the full suite passes (2077). PR CI: 33 pass, 11 skipped. No fault found in the change of the PR.</text>
+
+  <!-- pre-existing -->
+  <text x="20" y="364" class="h">Older faults next to it (not from this PR)</text>
+
+  <text x="20" y="392" class="t" font-weight="bold">1. MtlManager and the shm table are two lcore maps: one CPU goes to two processes</text>
+  <rect x="40" y="406" width="230" height="58" class="box"/>
+  <text x="52" y="426" class="t" font-weight="bold">MtlManager map</text>
+  <text x="52" y="444" class="s">lcores of connected processes</text>
+  <rect x="40" y="486" width="230" height="58" class="box"/>
+  <text x="52" y="506" class="t" font-weight="bold">shm table, key 0x15050005</text>
+  <text x="52" y="524" class="s">lcores of single instance mode</text>
+  <rect x="380" y="446" width="120" height="58" class="warn"/>
+  <text x="404" y="471" class="t" font-weight="bold">CPU 1</text>
+  <text x="392" y="489" class="s">two busy-polls</text>
+  <path d="M270,435 L378,465" class="line"/>
+  <path d="M270,515 L378,487" class="line"/>
+  <text x="290" y="436" class="s">P1</text>
+  <text x="290" y="526" class="s">P2</text>
+  <rect x="540" y="400" width="640" height="150" class="box"/>
+  <text x="552" y="420" class="t" font-weight="bold">H2: P1 has lcore 1 from MtlManager; MtlManager is SIGKILLed; P2 starts</text>
+  <text x="552" y="437" class="code">P1 sch_get_lcore, succ on manager lcore 1</text>
+  <text x="552" y="452" class="code">P2 mt_instance_init, connect to manager fail, assume single instance mode</text>
+  <text x="552" y="467" class="code">P2 sch_get_lcore, succ on shm lcore 1</text>
+  <text x="552" y="490" class="t" font-weight="bold">H3: P1 has lcore 1 from the shm table; MtlManager starts; P2 starts</text>
+  <text x="552" y="507" class="code">P1 sch_get_lcore, succ on shm lcore 1</text>
+  <text x="552" y="522" class="code">P2 sch_get_lcore, succ on manager lcore 1</text>
+  <text x="552" y="541" class="s">Each map does not know the other. doc/shm_lcore.md does not tell to not mix the two modes.</text>
+
+  <text x="20" y="588" class="t" font-weight="bold">2. LcoreMgr --clean_pid_auto_check logs the delete, but the entry stays active</text>
+  <rect x="40" y="600" width="1140" height="78" class="box"/>
+  <text x="52" y="620" class="code">before: lcore 1 active pid 2721803 (live)   lcore 2 active pid 2722089 (SIGKILLed)   used 2   nattch 1</text>
+  <text x="52" y="638" class="code">tool:   lcore_shm_clean_auto_pid, delete dead lcore 2 from the shared mem, PID 2722089</text>
+  <text x="52" y="656" class="code">after:  lcore 1 active pid 2721803          lcore 2 active pid 2722089                 used 2</text>
+  <text x="52" y="672" class="s">lcore_shm_clean_auto_pid() only counts: no "shm_entry->active = false", no "used--". Unit test: MtSchLcoreShm.AutoCleanFreesTheEntryOfADeadPid (fails).</text>
+
+  <text x="20" y="710" class="t" font-weight="bold">3. Smaller LcoreMgr faults</text>
+  <text x="40" y="730" class="s">- LcoreMgr exits 0 when sch_lcore_shm_init() fails (a 256 build on a 128 table: "Invalid argument", rc 0).</text>
+  <text x="40" y="748" class="s">- LcoreMgr --info and the clean actions remove a table with no process attached as they exit (the last-user rule of sch_lcore_shm_uinit()),</text>
+  <text x="52" y="764" class="s">and they attach with no lock file. L2 above is that window.</text>
+
+  <text x="20" y="806" class="s">Branch with the probe results and the failing test: DawidWesierski4:pr-1909-review (PR head afc4cc6b + 1 test commit).</text>
+  <text x="20" y="824" class="s">Run 2026-11-23 on the dev host (256 CPUs, 2 NUMA nodes), MtlManager of the same tree, no other MTL process.</text>
+</svg>
