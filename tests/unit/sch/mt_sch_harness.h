@@ -95,6 +95,13 @@ size_t ut_sch_lcore_shm_size(void);
  * afterwards, 0 if none. */
 int ut_sch_lcore_shm_init_over_smaller(bool attached, bool clear_on_first, size_t* size);
 
+/* Puts an entry of a dead PID of this user on lcore 1 of a table at a fresh key that
+ * this process keeps attached, as a live MTL process does, then runs
+ * mtl_lcore_shm_clean(MTL_LCORE_CLEAN_PID_AUTO_CHECK), as LcoreMgr
+ * --clean_pid_auto_check does. *cleaned is its result, *still_active and *used the
+ * entry and the table counter afterwards. */
+int ut_sch_lcore_shm_auto_clean_dead(int* cleaned, bool* still_active, int* used);
+
 #ifdef __cplusplus
 }
 #endif

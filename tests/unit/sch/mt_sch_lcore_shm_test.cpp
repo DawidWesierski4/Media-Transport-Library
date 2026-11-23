@@ -27,3 +27,19 @@ TEST(MtSchLcoreShm, LcoreMgrKeepsUnusedSmallerTable) {
   EXPECT_LT(ut_sch_lcore_shm_init_over_smaller(false, false, &size), 0);
   EXPECT_EQ(size, ut_sch_lcore_shm_size() / 2);
 }
+
+/* LcoreMgr --clean_pid_auto_check logs "delete dead lcore" for an entry of a dead PID,
+ * but lcore_shm_clean_auto_pid() only counts it: the entry stays active and used keeps
+ * it. A live process keeps the table attached, so the table is not removed either, and
+ * the lcore stays taken for each other user until a process of the same user and host
+ * asks for that lcore. Found on PR #1909 review, older than the PR. */
+TEST(MtSchLcoreShm, AutoCleanFreesTheEntryOfADeadPid) {
+  int cleaned = 0, used = -1;
+  bool still_active = true;
+
+  ASSERT_EQ(ut_sch_lcore_shm_auto_clean_dead(&cleaned, &still_active, &used), 0);
+
+  EXPECT_EQ(cleaned, 1);
+  EXPECT_FALSE(still_active) << "the tool logged the delete, the entry is still active";
+  EXPECT_EQ(used, 0);
+}

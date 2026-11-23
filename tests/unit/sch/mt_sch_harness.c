@@ -17,6 +17,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #undef MTL_HAS_USDT
@@ -619,6 +620,45 @@ int ut_sch_lcore_shm_init_over_smaller(bool attached, bool clear_on_first, size_
   if (old && old != (void*)-1) shmdt(old);
   if (old_id >= 0) shmctl(old_id, IPC_RMID, NULL);
   if (shm_id >= 0) shmctl(shm_id, IPC_RMID, NULL);
+  unlink(path);
+  return ret;
+}
+
+int ut_sch_lcore_shm_auto_clean_dead(int* cleaned, bool* still_active, int* used) {
+  char path[] = "/tmp/ut_sch_shm_XXXXXX";
+  struct mt_lcore_shm* table = (void*)-1;
+  int ret = -EIO;
+
+  *cleaned = 0;
+  *still_active = true;
+  *used = -1;
+  int fd = mkstemp(path);
+  if (fd < 0) return -errno;
+  close(fd);
+  key_t key = ftok(path, 21);
+  int id = shmget(key, sizeof(*table), 0666 | IPC_CREAT | IPC_EXCL);
+  if (id >= 0) table = shmat(id, NULL, 0); /* a live process keeps it attached */
+  pid_t dead = fork();
+  if (dead == 0) _exit(0);
+  if (dead > 0) waitpid(dead, NULL, 0);
+  if (table != (void*)-1 && dead > 0) {
+    struct mt_lcore_shm_entry* e = &table->lcores_info[1];
+    memset(table, 0, sizeof(*table));
+    mt_user_info_init(&e->u_info);
+    e->pid = dead;
+    e->type = MT_LCORE_TYPE_SCH;
+    e->active = true;
+    table->used = 1;
+
+    ut_sch_ftok_path = path;
+    *cleaned = mtl_lcore_shm_clean(MTL_LCORE_CLEAN_PID_AUTO_CHECK, NULL, 0);
+    ut_sch_ftok_path = NULL;
+    *still_active = e->active;
+    *used = table->used;
+    ret = 0;
+  }
+  if (table != (void*)-1) shmdt(table);
+  if (id >= 0) shmctl(id, IPC_RMID, NULL);
   unlink(path);
   return ret;
 }
