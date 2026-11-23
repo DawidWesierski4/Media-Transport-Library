@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 860" width="1200" height="860" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <style>
+      .t { fill: #1d2731; }
+      .s { fill: #4a5866; font-size: 11.5px; }
+      .h { font-size: 17px; font-weight: bold; fill: #1d2731; }
+      .code { font-family: DejaVu Sans Mono, Consolas, monospace; font-size: 12px; fill: #12324f; }
+      .axis { stroke: #1d2731; stroke-width: 1.5; marker-end: url(#arr); }
+      .dash { stroke: #888; stroke-width: 1; stroke-dasharray: 4 3; fill: none; }
+      .ok { fill: #cfe6cf; stroke: #3d7a3d; stroke-width: 1.2; }
+      .bad { fill: #f6c9c9; stroke: #b02a2a; stroke-width: 1.4; }
+      .note { fill: #ffffff; stroke: #5a6b7d; stroke-width: 1.2; }
+    </style>
+  </defs>
+  <rect width="1200" height="860" fill="#fbfcfd"/>
+  <text x="20" y="30" class="h">PR #1957: two ways an RTP-level USER_PACING frame leaves in a burst</text>
+  <text x="20" y="50" class="s">The area of each bar is the 4320 packets of one 1080p59.94 frame; its width is the time the RX side took to get them. Measured on E830 VFs, TSC pacing.</text>
+
+  <!-- ============ fault 1 ============ -->
+  <text x="20" y="88" class="h">1. Without EXACT, a TAI more than 1 s ahead: the frame goes out at once, unpaced</text>
+  <text x="20" y="108" class="s">st20_api.h of the PR: "Otherwise the frame goes on the epoch nearest to tai, even if that epoch is past or more than 1s ahead".</text>
+
+  <!-- expected row -->
+  <text x="20" y="150" class="t" font-weight="bold">What the API says</text>
+  <line x1="200" y1="190" x2="1170" y2="190" class="axis"/>
+  <line x1="230" y1="135" x2="230" y2="200" stroke="#a02020" stroke-width="2"/>
+  <text x="218" y="214" class="s" fill="#a02020">now</text>
+  <path d="M560,190 l6,-8 l6,16 l6,-8" stroke="#1d2731" fill="none" stroke-width="1.6"/>
+  <text x="520" y="214" class="s">1.5 s later (not to scale)</text>
+  <line x1="760" y1="140" x2="760" y2="200" stroke="#2c5d8f" stroke-width="2"/>
+  <text x="728" y="214" class="s">nearest epoch</text>
+  <rect x="764" y="168" width="400" height="22" class="ok"/>
+  <text x="790" y="184" class="s">4320 packets at TRS = 3.7 us: 16 002 us</text>
+  <text x="250" y="160" class="s">the session waits for the epoch</text>
+
+  <!-- actual row -->
+  <text x="20" y="262" class="t" font-weight="bold">What the NIC sent</text>
+  <line x1="200" y1="340" x2="1170" y2="340" class="axis"/>
+  <line x1="230" y1="245" x2="230" y2="350" stroke="#a02020" stroke-width="2"/>
+  <text x="218" y="364" class="s" fill="#a02020">now</text>
+  <!-- same area: 400x22 = 8800 -> width 74 (2977/16002*400) height 119 -->
+  <rect x="232" y="221" width="74" height="119" class="bad"/>
+  <text x="240" y="285" class="s" font-weight="bold" fill="#7a1414">2 977 us</text>
+  <path d="M560,340 l6,-8 l6,16 l6,-8" stroke="#1d2731" fill="none" stroke-width="1.6"/>
+  <line x1="760" y1="290" x2="760" y2="350" stroke="#2c5d8f" stroke-width="2"/>
+  <text x="728" y="364" class="s">nearest epoch: nothing left to send</text>
+
+  <rect x="330" y="230" width="380" height="88" class="note"/>
+  <text x="342" y="250" class="code">tv_sync_pacing(): start = now + 1.5 s</text>
+  <text x="342" y="268" class="code">video_trs_tsc_tasklet(): delta &gt; NS_PER_S</text>
+  <text x="342" y="286" class="code">  -&gt; err("invalid tsc cur .. target ..")</text>
+  <text x="342" y="304" class="code">  -&gt; video_trs_burst() now, for each bulk</text>
+  <rect x="740" y="230" width="430" height="88" class="note"/>
+  <text x="752" y="250" class="t" font-weight="bold">Seen in one run</text>
+  <text x="752" y="268" class="s">frame 50: RX span 2 977.5 us, a paced frame 16 002 us (5.4x)</text>
+  <text x="752" y="284" class="s">1080 err() lines for that frame, one per bulk of 4 packets</text>
+  <text x="752" y="300" class="s">the stream does not stop for 1.5 s; frame 51 is on time</text>
+
+  <!-- ============ fault 2 ============ -->
+  <text x="20" y="410" class="h">2. With EXACT, a fallback frame after an off-grid TAI starts while the frame before it is still on the wire</text>
+  <text x="20" y="430" class="s">A frame with no TAI (or a TAI in the past or &gt; 1 s ahead) gets default pacing: the epoch after the nearest epoch of the frame before it.</text>
+  <text x="20" y="446" class="s">With an app TAI below 0.5 TFRAME that epoch is N+1, and its start is earlier than the end of frame N.</text>
+
+  <!-- scale: 1 TFRAME = 450 px ; epoch N at x=150, N+1 at 600, N+2 at 1050 -->
+  <line x1="60" y1="600" x2="1170" y2="600" class="axis"/>
+  <line x1="150" y1="470" x2="150" y2="612" stroke="#2c5d8f" stroke-width="2"/>
+  <text x="130" y="628" class="t" font-weight="bold">epoch N</text>
+  <line x1="600" y1="470" x2="600" y2="612" stroke="#2c5d8f" stroke-width="2"/>
+  <text x="575" y="628" class="t" font-weight="bold">epoch N+1</text>
+  <line x1="1050" y1="470" x2="1050" y2="612" stroke="#2c5d8f" stroke-width="2"/>
+  <text x="1025" y="628" class="t" font-weight="bold">epoch N+2</text>
+
+  <!-- frame N: EXACT at 0.37 T => x = 150+166 = 316 ; paced 0.96 T = 432 px -> to 748 -->
+  <rect x="316" y="560" width="432" height="22" class="ok"/>
+  <text x="330" y="576" class="s">frame N: EXACT at app TAI = N + 0.37 TFRAME, paced, 16 002 us</text>
+  <line x1="316" y1="490" x2="316" y2="600" stroke="#d9480f" stroke-width="2"/>
+  <text x="270" y="486" class="s" fill="#d9480f">app TAI of frame N</text>
+
+  <!-- default start of frame N+1: N+1 + 615 us = 600 + 16.6 px = 617 -->
+  <line x1="617" y1="505" x2="617" y2="600" stroke="#2c5d8f" stroke-width="1.4" stroke-dasharray="3 2"/>
+  <text x="560" y="500" class="s">default start of frame N+1: N+1 + TROFFSET - VRX x TRS</text>
+  <!-- conflict window 617 .. 748 -->
+  <rect x="617" y="526" width="131" height="22" fill="#fdecec" stroke="#b02a2a" stroke-dasharray="4 2"/>
+  <text x="623" y="541" class="s" fill="#7a1414">overlap 4.9 ms</text>
+
+  <!-- frame N+1 actual: first pkt at 748, catch-up burst (taller), then paced; span 14111 us = 0.846 T = 381 px -> to 1129 -->
+  <!-- paced span would be 432 px; 51 px shorter. Burst part: width 60, height chosen so that area matches 51+60 px of pacing -->
+  <rect x="748" y="519" width="60" height="41" class="bad"/>
+  <rect x="808" y="538" width="321" height="22" class="ok"/>
+  <text x="815" y="553" class="s">frame N+1, then paced</text>
+  <text x="752" y="514" class="s" fill="#7a1414">catch-up burst</text>
+  <text x="650" y="664" class="s">Frame N+1: first packet 5 501 us after epoch N+1 (paced: 615 us).</text>
+  <text x="650" y="680" class="s">RX span 14 111 us, not 16 003 us: about 1.9 ms of its packets</text>
+  <text x="650" y="696" class="s">leave faster than TRS. Seen for frames 30, 40 and 50 of the EXACT run.</text>
+
+  <rect x="20" y="650" width="610" height="88" class="note"/>
+  <text x="32" y="670" class="t" font-weight="bold">Why</text>
+  <text x="32" y="688" class="s">tv_sync_pacing() keeps cur_epochs = nearest epoch of the EXACT TAI (N for 0.37 TFRAME).</text>
+  <text x="32" y="704" class="s">calc_frame_count_since_epoch() then gives the next frame N+1, and transmission_start_time()</text>
+  <text x="32" y="720" class="s">puts it at N+1 + TROFFSET - VRX x TRS, 0.73 TFRAME after frame N started.</text>
+
+  <!-- footer -->
+  <text x="20" y="768" class="t" font-weight="bold">Why a burst is a fault: ST 2110-21:2022 §6.6.2 (p11) and §7.1.2 (p12)</text>
+  <text x="20" y="786" class="s">A Type N sender passes the Virtual Receiver Buffer model: the VRXFULL bucket drains packet j at TPRj and must not overflow or underflow.</text>
+  <text x="20" y="802" class="s">For 1080p59.94 with 4320 packets: VRXFULL = MAX(INT(1500 x 8 / 1500), INT(4320 / (27000 x TFRAME))) = 9 packets,</text>
+  <text x="20" y="818" class="s">CMAX = MAX(4, INT(4320 / (43200 x 1080/1125 x TFRAME))) = 6 (§6.6.1, p9). Fault 1 sends the frame 1.5 s before its TPR0; fault 2 is late, then bursts.</text>
+  <text x="20" y="840" class="s">Unit tests that fail on the PR: tests/unit/session/st20_tx/rtp_user_pacing_bugs_test.cpp. Sample: app/sample/low_level/tx_rtp_user_pacing_sample.c.</text>
+</svg>
