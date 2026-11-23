@@ -41,6 +41,8 @@ struct demo_frame {
   uint64_t target;  /* the TAI the app asked for, 0 for none */
   uint64_t put;     /* when the app put the first packet */
   uint64_t arrival; /* when the RX thread saw the first packet */
+  uint64_t last;    /* when the RX thread saw the last packet */
+  uint32_t rx_pkts;
   const char* what;
 };
 
@@ -214,6 +216,10 @@ static void* demo_rx_thread(void* arg) {
       d->rx_frames++;
       if (ts < DEMO_MAX_FRAMES && !d->frames[ts].arrival) d->frames[ts].arrival = now;
     }
+    if (ts < DEMO_MAX_FRAMES) {
+      d->frames[ts].last = now;
+      d->frames[ts].rx_pkts++;
+    }
     st20_rx_put_mbuf(d->rx, mbuf);
   }
   return NULL;
@@ -244,8 +250,9 @@ static void demo_print_row(struct demo_ctx* d, uint32_t i) {
     printf("  %12s\n", "not received");
     return;
   }
-  printf("  %+12.1f  %+12.1f\n", f->target ? demo_us(f->arrival, f->target) : 0.0,
-         demo_us(f->arrival, near));
+  printf("  %+12.1f  %+12.1f  %10.1f  %5u\n",
+         f->target ? demo_us(f->arrival, f->target) : 0.0, demo_us(f->arrival, near),
+         demo_us(f->last, f->arrival), f->rx_pkts);
 }
 
 static void demo_report(struct demo_ctx* d) {
@@ -256,9 +263,10 @@ static void demo_report(struct demo_ctx* d) {
   printf("\n=== %s, app TAI at %.2f of a frame period (%.1f us) ===\n",
          d->exact ? "EXACT_USER_PACING" : "USER_PACING, nearest epoch", d->offset,
          d->offset * demo_frame_ns(d) / 1000.0);
-  printf("%5s  %-21s %20s %11s  %12s  %12s\n", "frame", "what", "app tai (ns)",
-         "tai-epoch", "arr-tai", "arr-epoch");
-  printf("%5s  %-21s %20s %11s  %12s  %12s\n", "", "", "", "(us)", "(us)", "(us)");
+  printf("%5s  %-21s %20s %11s  %12s  %12s  %10s  %5s\n", "frame", "what", "app tai (ns)",
+         "tai-epoch", "arr-tai", "arr-epoch", "rx span", "pkts");
+  printf("%5s  %-21s %20s %11s  %12s  %12s  %10s\n", "", "", "", "(us)", "(us)", "(us)",
+         "(us)");
   for (uint32_t i = 0; i < n; i++) {
     struct demo_frame* f = &d->frames[i];
     bool special =
