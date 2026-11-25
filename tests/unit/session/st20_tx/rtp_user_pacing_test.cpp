@@ -246,6 +246,19 @@ TEST_F(St20TxRtpUserPacingTest, NonExactTaiStartingInsideOneSecondIsKept) {
   }
 }
 
+/* The TSN transmitter does not wait: it writes the target into the E830 TxPP launch
+ * time, a 19-bit field of 128 ns that wraps at about 67 ms. A start 500 ms ahead, inside
+ * the 1 s rule, gets a launch time the NIC cannot tell from a past one. */
+TEST_F(St20TxRtpUserPacingTest, TsnLaunchTimeStaysInsideTheNicWindow) {
+  constexpr uint64_t kTxppWindowNs = (1ull << 19) * 128;
+  SetFlags(true, false);
+  ut_txv_set_port_pacing(ctx_, UT_TXV_PACING_TSN, 0);
+
+  Run(true, {{100, kNowTai + 500 * kFrameNs}});
+
+  EXPECT_LT(sent_[0].ptp - kNowTai, kTxppWindowNs);
+}
+
 /* With EXACT, frame 0 starts 0.37 TFRAME past epoch N, so its nearest epoch is N. Frame 1
  * has no TAI; default pacing would give it epoch N+1, TROFFSET (0.1 TFRAME) after it:
  * only 0.73 TFRAME after frame 0 started, while frame 0 is still on the wire. A frame
