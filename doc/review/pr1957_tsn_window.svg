@@ -15,5 +15,5 @@
   <!-- the TAI of the test -->
   <line x1="360" y1="76" x2="360" y2="100" stroke="#c00000" stroke-width="3"/>
   <text x="360" y="124" text-anchor="middle" fill="#c00000">TAI +500 ms</text>
-  <text x="360" y="144" text-anchor="middle" fill="#c00000">launch time wraps: the NIC sends the frame at once</text>
+  <text x="360" y="144" text-anchor="middle" fill="#c00000">the launch time wraps: the NIC sends the frame at a wrong time</text>
 </svg>
