@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="170" viewBox="0 0 720 170" font-family="sans-serif" font-size="13">
+  <rect width="720" height="170" fill="#ffffff"/>
+  <!-- time axis: 0 ms at x=60, 1000 ms at x=660 (0.6 px per ms) -->
+  <line x1="60" y1="100" x2="660" y2="100" stroke="#000" stroke-width="2"/>
+  <line x1="60" y1="94" x2="60" y2="106" stroke="#000" stroke-width="2"/>
+  <line x1="660" y1="94" x2="660" y2="106" stroke="#000" stroke-width="2"/>
+  <text x="60" y="124" text-anchor="middle">now</text>
+  <text x="660" y="124" text-anchor="middle">+1 s</text>
+  <!-- what the PR accepts -->
+  <rect x="60" y="60" width="600" height="12" fill="#d0d0d0"/>
+  <text x="360" y="52" text-anchor="middle">The PR accepts a start up to 1 s ahead</text>
+  <!-- E830 TxPP window: 67.1 ms = 40 px -->
+  <rect x="60" y="80" width="40" height="20" fill="#2e8b57"/>
+  <text x="80" y="144" text-anchor="middle" fill="#2e8b57">TxPP window 67.1 ms</text>
+  <!-- the TAI of the test -->
+  <line x1="360" y1="76" x2="360" y2="100" stroke="#c00000" stroke-width="3"/>
+  <text x="360" y="124" text-anchor="middle" fill="#c00000">TAI +500 ms</text>
+  <text x="360" y="144" text-anchor="middle" fill="#c00000">launch time wraps: the NIC sends the frame at once</text>
+</svg>
