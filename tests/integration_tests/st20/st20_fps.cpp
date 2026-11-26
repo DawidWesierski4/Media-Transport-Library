@@ -20,13 +20,12 @@ static void st20_rx_fps_test(enum st20_type type[], enum st_fps fps[], int width
     throw std::runtime_error("Dual port not enabled");
   }
 
-  /* return if level small than global */
-  if (level < ctx->level) return;
+  /* skip if level is below global */
+  if (level < ctx->level) GTEST_SKIP() << "Test level is below the requested level";
 
   if (ext_buf) {
     if (ctx->iova == MTL_IOVA_MODE_PA) {
-      info("%s, skip ext_buf test as it's PA iova mode\n", __func__);
-      return;
+      GTEST_SKIP() << "External buffer test requires IOVA VA mode";
     }
   }
 
@@ -181,13 +180,12 @@ static void st20_tx_fps_test(enum st20_type type[], enum st_fps fps[], int width
   std::vector<double> framerate;
   std::vector<std::thread> rtp_thread;
 
-  /* return if level small than global */
-  if (level < ctx->level) return;
+  /* skip if level is below global */
+  if (level < ctx->level) GTEST_SKIP() << "Test level is below the requested level";
 
   if (ext_buf) {
     if (ctx->iova == MTL_IOVA_MODE_PA) {
-      info("%s, skip ext_buf test as it's PA iova mode\n", __func__);
-      return;
+      GTEST_SKIP() << "External buffer test requires IOVA VA mode";
     }
   }
 

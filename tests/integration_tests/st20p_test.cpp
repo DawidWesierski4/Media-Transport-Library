@@ -759,32 +759,30 @@ static void st20p_rx_digest_test(enum st_fps fps[], int width[], int height[],
   struct st20p_rx_ops ops_rx;
   int sessions = para->sessions;
 
-  st_test_jxs_fail_interval(ctx, para->fail_interval);
-  st_test_jxs_timeout_interval(ctx, para->timeout_interval);
-  st_test_jxs_timeout_ms(ctx, para->timeout_ms);
-
   if (ctx->para.num_ports < 2) {
     info("%s, dual port should be enabled, one for tx and one for rx\n", __func__);
     throw std::runtime_error("Dual port not enabled");
   }
 
-  /* return if level lower than global */
-  if (para->level < ctx->level) return;
+  /* skip if level is below global */
+  if (para->level < ctx->level) GTEST_SKIP() << "Test level is below the requested level";
 
   if (para->tx_ext || para->rx_ext) {
     if (ctx->iova == MTL_IOVA_MODE_PA) {
-      info("%s, skip ext_buf test as it's PA iova mode\n", __func__);
-      return;
+      GTEST_SKIP() << "External buffer test requires IOVA VA mode";
     }
   }
 
   if (para->pkt_convert) {
     enum mtl_pmd_type pmd = ctx->para.pmd[MTL_PORT_R];
     if (MTL_PMD_DPDK_USER != pmd) {
-      info("%s, skip as pmd %d is not dpdk user\n", __func__, pmd);
-      return;
+      GTEST_SKIP() << "Packet convert test requires DPDK user PMD";
     }
   }
+
+  st_test_jxs_fail_interval(ctx, para->fail_interval);
+  st_test_jxs_timeout_interval(ctx, para->timeout_interval);
+  st_test_jxs_timeout_ms(ctx, para->timeout_ms);
 
   std::vector<tests_context*> test_ctx_tx;
   std::vector<tests_context*> test_ctx_rx;
@@ -1753,8 +1751,7 @@ TEST(St20p, tx_ext_frame_manual_release_two_phase) {
   int ret;
 
   if (ctx->iova == MTL_IOVA_MODE_PA) {
-    info("%s, skip ext_buf test as it's PA iova mode\n", __func__);
-    return;
+    GTEST_SKIP() << "External buffer test requires IOVA VA mode";
   }
 
   const int fb_cnt = 3;
@@ -1930,8 +1927,7 @@ TEST(St20p, rx_put_frame_abort) {
   struct st20p_rx_ops ops_rx;
 
   if (ctx->para.num_ports < 2) {
-    info("%s, dual port should be enabled\n", __func__);
-    return;
+    GTEST_SKIP() << "Test requires at least 2 ports";
   }
 
   /* create TX to feed data */
@@ -2074,8 +2070,7 @@ TEST(St20p, redundant_stats) {
   int ret;
 
   if (ctx->para.num_ports < 4) {
-    info("%s, need 4 ports for redundant test, skipping\n", __func__);
-    return;
+    GTEST_SKIP() << "Redundant test requires 4 ports";
   }
 
   struct st20p_tx_ops ops_tx;

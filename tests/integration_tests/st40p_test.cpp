@@ -67,8 +67,7 @@ TEST(St40p, rx_put_frame_abort) {
   struct st40p_rx_ops ops_rx;
 
   if (ctx->para.num_ports < 2) {
-    info("%s, dual port should be enabled\n", __func__);
-    return;
+    GTEST_SKIP() << "Test requires at least 2 ports";
   }
 
   /* create TX to feed data */
@@ -201,8 +200,7 @@ TEST(St40p, redundant_stats) {
   int ret;
 
   if (ctx->para.num_ports < 4) {
-    info("%s, need 4 ports for redundant test, skipping\n", __func__);
-    return;
+    GTEST_SKIP() << "Redundant test requires 4 ports";
   }
 
   struct st40p_tx_ops ops_tx;

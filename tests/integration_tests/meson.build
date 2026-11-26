@@ -16,4 +16,6 @@ sources += st20_sources
 
 subdir('noctx')
 sources += noctx_sources
+
+subdir('probe')
 test_inc = include_directories('.', 'noctx', 'st20')

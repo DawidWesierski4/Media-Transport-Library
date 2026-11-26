@@ -20,8 +20,7 @@ static void st20_rx_dump_test(enum st20_type type[], enum st_fps fps[], int widt
   }
 
   if (!mtl_pmd_is_dpdk_based(m_handle, MTL_PORT_R)) {
-    info("%s, MTL_PORT_R is not a DPDK based PMD, skip this case\n", __func__);
-    return;
+    GTEST_SKIP() << "MTL_PORT_R is not a DPDK-based PMD";
   }
 
   std::vector<tests_context*> test_ctx_tx;
