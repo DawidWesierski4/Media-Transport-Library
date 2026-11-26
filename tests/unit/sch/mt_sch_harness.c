@@ -6,6 +6,7 @@
  * libmtl's for the whole UnitTest binary.
  */
 
+#define _GNU_SOURCE
 #include "sch/mt_sch_harness.h"
 
 #include <limits.h>
@@ -345,7 +346,7 @@ mtl_handle ut_sch_create_lcore_main(unsigned int nb_lcores) {
     return NULL;
   }
   impl->type = MT_HANDLE_MAIN;
-  impl->instance_fd = -1;
+  impl->instance = NULL;
   impl->user_para.flags = MTL_FLAG_NOT_BIND_NUMA;
   impl->u_info.pid = getpid();
   mgr->lcore_lock_fd = -1;

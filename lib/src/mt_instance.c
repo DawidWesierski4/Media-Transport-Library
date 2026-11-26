@@ -1,305 +1,680 @@
 /* SPDX-License-Identifier: BSD-3-Clause
- * Copyright(c) 2023 Intel Corporation
+ * Copyright(c) 2023-2026 Intel Corporation
  */
 
 #include "mt_instance.h"
 
 #ifndef WINDOWSENV
 
-#include <sys/un.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#include "../manager/mtl_mproto.h"
 #include "mt_log.h"
-#include "mt_util.h"
+#include "mt_varlink.h"
 
-static int instance_send_and_receive_message(int sock, mtl_message_t* msg,
-                                             mtl_message_type_t response_type) {
-  ssize_t ret = send(sock, msg, sizeof(*msg), MSG_NOSIGNAL);
-  if (ret < 0) {
-    err("%s, send message fail\n", __func__);
-    return ret;
-  }
+#define MT_INSTANCE_RPC_TIMEOUT_MS 5000LL
+#define MT_INSTANCE_ALIVE_TIMEOUT_MS 500LL
+#define MT_INSTANCE_CLOSE_TIMEOUT_MS 1000LL
+#define MT_V1_DEFAULT_SOCK_PATH "/var/run/imtl/mtl_manager.sock"
 
-  memset(msg, 0, sizeof(*msg));
-  ret = recv(sock, msg, sizeof(*msg), 0);
-  if (ret < 0 || ntohl(msg->header.magic) != MTL_MANAGER_MAGIC ||
-      ntohl(msg->header.type) != response_type) {
-    err("%s, recv response fail\n", __func__);
-    return -EIO;
-  }
+struct mt_instance_ctx {
+  pthread_mutex_t mutex;
+  int sock_fd;
+  char sock_path[256];
+  char client_name[128];
+  char session_id[MT_VARLINK_ID_STR_LEN];
+  char** leases;
+  size_t lease_count;
+  size_t lease_cap;
+  int64_t rpc_timeout_ms;
+  bool abort_on_loss;
+};
 
-  return ntohl(msg->body.response_msg.response);
+static const char* instance_resolve_sock_path(void) {
+  const char* env_path = getenv("MTL_MANAGER_SOCK");
+  if (env_path && env_path[0] != '\0') return env_path;
+  return MT_VARLINK_DEFAULT_SOCK_PATH;
 }
 
-int mt_instance_put_lcore(struct mtl_main_impl* impl, uint16_t lcore_id) {
-  int sock = impl->instance_fd;
-
-  mtl_message_t msg;
-  msg.header.magic = htonl(MTL_MANAGER_MAGIC);
-  msg.header.type = htonl(MTL_MSG_TYPE_PUT_LCORE);
-  msg.body.lcore_msg.lcore = htons(lcore_id);
-  msg.header.body_len = sizeof(msg.body.lcore_msg);
-
-  return instance_send_and_receive_message(sock, &msg, MTL_MSG_TYPE_RESPONSE);
+static const char* instance_resolve_v1_sock_path(void) {
+  const char* env_path = getenv("MTL_V1_MANAGER_SOCK");
+  if (env_path != NULL) return env_path;
+  return MT_V1_DEFAULT_SOCK_PATH;
 }
 
-int mt_instance_get_lcore(struct mtl_main_impl* impl, uint16_t lcore_id) {
-  int sock = impl->instance_fd;
+static bool env_flag_enabled(const char* name) {
+  const char* v = getenv(name);
+  return (v && strcmp(v, "1") == 0);
+}
 
-  mtl_message_t msg;
-  msg.header.magic = htonl(MTL_MANAGER_MAGIC);
-  msg.header.type = htonl(MTL_MSG_TYPE_GET_LCORE);
-  msg.body.lcore_msg.lcore = htons(lcore_id);
-  msg.header.body_len = htonl(sizeof(mtl_lcore_message_t));
+static int instance_verify_server_peercred(int fd, const char* sock_path) {
+  struct ucred peer;
+  socklen_t len = sizeof(peer);
+  memset(&peer, 0, sizeof(peer));
+  if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &peer, &len) != 0 || len != sizeof(peer) ||
+      peer.pid <= 0) {
+    err("%s, failed to query SO_PEERCRED on %s\n", __func__, sock_path);
+    return -EACCES;
+  }
+  if (env_flag_enabled("MTL_REQUIRE_ROOT_MANAGER")) {
+    if (peer.uid != 0) {
+      err("%s, untrusted manager uid %u on %s (MTL_REQUIRE_ROOT_MANAGER=1 requires uid "
+          "0)\n",
+          __func__, (unsigned)peer.uid, sock_path);
+      return -EACCES;
+    }
+  } else if (peer.uid != 0 && peer.uid != geteuid()) {
+    err("%s, untrusted manager uid %u on %s (expected 0 or %u)\n", __func__,
+        (unsigned)peer.uid, sock_path, (unsigned)geteuid());
+    return -EACCES;
+  }
+  return 0;
+}
 
-  return instance_send_and_receive_message(sock, &msg, MTL_MSG_TYPE_RESPONSE);
+static int instance_query_and_log_get_info(int fd, const char* sock_path,
+                                           int64_t timeout_ms) {
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = mt_varlink_call(fd, MT_VARLINK_SERVICE_INTERFACE ".GetInfo", NULL, NULL, 0,
+                           timeout_ms, &reply, err_name, sizeof(err_name), err_msg,
+                           sizeof(err_msg));
+  if (rc < 0) {
+    err("%s, GetInfo on %s fail %d (%s: %s)\n", __func__, sock_path, rc, err_name,
+        err_msg);
+    return rc;
+  }
+
+  const char* version = "unknown";
+  char ifaces_buf[512];
+  ifaces_buf[0] = '\0';
+
+  struct json_object* rparams = NULL;
+  if (reply && json_object_object_get_ex(reply, "parameters", &rparams) && rparams &&
+      json_object_is_type(rparams, json_type_object)) {
+    struct json_object* jver = NULL;
+    if (json_object_object_get_ex(rparams, "version", &jver) && jver &&
+        json_object_is_type(jver, json_type_string)) {
+      version = json_object_get_string(jver);
+    }
+    struct json_object* jifs = NULL;
+    if (json_object_object_get_ex(rparams, "interfaces", &jifs) && jifs &&
+        json_object_is_type(jifs, json_type_array)) {
+      size_t n = json_object_array_length(jifs);
+      size_t off = 0;
+      for (size_t i = 0; i < n && off + 1u < sizeof(ifaces_buf); ++i) {
+        struct json_object* item = json_object_array_get_idx(jifs, i);
+        if (!item || !json_object_is_type(item, json_type_string)) continue;
+        const char* s = json_object_get_string(item);
+        if (!s) continue;
+        int w = snprintf(ifaces_buf + off, sizeof(ifaces_buf) - off, "%s%s",
+                         (off > 0u) ? ", " : "", s);
+        if (w < 0) break;
+        if ((size_t)w >= sizeof(ifaces_buf) - off) {
+          off = sizeof(ifaces_buf) - 1u;
+          break;
+        }
+        off += (size_t)w;
+      }
+    }
+  }
+
+  info("%s, MtlManager 2 at %s version=%s interfaces=[%s]\n", __func__, sock_path,
+       version, ifaces_buf);
+  if (reply) json_object_put(reply);
+  return 0;
+}
+
+static void instance_build_client_name(char* out, size_t out_sz) {
+  char comm[64];
+  memset(comm, 0, sizeof(comm));
+  int fd = open("/proc/self/comm", O_RDONLY | O_CLOEXEC);
+  if (fd >= 0) {
+    ssize_t n = read(fd, comm, sizeof(comm) - 1u);
+    close(fd);
+    if (n > 0) {
+      comm[n] = '\0';
+      for (ssize_t i = 0; i < n; ++i) {
+        if (comm[i] == '\n' || comm[i] == '\r') {
+          comm[i] = '\0';
+          break;
+        }
+        unsigned char c = (unsigned char)comm[i];
+        if (c < 0x20u || c > 0x7Eu) comm[i] = '_';
+      }
+    }
+  }
+  if (comm[0] == '\0') snprintf(comm, sizeof(comm), "mtl");
+  snprintf(out, out_sz, "mtl-%s-%ld", comm, (long)getpid());
+}
+
+static bool is_transport_disconnect(int rc) {
+  return rc == -EPIPE || rc == -ECONNRESET || rc == -ECONNABORTED || rc == -ENOTCONN;
+}
+
+static int instance_track_lease_locked(struct mt_instance_ctx* ctx,
+                                       const char* lease_id) {
+  if (!lease_id || lease_id[0] == '\0') return -EINVAL;
+  for (size_t i = 0; i < ctx->lease_count; ++i) {
+    if (strcmp(ctx->leases[i], lease_id) == 0) return 0;
+  }
+  if (ctx->lease_count >= ctx->lease_cap) {
+    size_t new_cap = (ctx->lease_cap == 0u) ? 16u : (ctx->lease_cap * 2u);
+    char** nl = (char**)realloc(ctx->leases, new_cap * sizeof(char*));
+    if (!nl) return -ENOMEM;
+    ctx->leases = nl;
+    ctx->lease_cap = new_cap;
+  }
+  char* copy = strdup(lease_id);
+  if (!copy) return -ENOMEM;
+  ctx->leases[ctx->lease_count++] = copy;
+  return 0;
+}
+
+static void instance_untrack_lease_locked(struct mt_instance_ctx* ctx,
+                                          const char* lease_id) {
+  if (!lease_id) return;
+  for (size_t i = 0; i < ctx->lease_count; ++i) {
+    if (strcmp(ctx->leases[i], lease_id) == 0) {
+      free(ctx->leases[i]);
+      ctx->leases[i] = ctx->leases[ctx->lease_count - 1u];
+      ctx->leases[ctx->lease_count - 1u] = NULL;
+      ctx->lease_count--;
+      return;
+    }
+  }
+}
+
+static void instance_copy_str(char* dst, size_t dst_sz, const char* src) {
+  if (!dst || dst_sz == 0u) return;
+  if (!src) {
+    dst[0] = '\0';
+    return;
+  }
+  size_t len = strnlen(src, dst_sz - 1u);
+  memcpy(dst, src, len);
+  dst[len] = '\0';
+}
+
+static int instance_reconnect_and_claim_locked(struct mtl_main_impl* impl,
+                                               struct mt_instance_ctx* ctx) {
+  if (ctx->sock_fd >= 0) {
+    close(ctx->sock_fd);
+    ctx->sock_fd = -1;
+  }
+  if (ctx->sock_path[0] == '\0') return -EIO;
+
+  int fd = mt_varlink_connect_unix(ctx->sock_path, ctx->rpc_timeout_ms);
+  if (fd < 0) {
+    err("%s, reconnect to %s fail %d\n", __func__, ctx->sock_path, fd);
+    goto fail;
+  }
+  if (instance_verify_server_peercred(fd, ctx->sock_path) < 0) {
+    close(fd);
+    goto fail;
+  }
+
+  struct json_object* params = json_object_new_object();
+  struct json_object* arr = json_object_new_array();
+  if (!params || !arr) {
+    if (params) json_object_put(params);
+    if (arr) json_object_put(arr);
+    close(fd);
+    goto fail;
+  }
+  json_object_object_add(params, "clientName", json_object_new_string(ctx->client_name));
+  for (size_t i = 0; i < ctx->lease_count; ++i) {
+    json_object_array_add(arr, json_object_new_string(ctx->leases[i]));
+  }
+  json_object_object_add(params, "leaseIds", arr);
+
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = mt_varlink_call(fd, MT_VARLINK_MANAGER_INTERFACE ".ClaimSession", params, NULL,
+                           0, ctx->rpc_timeout_ms, &reply, err_name, sizeof(err_name),
+                           err_msg, sizeof(err_msg));
+  json_object_put(params);
+  if (rc < 0) {
+    err("%s, ClaimSession fail %d (%s: %s)\n", __func__, rc, err_name, err_msg);
+    close(fd);
+    goto fail;
+  }
+
+  struct json_object* rparams = NULL;
+  struct json_object* jsid = NULL;
+  if (json_object_object_get_ex(reply, "parameters", &rparams) && rparams &&
+      json_object_object_get_ex(rparams, "sessionId", &jsid) && jsid &&
+      json_object_is_type(jsid, json_type_string)) {
+    instance_copy_str(ctx->session_id, sizeof(ctx->session_id),
+                      json_object_get_string(jsid));
+  }
+  json_object_put(reply);
+
+  ctx->sock_fd = fd;
+  info("%s, reclaimed manager session %s (%zu leases)\n", __func__, ctx->session_id,
+       ctx->lease_count);
+  return 0;
+
+fail:
+  if (impl && (ctx->abort_on_loss || env_flag_enabled("MTL_ABORT_ON_MANAGER_LOSS"))) {
+    err("%s, MTL_ABORT_ON_MANAGER_LOSS=1 set, aborting instance\n", __func__);
+    mtl_abort(impl);
+  }
+  return -EIO;
+}
+
+static int instance_call_locked(struct mtl_main_impl* impl, struct mt_instance_ctx* ctx,
+                                const char* method, struct json_object* params,
+                                struct json_object** out_reply, char* err_name,
+                                size_t err_name_sz, char* err_msg, size_t err_msg_sz) {
+  int rc = -EPIPE;
+  if (ctx->sock_fd >= 0) {
+    rc = mt_varlink_call(ctx->sock_fd, method, params, NULL, 0, ctx->rpc_timeout_ms,
+                         out_reply, err_name, err_name_sz, err_msg, err_msg_sz);
+  }
+  if (!is_transport_disconnect(rc)) return rc;
+
+  warn("%s, manager connection lost (%d) during %s, attempting ClaimSession\n", __func__,
+       rc, method);
+  int rrc = instance_reconnect_and_claim_locked(impl, ctx);
+  if (rrc < 0) return rrc;
+
+  return mt_varlink_call(ctx->sock_fd, method, params, NULL, 0, ctx->rpc_timeout_ms,
+                         out_reply, err_name, err_name_sz, err_msg, err_msg_sz);
+}
+
+struct mt_instance_ctx* mt_instance_create_from_fd(int sock_fd, const char* sock_path,
+                                                   const char* client_name) {
+  if (sock_fd < 0) return NULL;
+  struct mt_instance_ctx* ctx = (struct mt_instance_ctx*)calloc(1u, sizeof(*ctx));
+  if (!ctx) return NULL;
+  if (pthread_mutex_init(&ctx->mutex, NULL) != 0) {
+    free(ctx);
+    return NULL;
+  }
+  ctx->sock_fd = sock_fd;
+  ctx->rpc_timeout_ms = MT_INSTANCE_RPC_TIMEOUT_MS;
+  ctx->abort_on_loss = env_flag_enabled("MTL_ABORT_ON_MANAGER_LOSS");
+  if (sock_path) instance_copy_str(ctx->sock_path, sizeof(ctx->sock_path), sock_path);
+  if (client_name && client_name[0] != '\0')
+    instance_copy_str(ctx->client_name, sizeof(ctx->client_name), client_name);
+  else
+    instance_build_client_name(ctx->client_name, sizeof(ctx->client_name));
+  return ctx;
+}
+
+int mt_instance_connect(struct mtl_init_params* p, struct mt_instance_ctx** out_ctx) {
+  if (!out_ctx) return -EINVAL;
+  *out_ctx = NULL;
+
+  const char* sock_path = instance_resolve_sock_path();
+  bool require_manager = env_flag_enabled("MTL_REQUIRE_MANAGER");
+  bool has_native_af_xdp = false;
+  bool has_dpdk_af_xdp = false;
+
+  if (p) {
+    int num_ports = (p->num_ports > MTL_PORT_MAX) ? MTL_PORT_MAX : p->num_ports;
+    for (int i = 0; i < num_ports; ++i) {
+      if (p->pmd[i] == MTL_PMD_NATIVE_AF_XDP) has_native_af_xdp = true;
+      if (p->pmd[i] == MTL_PMD_DPDK_AF_XDP) has_dpdk_af_xdp = true;
+    }
+  }
+
+  struct stat st;
+  bool sock_exists = (lstat(sock_path, &st) == 0);
+  int fd = mt_varlink_connect_unix(sock_path, MT_INSTANCE_RPC_TIMEOUT_MS);
+  if (fd < 0) {
+    if (fd == -ENOENT && !sock_exists) {
+      /* D4 (VER-M): if v1 MtlManager is listening, refuse shm fallback cleanly. */
+      const char* v1_sock_path = instance_resolve_v1_sock_path();
+      if (v1_sock_path && v1_sock_path[0] != '\0') {
+        int v1_fd = mt_varlink_connect_unix(v1_sock_path, MT_INSTANCE_ALIVE_TIMEOUT_MS);
+        if (v1_fd >= 0) {
+          close(v1_fd);
+          err("%s, v1 MtlManager detected; upgrade MtlManager to v2 (socket %s)\n",
+              __func__, v1_sock_path);
+          return -EPROTONOSUPPORT;
+        }
+      }
+      if (require_manager) {
+        err("%s, MTL_REQUIRE_MANAGER=1 set but %s is missing; check 'systemctl status "
+            "mtlm2.service' and 'journalctl -u mtlm2.service'\n",
+            __func__, sock_path);
+        return -ENOENT;
+      }
+      if (has_native_af_xdp) {
+        err("%s, MTL_PMD_NATIVE_AF_XDP requires MtlManager 2 at %s; check 'systemctl "
+            "status mtlm2.service' and 'journalctl -u mtlm2.service'\n",
+            __func__, sock_path);
+        return -ENOENT;
+      }
+      info("%s, manager socket %s absent, using standalone/shm mode\n", __func__,
+           sock_path);
+      return 0;
+    }
+    err("%s, connect to %s fail %d (%s); check 'systemctl status mtlm2.service' and "
+        "'journalctl -u mtlm2.service', or stop legacy shm MTL processes on hosts with "
+        ">RTE_MAX_LCORE CPUs\n",
+        __func__, sock_path, fd, strerror(-fd));
+    return fd;
+  }
+
+  /* D5 (SEC-AC-14): verify server SO_PEERCRED before sending any RPC. */
+  int peer_rc = instance_verify_server_peercred(fd, sock_path);
+  if (peer_rc < 0) {
+    close(fd);
+    return peer_rc;
+  }
+
+  if (has_dpdk_af_xdp) {
+    close(fd);
+    err("%s, MTL_PMD_DPDK_AF_XDP is not supported with MtlManager 2; migrate to "
+        "MTL_PMD_NATIVE_AF_XDP or run without MtlManager 2\n",
+        __func__);
+    return -ENOTSUP;
+  }
+  if (has_native_af_xdp) {
+    close(fd);
+    err("%s, MTL_PMD_NATIVE_AF_XDP with MtlManager 2 is not yet enabled in PR 1a\n",
+        __func__);
+    return -ENOTSUP;
+  }
+
+  struct mt_instance_ctx* ctx = mt_instance_create_from_fd(fd, sock_path, NULL);
+  if (!ctx) {
+    close(fd);
+    return -ENOMEM;
+  }
+
+  /* VER-PROTO-03: query org.varlink.service.GetInfo at connect and log once. */
+  int info_rc =
+      instance_query_and_log_get_info(ctx->sock_fd, sock_path, ctx->rpc_timeout_ms);
+  if (info_rc < 0) {
+    close(ctx->sock_fd);
+    ctx->sock_fd = -1;
+    mt_instance_disconnect(ctx);
+    return info_rc;
+  }
+
+  struct json_object* params = json_object_new_object();
+  if (!params) {
+    mt_instance_disconnect(ctx);
+    return -ENOMEM;
+  }
+  json_object_object_add(params, "clientName", json_object_new_string(ctx->client_name));
+
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = mt_varlink_call(ctx->sock_fd, MT_VARLINK_MANAGER_INTERFACE ".OpenSession",
+                           params, NULL, 0, ctx->rpc_timeout_ms, &reply, err_name,
+                           sizeof(err_name), err_msg, sizeof(err_msg));
+  json_object_put(params);
+  if (rc < 0) {
+    err("%s, OpenSession on %s fail %d (%s: %s); check 'systemctl status mtlm2.service' "
+        "and 'journalctl -u mtlm2.service', or stop legacy shm MTL processes on hosts "
+        "with >RTE_MAX_LCORE CPUs\n",
+        __func__, sock_path, rc, err_name, err_msg);
+    close(ctx->sock_fd);
+    ctx->sock_fd = -1;
+    mt_instance_disconnect(ctx);
+    return rc;
+  }
+
+  struct json_object* rparams = NULL;
+  struct json_object* jsid = NULL;
+  if (!json_object_object_get_ex(reply, "parameters", &rparams) || !rparams ||
+      !json_object_object_get_ex(rparams, "sessionId", &jsid) || !jsid ||
+      !json_object_is_type(jsid, json_type_string)) {
+    json_object_put(reply);
+    err("%s, OpenSession reply missing sessionId\n", __func__);
+    close(ctx->sock_fd);
+    ctx->sock_fd = -1;
+    mt_instance_disconnect(ctx);
+    return -EPROTO;
+  }
+  instance_copy_str(ctx->session_id, sizeof(ctx->session_id),
+                    json_object_get_string(jsid));
+  json_object_put(reply);
+
+  info("%s, connected to MtlManager 2 at %s session %s\n", __func__, sock_path,
+       ctx->session_id);
+  *out_ctx = ctx;
+  return 0;
+}
+
+void mt_instance_disconnect(struct mt_instance_ctx* ctx) {
+  if (!ctx) return;
+  pthread_mutex_lock(&ctx->mutex);
+  if (ctx->sock_fd >= 0) {
+    if (ctx->session_id[0] != '\0') {
+      struct json_object* reply = NULL;
+      (void)mt_varlink_call(ctx->sock_fd, MT_VARLINK_MANAGER_INTERFACE ".CloseSession",
+                            NULL, NULL, 0, MT_INSTANCE_CLOSE_TIMEOUT_MS, &reply, NULL, 0,
+                            NULL, 0);
+      if (reply) json_object_put(reply);
+    }
+    close(ctx->sock_fd);
+    ctx->sock_fd = -1;
+  }
+  for (size_t i = 0; i < ctx->lease_count; ++i) free(ctx->leases[i]);
+  free(ctx->leases);
+  ctx->leases = NULL;
+  ctx->lease_count = 0;
+  ctx->lease_cap = 0;
+  pthread_mutex_unlock(&ctx->mutex);
+  pthread_mutex_destroy(&ctx->mutex);
+  free(ctx);
+}
+
+int mt_instance_uinit(struct mtl_main_impl* impl) {
+  if (!impl || !impl->instance) return 0;
+  mt_instance_disconnect(impl->instance);
+  impl->instance = NULL;
+  return 0;
+}
+
+int mt_instance_get_cpu(struct mtl_main_impl* impl, uint32_t phys_cpu,
+                        char lease_id_out[40]) {
+  if (!impl || !impl->instance || !lease_id_out) return -EINVAL;
+  lease_id_out[0] = '\0';
+
+  struct mt_instance_ctx* ctx = impl->instance;
+  struct json_object* params = json_object_new_object();
+  if (!params) return -ENOMEM;
+  json_object_object_add(params, "preferred", json_object_new_int64((int64_t)phys_cpu));
+  json_object_object_add(params, "allowFallback", json_object_new_boolean(0));
+
+  pthread_mutex_lock(&ctx->mutex);
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc =
+      instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".AcquireCpu", params,
+                           &reply, err_name, sizeof(err_name), err_msg, sizeof(err_msg));
+  json_object_put(params);
+  if (rc < 0) {
+    pthread_mutex_unlock(&ctx->mutex);
+    if (rc != -EBUSY) {
+      err("%s(cpu %u), AcquireCpu fail %d (%s: %s)\n", __func__, phys_cpu, rc, err_name,
+          err_msg);
+    }
+    return rc;
+  }
+
+  struct json_object* rparams = NULL;
+  struct json_object* jlid = NULL;
+  if (!json_object_object_get_ex(reply, "parameters", &rparams) || !rparams ||
+      !json_object_object_get_ex(rparams, "leaseId", &jlid) || !jlid ||
+      !json_object_is_type(jlid, json_type_string)) {
+    json_object_put(reply);
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(cpu %u), AcquireCpu reply missing leaseId\n", __func__, phys_cpu);
+    return -EPROTO;
+  }
+
+  const char* lid = json_object_get_string(jlid);
+  instance_copy_str(lease_id_out, MT_VARLINK_ID_STR_LEN, lid);
+  int trc = instance_track_lease_locked(ctx, lease_id_out);
+  json_object_put(reply);
+  pthread_mutex_unlock(&ctx->mutex);
+  return trc;
+}
+
+int mt_instance_release_lease(struct mtl_main_impl* impl, const char* lease_id) {
+  if (!impl || !impl->instance || !lease_id || lease_id[0] == '\0') return -EINVAL;
+
+  struct mt_instance_ctx* ctx = impl->instance;
+  struct json_object* params = json_object_new_object();
+  if (!params) return -ENOMEM;
+  json_object_object_add(params, "leaseId", json_object_new_string(lease_id));
+
+  pthread_mutex_lock(&ctx->mutex);
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".ReleaseLease",
+                                params, &reply, err_name, sizeof(err_name), err_msg,
+                                sizeof(err_msg));
+  json_object_put(params);
+  if (reply) json_object_put(reply);
+  if (rc == 0 || rc == -ENOENT) instance_untrack_lease_locked(ctx, lease_id);
+  pthread_mutex_unlock(&ctx->mutex);
+
+  if (rc < 0) {
+    err("%s(%s), ReleaseLease fail %d (%s: %s)\n", __func__, lease_id, rc, err_name,
+        err_msg);
+  }
+  return rc;
 }
 
 int mt_instance_request_xsks_map_fd(struct mtl_main_impl* impl, unsigned int ifindex) {
-  int ret;
-  int xsks_map_fd = -1;
-  int sock = impl->instance_fd;
-
-  mtl_message_t mtl_msg;
-  mtl_msg.header.magic = htonl(MTL_MANAGER_MAGIC);
-  mtl_msg.header.type = htonl(MTL_MSG_TYPE_IF_XSK_MAP_FD);
-  mtl_msg.body.if_msg.ifindex = htonl(ifindex);
-  mtl_msg.header.body_len = htonl(sizeof(mtl_if_message_t));
-
-  ret = send(sock, &mtl_msg, sizeof(mtl_msg), MSG_NOSIGNAL);
-  if (ret < 0) {
-    err("%s(%u), send message fail\n", __func__, ifindex);
-    return ret;
-  }
-
-  char cms[CMSG_SPACE(sizeof(int))];
-  struct cmsghdr* cmsg;
-  struct msghdr msg;
-  struct iovec iov;
-  int value;
-  int len;
-
-  iov.iov_base = &value;
-  iov.iov_len = sizeof(int);
-
-  memset(&msg, 0, sizeof(msg));
-  msg.msg_iov = &iov;
-  msg.msg_iovlen = 1;
-  msg.msg_control = (caddr_t)cms;
-  msg.msg_controllen = sizeof(cms);
-
-  len = recvmsg(sock, &msg, 0);
-  if (len < 0) {
-    err("%s(%u), recv message fail\n", __func__, ifindex);
-    return len;
-  }
-
-  cmsg = CMSG_FIRSTHDR(&msg);
-  if (cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SCM_RIGHTS ||
-      cmsg->cmsg_len != CMSG_LEN(sizeof(int))) {
-    err("%s(%u), invalid cmsg for map fd\n", __func__, ifindex);
-    return -EINVAL;
-  }
-
-  xsks_map_fd = *(int*)CMSG_DATA(cmsg);
-  if (xsks_map_fd < 0) {
-    err("%s(%u), get xsks_map_fd fail, %s\n", __func__, ifindex, strerror(errno));
-    return errno;
-  }
-
-  return xsks_map_fd;
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(ifindex);
+  return -ENOTSUP;
 }
 
 int mt_instance_update_udp_dp_filter(struct mtl_main_impl* impl, unsigned int ifindex,
                                      uint16_t dst_port, bool add) {
-  int sock = impl->instance_fd;
-
-  mtl_message_t msg;
-  msg.header.magic = htonl(MTL_MANAGER_MAGIC);
-  msg.header.type =
-      add ? htonl(MTL_MSG_TYPE_ADD_UDP_DP_FILTER) : htonl(MTL_MSG_TYPE_DEL_UDP_DP_FILTER);
-  msg.body.udp_dp_filter_msg.ifindex = htonl(ifindex);
-  msg.body.udp_dp_filter_msg.port = htons(dst_port);
-  msg.header.body_len = htonl(sizeof(mtl_udp_dp_filter_message_t));
-
-  return instance_send_and_receive_message(sock, &msg, MTL_MSG_TYPE_RESPONSE);
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(ifindex);
+  MTL_MAY_UNUSED(dst_port);
+  MTL_MAY_UNUSED(add);
+  return -ENOTSUP;
 }
 
 int mt_instance_get_queue(struct mtl_main_impl* impl, unsigned int ifindex) {
-  int sock = impl->instance_fd;
-
-  mtl_message_t msg;
-  msg.header.magic = htonl(MTL_MANAGER_MAGIC);
-  msg.header.type = htonl(MTL_MSG_TYPE_IF_GET_QUEUE);
-  msg.body.if_msg.ifindex = htonl(ifindex);
-  msg.header.body_len = htonl(sizeof(mtl_if_message_t));
-
-  return instance_send_and_receive_message(sock, &msg, MTL_MSG_TYPE_IF_QUEUE_ID);
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(ifindex);
+  return -ENOTSUP;
 }
 
 int mt_instance_put_queue(struct mtl_main_impl* impl, unsigned int ifindex,
                           uint16_t queue_id) {
-  int sock = impl->instance_fd;
-
-  mtl_message_t msg;
-  msg.header.magic = htonl(MTL_MANAGER_MAGIC);
-  msg.header.type = htonl(MTL_MSG_TYPE_IF_PUT_QUEUE);
-  msg.body.if_msg.ifindex = htonl(ifindex);
-  msg.body.if_msg.queue_id = htons(queue_id);
-  msg.header.body_len = htonl(sizeof(mtl_if_message_t));
-
-  return instance_send_and_receive_message(sock, &msg, MTL_MSG_TYPE_RESPONSE);
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(ifindex);
+  MTL_MAY_UNUSED(queue_id);
+  return -ENOTSUP;
 }
 
 int mt_instance_add_flow(struct mtl_main_impl* impl, unsigned int ifindex,
                          uint16_t queue_id, uint32_t flow_type, uint32_t src_ip,
                          uint32_t dst_ip, uint16_t src_port, uint16_t dst_port) {
-  int sock = impl->instance_fd;
-
-  mtl_message_t msg;
-  msg.header.magic = htonl(MTL_MANAGER_MAGIC);
-  msg.header.type = htonl(MTL_MSG_TYPE_IF_ADD_FLOW);
-  msg.body.if_msg.ifindex = htonl(ifindex);
-  msg.body.if_msg.queue_id = htons(queue_id);
-  msg.body.if_msg.flow_type = htonl(flow_type);
-  msg.body.if_msg.src_ip = htonl(src_ip);
-  msg.body.if_msg.dst_ip = htonl(dst_ip);
-  msg.body.if_msg.src_port = htons(src_port);
-  msg.body.if_msg.dst_port = htons(dst_port);
-  msg.header.body_len = htonl(sizeof(mtl_if_message_t));
-
-  return instance_send_and_receive_message(sock, &msg, MTL_MSG_TYPE_IF_FLOW_ID);
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(ifindex);
+  MTL_MAY_UNUSED(queue_id);
+  MTL_MAY_UNUSED(flow_type);
+  MTL_MAY_UNUSED(src_ip);
+  MTL_MAY_UNUSED(dst_ip);
+  MTL_MAY_UNUSED(src_port);
+  MTL_MAY_UNUSED(dst_port);
+  return -ENOTSUP;
 }
 
 int mt_instance_del_flow(struct mtl_main_impl* impl, unsigned int ifindex,
                          uint32_t flow_id) {
-  int sock = impl->instance_fd;
-
-  mtl_message_t msg;
-  msg.header.magic = htonl(MTL_MANAGER_MAGIC);
-  msg.header.type = htonl(MTL_MSG_TYPE_IF_DEL_FLOW);
-  msg.body.if_msg.ifindex = htonl(ifindex);
-  msg.body.if_msg.flow_id = htonl(flow_id);
-  msg.header.body_len = htonl(sizeof(mtl_if_message_t));
-
-  return instance_send_and_receive_message(sock, &msg, MTL_MSG_TYPE_RESPONSE);
-}
-
-int mt_instance_init(struct mtl_main_impl* impl, struct mtl_init_params* p) {
-  impl->instance_fd = -1;
-  int sock = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (sock < 0) {
-    err("%s, create socket fail %d\n", __func__, sock);
-    return sock;
-  }
-
-  struct sockaddr_un addr;
-  addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, MTL_MANAGER_SOCK_PATH, sizeof(addr.sun_path) - 1);
-  int ret = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
-  if (ret < 0) {
-    warn("%s, connect to manager fail, assume single instance mode\n", __func__);
-    close(sock);
-    return ret;
-  }
-
-  struct mt_user_info* u_info = &impl->u_info;
-
-  mtl_message_t msg;
-  msg.header.magic = htonl(MTL_MANAGER_MAGIC);
-  msg.header.type = htonl(MTL_MSG_TYPE_REGISTER);
-  msg.header.body_len = sizeof(mtl_register_message_t);
-
-  mtl_register_message_t* reg_msg = &msg.body.register_msg;
-  reg_msg->pid = htonl(u_info->pid);
-  reg_msg->uid = htonl(getuid());
-  strncpy(reg_msg->hostname, u_info->hostname, sizeof(reg_msg->hostname) - 1);
-  reg_msg->hostname[sizeof(reg_msg->hostname) - 1] = '\0';
-
-  /* manager will load xdp program for afxdp interfaces */
-  uint16_t num_xdp_if = 0;
-  for (int i = 0; i < p->num_ports; i++) {
-    if (mtl_pmd_is_af_xdp(p->pmd[i])) {
-      const char* if_name;
-      if (p->pmd[i] == MTL_PMD_NATIVE_AF_XDP)
-        if_name = mt_native_afxdp_port2if(p->port[i]);
-      else
-        if_name = mt_dpdk_afxdp_port2if(p->port[i]);
-      reg_msg->ifindex[num_xdp_if] = htonl(if_nametoindex(if_name));
-      num_xdp_if++;
-    }
-  }
-  reg_msg->num_if = htons(num_xdp_if);
-
-  int response = instance_send_and_receive_message(sock, &msg, MTL_MSG_TYPE_RESPONSE);
-  if (response != 0) {
-    err("%s, register fail\n", __func__);
-    close(sock);
-    return -EIO;
-  }
-
-  impl->instance_fd = sock;
-
-  info("%s, succ\n", __func__);
-
-  return 0;
-}
-
-int mt_instance_uinit(struct mtl_main_impl* impl) {
-  int sock = impl->instance_fd;
-  if (sock <= 0) return -EIO;
-
-  return close(sock);
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(ifindex);
+  MTL_MAY_UNUSED(flow_id);
+  return -ENOTSUP;
 }
 
 bool mtl_is_manager_alive(void) {
-  int sock = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (sock < 0) {
-    err("%s, create socket fail %d\n", __func__, sock);
-    return false;
-  }
-  struct sockaddr_un addr;
-  addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, MTL_MANAGER_SOCK_PATH, sizeof(addr.sun_path) - 1);
-  int ret = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
-  if (ret < 0) {
-    err("%s, MTL manager is not alive\n", __func__);
-    close(sock);
+  const char* sock_path = instance_resolve_sock_path();
+  int fd = mt_varlink_connect_unix(sock_path, MT_INSTANCE_ALIVE_TIMEOUT_MS);
+  if (fd < 0) return false;
+  if (instance_verify_server_peercred(fd, sock_path) < 0) {
+    close(fd);
     return false;
   }
 
-  close(sock);
-  return true;
+  struct json_object* reply = NULL;
+  int rc = mt_varlink_call(fd, MT_VARLINK_SERVICE_INTERFACE ".GetInfo", NULL, NULL, 0,
+                           MT_INSTANCE_ALIVE_TIMEOUT_MS, &reply, NULL, 0, NULL, 0);
+  if (reply) json_object_put(reply);
+  close(fd);
+  return rc == 0;
 }
 
-#else /* not supported on Windows */
+#else /* Windows stubs */
 
-int mt_instance_init(struct mtl_main_impl* impl, struct mtl_init_params* p) {
-  impl->instance_fd = -1;
+int mt_instance_connect(struct mtl_init_params* p, struct mt_instance_ctx** out_ctx) {
   MTL_MAY_UNUSED(p);
-  return -ENOTSUP;
+  if (out_ctx) *out_ctx = NULL;
+  return 0;
+}
+
+void mt_instance_disconnect(struct mt_instance_ctx* ctx) {
+  MTL_MAY_UNUSED(ctx);
 }
 
 int mt_instance_uinit(struct mtl_main_impl* impl) {
   MTL_MAY_UNUSED(impl);
+  return 0;
+}
+
+struct mt_instance_ctx* mt_instance_create_from_fd(int sock_fd, const char* sock_path,
+                                                   const char* client_name) {
+  MTL_MAY_UNUSED(sock_fd);
+  MTL_MAY_UNUSED(sock_path);
+  MTL_MAY_UNUSED(client_name);
+  return NULL;
+}
+
+int mt_instance_get_cpu(struct mtl_main_impl* impl, uint32_t phys_cpu,
+                        char lease_id_out[40]) {
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(phys_cpu);
+  MTL_MAY_UNUSED(lease_id_out);
   return -ENOTSUP;
 }
 
-int mt_instance_get_lcore(struct mtl_main_impl* impl, uint16_t lcore_id) {
+int mt_instance_release_lease(struct mtl_main_impl* impl, const char* lease_id) {
   MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(lcore_id);
-  return -ENOTSUP;
-}
-
-int mt_instance_put_lcore(struct mtl_main_impl* impl, uint16_t lcore_id) {
-  MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(lcore_id);
+  MTL_MAY_UNUSED(lease_id);
   return -ENOTSUP;
 }
 
 int mt_instance_request_xsks_map_fd(struct mtl_main_impl* impl, unsigned int ifindex) {
   MTL_MAY_UNUSED(impl);
   MTL_MAY_UNUSED(ifindex);
+  return -ENOTSUP;
+}
+
+int mt_instance_update_udp_dp_filter(struct mtl_main_impl* impl, unsigned int ifindex,
+                                     uint16_t dst_port, bool add) {
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(ifindex);
+  MTL_MAY_UNUSED(dst_port);
+  MTL_MAY_UNUSED(add);
   return -ENOTSUP;
 }
 

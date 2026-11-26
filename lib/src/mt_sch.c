@@ -837,6 +837,19 @@ static void lcore_shm_check_and_clean(struct mt_lcore_shm_entry* shm_entry,
 #endif
 }
 
+static int sch_cpuset_single_cpu(const cpu_set_t* cpuset) {
+#ifndef WINDOWSENV
+  if (!cpuset || CPU_COUNT(cpuset) != 1) return -EINVAL;
+  for (int cpu = 0; cpu < CPU_SETSIZE; ++cpu) {
+    if (CPU_ISSET(cpu, cpuset)) return cpu;
+  }
+  return -EINVAL;
+#else
+  MTL_MAY_UNUSED(cpuset);
+  return -ENOTSUP;
+#endif
+}
+
 static int sch_get_lcore(struct mtl_main_impl* impl, unsigned int* lcore,
                          enum mt_lcore_type type, int socket) {
   unsigned int cur_lcore;
@@ -854,15 +867,26 @@ again:
       cur_lcore = rte_get_next_lcore(cur_lcore, 1, 0);
       if ((cur_lcore < RTE_MAX_LCORE) &&
           sch_socket_match(rte_lcore_to_socket_id(cur_lcore), socket, skip_numa_check)) {
-        ret = mt_instance_get_lcore(impl, cur_lcore);
+        cpu_set_t cpuset = rte_lcore_cpuset(cur_lcore);
+        int phys_cpu = sch_cpuset_single_cpu(&cpuset);
+        if (phys_cpu < 0) {
+          err("%s, lcore %u cpuset does not map to a single physical CPU\n", __func__,
+              cur_lcore);
+          tried++;
+          continue;
+        }
+        char lease_id[40] = {0};
+        ret = mt_instance_get_cpu(impl, (uint32_t)phys_cpu, lease_id);
         if (ret == 0) {
           *lcore = cur_lcore;
           rte_atomic32_inc(&impl->lcore_cnt);
           /* set local lcores info */
           mgr->local_lcores_active[cur_lcore] = true;
           mgr->local_lcores_type[cur_lcore] = type;
-          info("%s, succ on manager lcore %d for %s socket %d\n", __func__, cur_lcore,
-               lcore_type_name(type), socket);
+          memcpy(mgr->local_lcore_lease[cur_lcore], lease_id,
+                 sizeof(mgr->local_lcore_lease[cur_lcore]));
+          info("%s, succ on manager lcore %u (cpu %d lease %s) for %s socket %d\n",
+               __func__, cur_lcore, phys_cpu, lease_id, lcore_type_name(type), socket);
           return 0;
         }
       }
@@ -944,18 +968,24 @@ static int sch_put_lcore(struct mtl_main_impl* impl, unsigned int lcore) {
   struct mt_sch_mgr* mgr = mt_sch_get_mgr(impl);
 
   if (mt_is_manager_connected(impl)) {
-    ret = mt_instance_put_lcore(impl, lcore);
+    if (lcore >= RTE_MAX_LCORE) {
+      err("%s, invalid manager lcore %u\n", __func__, lcore);
+      return -EIO;
+    }
+    if (mgr->local_lcore_lease[lcore][0] == '\0') {
+      err("%s, manager lcore %u has no active lease\n", __func__, lcore);
+      return -EIO;
+    }
+    ret = mt_instance_release_lease(impl, mgr->local_lcore_lease[lcore]);
+    mgr->local_lcore_lease[lcore][0] = '\0';
     if (ret == 0) {
       rte_atomic32_dec(&impl->lcore_cnt);
       mgr->local_lcores_active[lcore] = false;
-      info("%s, succ on manager lcore %d for %s\n", __func__, lcore,
+      info("%s, succ on manager lcore %u for %s\n", __func__, lcore,
            lcore_type_name(mgr->local_lcores_type[lcore]));
       return 0;
-    } else if (lcore >= RTE_MAX_LCORE) {
-      err("%s, err %d on manager invalid lcore %d\n", __func__, ret, lcore);
-      return -EIO;
     } else {
-      err("%s, err %d on manager lcore %d for %s\n", __func__, ret, lcore,
+      err("%s, err %d on manager lcore %u for %s\n", __func__, ret, lcore,
           lcore_type_name(mgr->local_lcores_type[lcore]));
       return ret;
     }

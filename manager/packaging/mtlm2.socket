@@ -1,0 +1,13 @@
+[Unit]
+Description=MtlManager 2 Varlink Control Socket
+
+[Socket]
+ListenStream=/run/imtl/manager2.sock
+SocketUser=root
+SocketGroup=mtl
+SocketMode=0660
+DirectoryMode=0750
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target

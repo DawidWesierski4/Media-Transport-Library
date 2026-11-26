@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright 2023 Intel Corporation
+# Copyright 2023-2026 Intel Corporation
 
-option('enable_asan', type: 'boolean', value: false, description: 'enable/disable address sanitizer, debug usage only')
+option('enable_asan', type : 'boolean', value : false, description : 'enable asan check')
+option('enable_tests', type : 'boolean', value : false, description : 'build MtlManager 2 unit tests')

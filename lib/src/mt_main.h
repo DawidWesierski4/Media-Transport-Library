@@ -610,6 +610,7 @@ struct mt_sch_mgr {
   /* local lcores info */
   bool local_lcores_active[RTE_MAX_LCORE];
   enum mt_lcore_type local_lcores_type[RTE_MAX_LCORE];
+  char local_lcore_lease[RTE_MAX_LCORE][40];
 };
 
 /* the pads a frame of video RL training sends: their bytes, NORMAL size and count */
@@ -1178,6 +1179,8 @@ struct mt_dp_impl {
   rte_spinlock_t txq_sys_entry_lock; /* protect txq_sys_entry */
 };
 
+struct mt_instance_ctx;
+
 struct mtl_main_impl {
   struct mt_interface inf[MTL_PORT_MAX];
 
@@ -1269,7 +1272,7 @@ struct mtl_main_impl {
   bool privileged; /* if app running with root privilege */
 
   /* connect to mtl manager */
-  int instance_fd;
+  struct mt_instance_ctx* instance;
 };
 
 static inline struct mtl_init_params* mt_get_user_params(struct mtl_main_impl* impl) {
@@ -1281,7 +1284,7 @@ static inline bool mt_is_privileged(struct mtl_main_impl* impl) {
 }
 
 static inline bool mt_is_manager_connected(struct mtl_main_impl* impl) {
-  return impl->instance_fd > 0;
+  return impl->instance != NULL;
 }
 
 static inline struct mt_interface* mt_if(struct mtl_main_impl* impl, enum mtl_port port) {

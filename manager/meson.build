@@ -1,100 +1,89 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright 2023 Intel Corporation
+# Copyright 2023-2026 Intel Corporation
 
-project('mtl_manager', 'cpp', default_options: ['buildtype=release', 'warning_level=2', 'cpp_std=c++17', 'b_pie=true'],
-  version: run_command(find_program('cat'), files('../VERSION'), check: true).stdout().strip(),
+project('MtlManager', ['c', 'cpp'],
+  default_options : [
+    'c_std=gnu11',
+    'cpp_std=c++20',
+    'buildtype=release',
+    'warning_level=2',
+  ],
+  version : run_command(find_program('cat'), files('../VERSION'), check : true).stdout().strip(),
 )
 
-exec_env = host_machine.system()
-set_variable('is_windows', exec_env == 'windows')
+cc = meson.get_compiler('c')
+cpp = meson.get_compiler('cpp')
 
-if is_windows
-  message('not supported on Windows')
-  subdir_done()
-endif
+jsonc_dep = dependency('json-c', required : true)
+threads_dep = dependency('threads', required : true)
 
-message('BUILD Environment: ' + exec_env)
+c_args = ['-D_GNU_SOURCE', '-Wall', '-Wextra', '-Werror', '-Wformat', '-Wformat-security',
+          '-Werror=format-security', '-fstack-protector-strong']
+cpp_args = ['-D_GNU_SOURCE', '-Wall', '-Wextra', '-Werror', '-Wformat', '-Wformat-security',
+            '-Werror=format-security', '-fstack-protector-strong']
+link_args = ['-Wl,-z,relro', '-Wl,-z,now', '-Wl,-z,noexecstack']
 
-cpp_c = meson.get_compiler('cpp')
-
-# Compiler hardening, see doc/build.md
-add_project_arguments('-fstack-protector-strong', '-fstack-clash-protection', '-fcf-protection=full',
-  '-Wformat', '-Wformat-security', '-Werror=format-security', '-Wimplicit-fallthrough',
-  '-D_GLIBCXX_ASSERTIONS', language : 'cpp')
-if get_option('optimization') not in ['0', 'plain'] and get_option('b_sanitize') == 'none' and not ' '.join(get_option('cpp_args')).contains('_FORTIFY_SOURCE')
-  fortify = cpp_c.get_define('__USE_FORTIFY_LEVEL', prefix : '#include <string.h>',
-    args : ['-O2', '-U_FORTIFY_SOURCE', '-D_FORTIFY_SOURCE=3']) == '3' ? '3' : '2'
-  add_project_arguments('-U_FORTIFY_SOURCE', '-D_FORTIFY_SOURCE=' + fortify, language : 'cpp')
-endif
-add_project_link_arguments('-Wl,-z,relro', '-Wl,-z,now', '-Wl,-z,noexecstack', language : 'cpp')
-
-sources = ['mtl_manager.cpp']
-
-cpp_args = ['-std=c++17', '-Wall']
-link_cpp_args = ['-lstdc++fs']
-
-if get_option('buildtype') != 'debug'
-  cpp_args += ['-Werror']
-  # enable error on  Variable Length Arrays
-  cpp_args += ['-Wvla']
-endif
-
-# default no asan dep
-asan_dep = []
-if get_option('enable_asan') == true
-  message('Enable -fsanitize=address')
+if get_option('enable_asan')
+  c_args += ['-fsanitize=address']
   cpp_args += ['-fsanitize=address']
-  asan_dep = cpp_c.find_library('asan', required : true)
+  link_args += ['-fsanitize=address']
 endif
 
-mtlm_conf = configuration_data()
-# get external variables
-add_global_arguments('-D__MTLM_GIT__="'+ run_command('git', 'describe', '--abbrev=8', '--dirty', '--always', check: false).stdout().strip() + '"', language : 'cpp')
-# parse mtlm config
-# parse build config
-prj_ver = meson.project_version().split('.')
-mtlm_conf.set('MTLM_VERSION_MAJOR', prj_ver.get(0).to_int())
-mtlm_conf.set('MTLM_VERSION_MINOR', prj_ver.get(1).to_int())
-mtlm_conf.set('MTLM_VERSION_LAST', prj_ver.get(2).to_int())
-mtlm_conf.set_quoted('MTLM_VERSION_EXTRA', prj_ver.get(3))
-# parse compiler config
-cpp_c_ver = cpp_c.get_id() + '-' + cpp_c.version()
-mtlm_conf.set_quoted('MTLM_COMPILER', cpp_c_ver)
-# build config file
-build_cfg = 'mtlm_build_config.h'
-configure_file(output: build_cfg, configuration: mtlm_conf)
+inc_dirs = include_directories('.', '../lib/src')
 
-# xdp check
-libxdp_dep = dependency('libxdp', required: false)
-libbpf_dep = dependency('libbpf', required: false)
-if libxdp_dep.found() and libbpf_dep.found()
-  add_global_arguments('-DMTL_HAS_XDP_BACKEND', language : 'cpp')
-  clang = find_program('clang')
-  llvm_strip = find_program('llvm-strip')
-  multiarch = run_command(find_program('cc'), '-dumpmachine', check: true).stdout().strip()
-  # Build XDP prog obj
-  xdp_src = files('mtl.xdp.c')
-  xdp_temp_obj = custom_target('mtl.xdp.temp.o',
-    input : xdp_src,
-    output : 'mtl.xdp.temp.o',
-    command : [clang, '-g', '-O2', '-target', 'bpf', '-I/usr/include/' + multiarch,
-      '-c', '@INPUT@', '-o', '@OUTPUT@']
-  )
-  xdp_obj = custom_target('mtl.xdp.o',
-    depends : xdp_temp_obj,
-    input : xdp_temp_obj,
-    output : 'mtl.xdp.o',
-    install: true,
-    install_dir: get_option('prefix') + '/lib/bpf',
-    command : [llvm_strip, '-g', '@INPUT@', '-o', '@OUTPUT@']
-  )
-else
-  message('libxdp and libbpf not found, no af_xdp backend')
-endif
-
-executable('MtlManager', sources,
-  cpp_args: cpp_args,
-  link_args: link_cpp_args,
-  install: true,
-  dependencies: [asan_dep, libxdp_dep, libbpf_dep]
+mtlm2_core_sources = files(
+  '../lib/src/mt_varlink.c',
+  'mtlm2_peer.cpp',
+  'mtlm2_shm.cpp',
+  'mtlm2_journal.cpp',
+  'mtlm2_server.cpp',
 )
+
+mtlm2_exe = executable('MtlManager',
+  mtlm2_core_sources + files('mtlm2_main.cpp'),
+  include_directories : inc_dirs,
+  c_args : c_args,
+  cpp_args : cpp_args,
+  link_args : link_args,
+  dependencies : [jsonc_dep, threads_dep],
+  install : true,
+)
+
+if meson.version().version_compare('>=0.61')
+  install_symlink('mtlm2d',
+    pointing_to : 'MtlManager',
+    install_dir : get_option('bindir'),
+  )
+endif
+
+# Keep building mtl.xdp.o when libxdp, libbpf, and clang are present.
+libxdp_dep = dependency('libxdp', required : false)
+libbpf_dep = dependency('libbpf', required : false)
+clang_prog = find_program('clang', required : false)
+if libxdp_dep.found() and libbpf_dep.found() and clang_prog.found()
+  bpf_target = custom_target('mtl_xdp_bpf',
+    input : files('mtl.xdp.c'),
+    output : 'mtl.xdp.o',
+    command : [clang_prog, '-O2', '-g', '-Wall', '-target', 'bpf', '-c', '@INPUT@', '-o', '@OUTPUT@'],
+    build_by_default : true,
+    install : true,
+    install_dir : get_option('datadir') / 'mtl',
+  )
+endif
+
+if get_option('enable_tests')
+  gtest_dep = dependency('gtest', main : true, required : true)
+  test_exe = executable('test_mtlm2_pr1a',
+    mtlm2_core_sources + files('tests/test_mtlm2_pr1a.cpp'),
+    include_directories : inc_dirs,
+    c_args : c_args,
+    cpp_args : cpp_args + [
+      '-DMTLM2_PACKAGING_DIR="' + meson.current_source_dir() + '/packaging"',
+      '-DMTLM2_DAEMON_BIN="' + meson.current_build_dir() + '/MtlManager"',
+    ],
+    link_args : link_args,
+    dependencies : [jsonc_dep, threads_dep, gtest_dep],
+    install : false,
+  )
+  test('mtlm2_pr1a', test_exe, depends : [mtlm2_exe], timeout : 60)
+endif

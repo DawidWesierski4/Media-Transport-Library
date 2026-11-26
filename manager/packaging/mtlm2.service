@@ -1,0 +1,36 @@
+[Unit]
+Description=MtlManager 2 Control-Plane Resource Broker
+Requires=mtlm2.socket
+After=network.target mtlm2.socket
+
+[Service]
+Type=simple
+Group=mtl
+ExecStart=/usr/bin/mtlm2d --policy-file /etc/mtl/manager2-policy.json --socket-mode 0660 --state-dir /run/imtl/state
+Restart=on-failure
+RestartSec=2
+KillSignal=SIGTERM
+TimeoutStopSec=10
+
+RuntimeDirectory=imtl
+RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
+
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_BPF CAP_PERFMON
+AmbientCapabilities=CAP_NET_ADMIN CAP_BPF CAP_PERFMON
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=no
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET
+ReadWritePaths=-/tmp /run/imtl -/sys/fs/bpf
+
+[Install]
+WantedBy=multi-user.target

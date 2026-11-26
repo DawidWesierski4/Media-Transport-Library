@@ -404,9 +404,17 @@ mtl_handle mtl_init(struct mtl_init_params* p) {
       p->port_params[i].flags |= MTL_PORT_FLAG_ALLOW_DOWN_INITIALIZATION;
   }
 
+  struct mt_instance_ctx* instance_ctx = NULL;
+  ret = mt_instance_connect(p, &instance_ctx);
+  if (ret < 0) {
+    err("%s, mt_instance_connect fail %d\n", __func__, ret);
+    return NULL;
+  }
+
   ret = mt_dev_init(p, &kport_info);
   if (ret < 0) {
     err("%s, mt_dev_eal_init fail %d\n", __func__, ret);
+    mt_instance_disconnect(instance_ctx);
     return NULL;
   }
   notice("%s, MTL version: %s, dpdk version: %s\n", __func__, mtl_version(),
@@ -477,7 +485,8 @@ mtl_handle mtl_init(struct mtl_init_params* p) {
   impl->privileged = true;
 #endif
 
-  mt_instance_init(impl, p);
+  impl->instance = instance_ctx;
+  instance_ctx = NULL;
 
   mt_memcpy(&impl->user_para, p, sizeof(*p));
   impl->var_para.sch_default_sleep_us = 1 * US_PER_MS; /* default 1ms */
@@ -617,7 +626,10 @@ mtl_handle mtl_init(struct mtl_init_params* p) {
   return impl;
 
 err_exit:
-  if (impl) mtl_uninit(impl);
+  if (impl)
+    mtl_uninit(impl);
+  else if (instance_ctx)
+    mt_instance_disconnect(instance_ctx);
   return NULL;
 }
 
