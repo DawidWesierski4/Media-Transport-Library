@@ -64,6 +64,16 @@ Pass `--policy-file` for multi-tenant hosts.
 The systemd unit `mtlm2.service` always starts `MtlManager` with `--policy-file /etc/mtl/manager2-policy.json` and client socket mode `0660` (group `mtl`).
 Policy files deny access by default and enforce `allowed_cpus`, `allowed_interfaces`, `allowed_udp_ports`, and aggregated per-UID quotas (`max_cpus`, `max_queues`, `max_flows`).
 
+### Cgroup v2 `verify_only` Isolation Mode
+
+Pass `--cgroup-mode=verify_only` (or set `"cgroup_verify": { "mode": "verify_only" }` in the policy file) when an external orchestrator assigns tenant cpusets, such as Docker (`--cpuset-cpus`), Kubernetes, or `systemd-run --scope -p AllowedCPUs=...`.
+
+- MtlManager 2 operates strictly read-only against `--cgroup-mount` (default `/sys/fs/cgroup`) and never writes to cgroupfs.
+- `mtlm2.service` sets `ProtectControlGroups=yes`.
+- On `OpenSession`, MtlManager 2 reads the peer unified cgroup v2 path from `/proc/<pid>/cgroup`, checks the optional `expected_cgroup_pattern` glob, and rejects empty `cpuset.cpus.effective` or `cpuset.mems.effective` with `CgroupVerificationFailed`.
+- On every `AcquireCpu` and `GetStatus`, MtlManager 2 re-reads `cpuset.cpus.effective` and `cpuset.mems.effective` live, rejects CPUs outside the effective set with `CpuOutsideEffectiveSet` or `NumaNodeNotAllowed`, and intersects automatic CPU selection with the live effective sets.
+- `GetStatus` reports top-level `cgroupVerifyMode` and per-session `cgroupPath`, `effectiveCpus`, and `effectiveMems`.
+
 ## Non-Destructive Stop and Restart
 
 MtlManager 2 stores active leases and kernel objects in `/run/imtl/state/journal.json` (mode `0600`).

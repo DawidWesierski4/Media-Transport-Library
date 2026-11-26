@@ -85,10 +85,16 @@ void print_usage(const char* prog) {
                "(default: 5000)\n"
             << "  --heartbeat-stall-grace-ms <ms>  Grace extension after event loop "
                "stall (default: 5000)\n"
+            << "  --cgroup-mode <disabled|verify_only>  Cgroup v2 verification mode "
+               "(default: disabled)\n"
+            << "  --cgroup-mount <path>     Read-only cgroup v2 mount path (default: "
+               "/sys/fs/cgroup)\n"
+            << "  --cgroup-pattern <glob>   Expected peer cgroup v2 glob pattern\n"
             << "  --test-mock-netdev        Use in-memory mock netdev/XDP backend (for "
                "tests)\n"
             << "  --test-attach-xdp-delay-ms <ms>  Simulated attach_xdp delay in mock "
                "netdev (for tests)\n"
+            << "  --test-proc-root <path>   Override /proc root path (for tests)\n"
             << "  -h, --help                Show this help\n";
 }
 
@@ -119,6 +125,9 @@ int main(int argc, char** argv) {
   std::optional<int64_t> cli_hb_max_missed;
   std::optional<int64_t> cli_hb_min_timeout_ms;
   std::optional<int64_t> cli_hb_stall_grace_ms;
+  std::optional<mtlm2::CgroupVerifyMode> cli_cg_mode;
+  std::optional<std::string> cli_cg_mount;
+  std::optional<std::string> cli_cg_pattern;
 
   auto parse_i64_range = [](const std::string& text, int64_t lo, int64_t hi,
                             int64_t* out) -> bool {
@@ -258,6 +267,31 @@ int main(int argc, char** argv) {
         return 2;
       }
       cli_hb_stall_grace_ms = v;
+    } else if (arg == "--cgroup-mode") {
+      std::string mstr = need_val("--cgroup-mode");
+      mtlm2::CgroupVerifyMode mode{};
+      if (!mtlm2::parse_cgroup_verify_mode(mstr, &mode)) {
+        std::cerr << "MtlManager: invalid --cgroup-mode '" << mstr << "'\n";
+        return 2;
+      }
+      cli_cg_mode = mode;
+    } else if (arg == "--cgroup-mount") {
+      std::string mp = need_val("--cgroup-mount");
+      if (mp.empty()) {
+        std::cerr << "MtlManager: --cgroup-mount must not be empty\n";
+        return 2;
+      }
+      cli_cg_mount = std::move(mp);
+    } else if (arg == "--cgroup-pattern") {
+      std::string raw_pat = need_val("--cgroup-pattern");
+      std::string norm_pat;
+      std::string perr;
+      if (!mtlm2::normalize_and_validate_cgroup_pattern(raw_pat, &norm_pat, &perr)) {
+        std::cerr << "MtlManager: invalid --cgroup-pattern '" << raw_pat << "': " << perr
+                  << "\n";
+        return 2;
+      }
+      cli_cg_pattern = std::move(norm_pat);
     } else if (arg == "--test-mock-netdev") {
       cfg.use_mock_netdev = true;
     } else if (arg == "--test-attach-xdp-delay-ms") {
@@ -268,6 +302,8 @@ int main(int argc, char** argv) {
         return 2;
       }
       cfg.mock_attach_xdp_delay_ms = v;
+    } else if (arg == "--test-proc-root") {
+      cfg.proc_root = need_val("--test-proc-root");
     } else {
       std::cerr << "MtlManager: unknown option '" << arg << "'\n";
       print_usage(argv[0]);
@@ -293,6 +329,7 @@ int main(int argc, char** argv) {
     cfg.allow_world_client_socket = false;
     if (!mode_explicit) cfg.client_socket_mode = 0660;
     if (cfg.policy.has_heartbeat) cfg.heartbeat = cfg.policy.heartbeat;
+    if (cfg.policy.has_cgroup_verify) cfg.cgroup_verify = cfg.policy.cgroup_verify;
   }
 
   if (cli_hb_policy.has_value()) cfg.heartbeat.expiry_policy = *cli_hb_policy;
@@ -305,6 +342,10 @@ int main(int argc, char** argv) {
     cfg.heartbeat.min_timeout_ms = *cli_hb_min_timeout_ms;
   if (cli_hb_stall_grace_ms.has_value())
     cfg.heartbeat.stall_grace_ms = *cli_hb_stall_grace_ms;
+  if (cli_cg_mode.has_value()) cfg.cgroup_verify.mode = *cli_cg_mode;
+  if (cli_cg_mount.has_value()) cfg.cgroup_verify.mount_path = *cli_cg_mount;
+  if (cli_cg_pattern.has_value())
+    cfg.cgroup_verify.expected_cgroup_pattern = *cli_cg_pattern;
 
   mtlm2::MtlManagerServer server(std::move(cfg));
   std::string err;

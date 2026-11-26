@@ -86,7 +86,7 @@ method AttachXsk(queueLease: string) -> (leaseId: string)
 method AddFlow(queueLease: string, protocol: ?string, srcIp: ?string, dstIp: string, srcPort: ?int, dstPort: int) -> (leaseId: string, ruleLocation: int)
 method AddUdpFilter(queueLease: string, destinationPort: int) -> (leaseId: string)
 method ReleaseLease(leaseId: string) -> ()
-method GetStatus() -> (shmMode: string, shmTamperWarnings: int, heartbeatPolicy: string, heartbeatEvictionAction: string, heartbeatWarnings: int, heartbeatRevocations: int, managerStallEvents: int, quarantinedCount: int, sessions: []object, leases: []object, queues: []object, flows: []object, udpFilters: []object, xskAttachments: []object, xdpAttachments: []object, backendInterfaces: []object)
+method GetStatus() -> (shmMode: string, shmTamperWarnings: int, heartbeatPolicy: string, heartbeatEvictionAction: string, heartbeatWarnings: int, heartbeatRevocations: int, managerStallEvents: int, cgroupVerifyMode: string, quarantinedCount: int, sessions: []object, leases: []object, queues: []object, flows: []object, udpFilters: []object, xskAttachments: []object, xdpAttachments: []object, backendInterfaces: []object)
 method RevokeLease(leaseId: string) -> ()
 method RevokeSession(sessionId: string) -> ()
 method KillQuarantinedOwner(leaseId: string) -> ()
@@ -99,6 +99,9 @@ error LeaseNotFound (message: string)
 error LeaseNotOwned (message: string)
 error SessionNotFound (message: string)
 error RateLimited (message: string)
+error CgroupVerificationFailed (message: string)
+error CpuOutsideEffectiveSet (message: string)
+error NumaNodeNotAllowed (message: string)
 error InternalError (message: string)
 )";
 
@@ -433,8 +436,8 @@ bool PolicyConfig::load_file(const std::string& path, PolicyConfig* out,
   JsonPtr root(raw_root);
 
   static const std::set<std::string> kTopKeys = {
-      "allowed_cpus",  "allowed_interfaces", "allowed_udp_ports",
-      "default_quota", "uid_quotas",         "heartbeat"};
+      "allowed_cpus", "allowed_interfaces", "allowed_udp_ports", "default_quota",
+      "uid_quotas",   "heartbeat",          "cgroup_verify"};
   std::string bad_key;
   if (!check_allowed_keys(root.get(), kTopKeys, &bad_key)) {
     if (err_out) *err_out = "unknown key in policy file: " + bad_key;
@@ -516,7 +519,8 @@ bool PolicyConfig::load_file(const std::string& path, PolicyConfig* out,
 
   auto parse_quota = [&](json_object* qobj, UidQuota* qout) -> bool {
     if (!qobj || !json_object_is_type(qobj, json_type_object)) return false;
-    static const std::set<std::string> kQKeys = {"max_cpus", "max_queues", "max_flows"};
+    static const std::set<std::string> kQKeys = {"max_cpus", "max_queues", "max_flows",
+                                                 "expected_cgroup_pattern"};
     if (!check_allowed_keys(qobj, kQKeys, nullptr)) return false;
     auto read_opt_u32 = [&](const char* k, uint32_t* dst) -> bool {
       json_object* v = nullptr;
@@ -526,9 +530,26 @@ bool PolicyConfig::load_file(const std::string& path, PolicyConfig* out,
       *dst = static_cast<uint32_t>(n);
       return true;
     };
-    return read_opt_u32("max_cpus", &qout->max_cpus) &&
-           read_opt_u32("max_queues", &qout->max_queues) &&
-           read_opt_u32("max_flows", &qout->max_flows);
+    if (!read_opt_u32("max_cpus", &qout->max_cpus) ||
+        !read_opt_u32("max_queues", &qout->max_queues) ||
+        !read_opt_u32("max_flows", &qout->max_flows)) {
+      return false;
+    }
+    json_object* jpat = nullptr;
+    if (json_object_object_get_ex(qobj, "expected_cgroup_pattern", &jpat) && jpat) {
+      std::string raw_pat;
+      if (!parse_strict_str(jpat, &raw_pat)) return false;
+      if (!raw_pat.empty()) {
+        std::string norm_pat;
+        std::string perr;
+        if (!normalize_and_validate_cgroup_pattern(raw_pat, &norm_pat, &perr)) {
+          if (err_out) *err_out = "invalid expected_cgroup_pattern: " + perr;
+          return false;
+        }
+        qout->expected_cgroup_pattern = std::move(norm_pat);
+      }
+    }
+    return true;
   };
 
   json_object* dq = nullptr;
@@ -624,6 +645,57 @@ bool PolicyConfig::load_file(const std::string& path, PolicyConfig* out,
     }
   }
 
+  json_object* jcg = nullptr;
+  if (json_object_object_get_ex(root.get(), "cgroup_verify", &jcg) && jcg) {
+    if (!json_object_is_type(jcg, json_type_object)) {
+      if (err_out) *err_out = "cgroup_verify must be an object";
+      return false;
+    }
+    static const std::set<std::string> kCgKeys = {"mode", "mount_path",
+                                                  "expected_cgroup_pattern"};
+    std::string cg_bad;
+    if (!check_allowed_keys(jcg, kCgKeys, &cg_bad)) {
+      if (err_out) *err_out = "unknown key in policy cgroup_verify: " + cg_bad;
+      return false;
+    }
+    cfg.has_cgroup_verify = true;
+
+    json_object* v = nullptr;
+    if (json_object_object_get_ex(jcg, "mode", &v) && v) {
+      std::string s;
+      if (!parse_strict_str(v, &s) ||
+          !parse_cgroup_verify_mode(s, &cfg.cgroup_verify.mode)) {
+        if (err_out) *err_out = "invalid cgroup_verify.mode";
+        return false;
+      }
+    }
+    if (json_object_object_get_ex(jcg, "mount_path", &v) && v) {
+      std::string s;
+      if (!parse_strict_str(v, &s) || s.empty()) {
+        if (err_out) *err_out = "invalid cgroup_verify.mount_path";
+        return false;
+      }
+      cfg.cgroup_verify.mount_path = std::move(s);
+    }
+    if (json_object_object_get_ex(jcg, "expected_cgroup_pattern", &v) && v) {
+      std::string raw_pat;
+      if (!parse_strict_str(v, &raw_pat)) {
+        if (err_out) *err_out = "invalid cgroup_verify.expected_cgroup_pattern";
+        return false;
+      }
+      if (!raw_pat.empty()) {
+        std::string norm_pat;
+        std::string perr;
+        if (!normalize_and_validate_cgroup_pattern(raw_pat, &norm_pat, &perr)) {
+          if (err_out)
+            *err_out = "invalid cgroup_verify.expected_cgroup_pattern: " + perr;
+          return false;
+        }
+        cfg.cgroup_verify.expected_cgroup_pattern = std::move(norm_pat);
+      }
+    }
+  }
+
   *out = std::move(cfg);
   return true;
 }
@@ -668,10 +740,33 @@ uint32_t PolicyConfig::max_flows_for_uid(uid_t uid) const {
   return default_quota.max_flows;
 }
 
+std::string PolicyConfig::expected_cgroup_pattern_for_uid(uid_t uid) const {
+  auto it = uid_quotas.find(uid);
+  if (it != uid_quotas.end() && !it->second.expected_cgroup_pattern.empty()) {
+    return it->second.expected_cgroup_pattern;
+  }
+  if (!default_quota.expected_cgroup_pattern.empty()) {
+    return default_quota.expected_cgroup_pattern;
+  }
+  return cgroup_verify.expected_cgroup_pattern;
+}
+
+std::string MtlManagerServer::resolve_expected_cgroup_pattern(uid_t uid) const {
+  auto it = cfg_.policy.uid_quotas.find(uid);
+  if (it != cfg_.policy.uid_quotas.end() && !it->second.expected_cgroup_pattern.empty()) {
+    return it->second.expected_cgroup_pattern;
+  }
+  if (!cfg_.policy.default_quota.expected_cgroup_pattern.empty()) {
+    return cfg_.policy.default_quota.expected_cgroup_pattern;
+  }
+  return cfg_.cgroup_verify.expected_cgroup_pattern;
+}
+
 MtlManagerServer::MtlManagerServer(ServerConfig cfg,
                                    std::unique_ptr<NetdevBackend> netdev)
     : cfg_(std::move(cfg)),
       peer_extractor_(cfg_.proc_root),
+      cgroup_verifier_(cfg_.cgroup_verify, peer_extractor_),
       journal_(cfg_.state_dir),
       netdev_(std::move(netdev)) {
   if (!netdev_) {
@@ -1294,6 +1389,23 @@ bool MtlManagerServer::start(std::string* err_out) {
   if (started_) return true;
 
   if (!discover_online_cpus(err_out)) return false;
+
+  if (cfg_.cgroup_verify.mode == CgroupVerifyMode::VerifyOnly) {
+    if (!cfg_.cgroup_verify.expected_cgroup_pattern.empty()) {
+      std::string norm_pat;
+      std::string perr;
+      if (!normalize_and_validate_cgroup_pattern(
+              cfg_.cgroup_verify.expected_cgroup_pattern, &norm_pat, &perr)) {
+        if (err_out) *err_out = "invalid cgroup pattern: " + perr;
+        return false;
+      }
+      cfg_.cgroup_verify.expected_cgroup_pattern = std::move(norm_pat);
+    }
+    std::string cg_warn;
+    if (!cgroup_verifier_.probe_mount(&cg_warn)) {
+      std::cerr << "MtlManager: warning: " << cg_warn << "\n";
+    }
+  }
 
   /* D3 (MM-05): refuse startup if v1 MtlManager is listening. */
   if (!check_v1_manager_absent(err_out)) return false;
@@ -2404,6 +2516,22 @@ void MtlManagerServer::rpc_open_session(Connection& conn, struct json_object* pa
     req_missed = v;
   }
 
+  if (cfg_.cgroup_verify.mode == CgroupVerifyMode::VerifyOnly) {
+    CgroupEffectiveSnapshot cg_snap;
+    std::string cg_err;
+    if (!cgroup_verifier_.verify_peer(
+            conn.peer.principal.pid, conn.peer.principal.pidfd,
+            resolve_expected_cgroup_pattern(conn.peer.principal.uid), &cg_snap,
+            &cg_err)) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".CgroupVerificationFailed",
+                    cg_err);
+      return;
+    }
+    conn.cgroup_path = std::move(cg_snap.cgroup_path);
+    conn.effective_cpus = std::move(cg_snap.effective_cpus_str);
+    conn.effective_mems = std::move(cg_snap.effective_mems_str);
+  }
+
   conn.session_id = next_id("ses");
   conn.client_name = PeerCredExtractor::sanitize_label(raw_name);
   start_session_heartbeat(conn, req_interval, req_missed);
@@ -2528,6 +2656,22 @@ void MtlManagerServer::rpc_claim_session(Connection& conn, struct json_object* p
        * reported in 'missing' without touching the owner's lease. */
       missing_ids.push_back(std::move(lid));
     }
+  }
+
+  if (cfg_.cgroup_verify.mode == CgroupVerifyMode::VerifyOnly) {
+    CgroupEffectiveSnapshot cg_snap;
+    std::string cg_err;
+    if (!cgroup_verifier_.verify_peer(
+            conn.peer.principal.pid, conn.peer.principal.pidfd,
+            resolve_expected_cgroup_pattern(conn.peer.principal.uid), &cg_snap,
+            &cg_err)) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".CgroupVerificationFailed",
+                    cg_err);
+      return;
+    }
+    conn.cgroup_path = std::move(cg_snap.cgroup_path);
+    conn.effective_cpus = std::move(cg_snap.effective_cpus_str);
+    conn.effective_mems = std::move(cg_snap.effective_mems_str);
   }
 
   conn.session_id = next_id("ses");
@@ -2901,14 +3045,58 @@ void MtlManagerServer::rpc_acquire_cpu(Connection& conn, struct json_object* par
     return;
   }
 
+  /* Live cgroup v2 effective cpuset/mems refresh on every AcquireCpu (ISSUE-59, CG-01).
+   */
+  std::optional<CgroupEffectiveSnapshot> cg_snap;
+  if (cfg_.cgroup_verify.mode == CgroupVerifyMode::VerifyOnly) {
+    CgroupEffectiveSnapshot live;
+    std::string cg_err;
+    if (!cgroup_verifier_.verify_peer(
+            conn.peer.principal.pid, conn.peer.principal.pidfd,
+            resolve_expected_cgroup_pattern(conn.peer.principal.uid), &live, &cg_err)) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".CgroupVerificationFailed",
+                    cg_err);
+      return;
+    }
+    conn.cgroup_path = live.cgroup_path;
+    conn.effective_cpus = live.effective_cpus_str;
+    conn.effective_mems = live.effective_mems_str;
+    cg_snap = std::move(live);
+  }
+
   auto is_online = [&](uint32_t c) {
     return std::binary_search(online_cpus_.begin(), online_cpus_.end(), c);
+  };
+  auto cpu_node_of = [&](uint32_t c) -> int {
+    auto it = cpu_numa_node_.find(c);
+    return (it != cpu_numa_node_.end()) ? it->second : 0;
   };
   auto matches_numa = [&](uint32_t c) {
     if (!numa_node.has_value()) return true;
     auto it = cpu_numa_node_.find(c);
     return it != cpu_numa_node_.end() && it->second == *numa_node;
   };
+  auto in_effective_cpus = [&](uint32_t c) {
+    if (!cg_snap.has_value()) return true;
+    return cg_snap->effective_cpus.find(c) != cg_snap->effective_cpus.end();
+  };
+  auto in_effective_mems = [&](uint32_t c) {
+    if (!cg_snap.has_value()) return true;
+    int node = cpu_node_of(c);
+    if (node < 0) return false;
+    return cg_snap->effective_mems.find(static_cast<uint32_t>(node)) !=
+           cg_snap->effective_mems.end();
+  };
+
+  if (cg_snap.has_value() && numa_node.has_value() &&
+      cg_snap->effective_mems.find(static_cast<uint32_t>(*numa_node)) ==
+          cg_snap->effective_mems.end()) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".NumaNodeNotAllowed",
+                  "requested NUMA node " + std::to_string(*numa_node) +
+                      " is outside live cpuset.mems.effective (" +
+                      cg_snap->effective_mems_str + ")");
+    return;
+  }
 
   std::set<uint32_t> shm_foreign_busy;
   if (shm_.mode() == ShmMode::CaseACoexist) {
@@ -2931,6 +3119,22 @@ void MtlManagerServer::rpc_acquire_cpu(Connection& conn, struct json_object* par
                       "requested CPU is not permitted by policy");
         return;
       }
+    } else if (!in_effective_cpus(c)) {
+      if (!allow_fallback) {
+        enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".CpuOutsideEffectiveSet",
+                      "requested CPU " + std::to_string(c) +
+                          " is outside live cpuset.cpus.effective (" +
+                          cg_snap->effective_cpus_str + ")");
+        return;
+      }
+    } else if (!in_effective_mems(c)) {
+      if (!allow_fallback) {
+        enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".NumaNodeNotAllowed",
+                      "NUMA node " + std::to_string(cpu_node_of(c)) + " of CPU " +
+                          std::to_string(c) + " is outside live cpuset.mems.effective (" +
+                          cg_snap->effective_mems_str + ")");
+        return;
+      }
     } else if (is_online(c) && matches_numa(c) && !is_cpu_allocated(c) &&
                !is_shm_foreign_busy(c)) {
       chosen = c;
@@ -2943,7 +3147,8 @@ void MtlManagerServer::rpc_acquire_cpu(Connection& conn, struct json_object* par
 
   if (!chosen.has_value()) {
     for (uint32_t c : online_cpus_) {
-      if (!cfg_.policy.is_cpu_allowed(c) || !matches_numa(c) || is_cpu_allocated(c) ||
+      if (!cfg_.policy.is_cpu_allowed(c) || !in_effective_cpus(c) ||
+          !in_effective_mems(c) || !matches_numa(c) || is_cpu_allocated(c) ||
           is_shm_foreign_busy(c))
         continue;
       chosen = c;
@@ -3649,10 +3854,24 @@ void MtlManagerServer::rpc_get_status(Connection& conn, struct json_object* para
   json_object_object_add(
       rep, "managerStallEvents",
       json_object_new_int64(static_cast<int64_t>(manager_stall_events_)));
+  json_add_str(rep, "cgroupVerifyMode",
+               cgroup_verify_mode_to_string(cfg_.cgroup_verify.mode));
 
   json_object* sessions_arr = json_object_new_array();
   for (const auto& [cid, c] : connections_) {
     if (c->session_id.empty()) continue;
+    if (cfg_.cgroup_verify.mode == CgroupVerifyMode::VerifyOnly) {
+      CgroupEffectiveSnapshot live;
+      if (cgroup_verifier_.read_peer_effective(c->peer.principal.pid,
+                                               c->peer.principal.pidfd, &live, nullptr)) {
+        c->cgroup_path = std::move(live.cgroup_path);
+        c->effective_cpus = std::move(live.effective_cpus_str);
+        c->effective_mems = std::move(live.effective_mems_str);
+      } else {
+        c->effective_cpus.clear();
+        c->effective_mems.clear();
+      }
+    }
     json_object* so = json_object_new_object();
     json_add_str(so, "sessionId", c->session_id);
     json_add_str(so, "clientName", c->client_name);
@@ -3670,6 +3889,9 @@ void MtlManagerServer::rpc_get_status(Connection& conn, struct json_object* para
     if (!c->hb.client_state.empty()) {
       json_add_str(so, "clientState", c->hb.client_state);
     }
+    json_add_str(so, "cgroupPath", c->cgroup_path);
+    json_add_str(so, "effectiveCpus", c->effective_cpus);
+    json_add_str(so, "effectiveMems", c->effective_mems);
     json_object_array_add(sessions_arr, so);
   }
   json_object_object_add(rep, "sessions", sessions_arr);

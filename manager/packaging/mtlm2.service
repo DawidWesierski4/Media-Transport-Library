@@ -25,6 +25,7 @@ ProtectHome=yes
 PrivateTmp=no
 ProtectKernelModules=yes
 ProtectKernelTunables=yes
+ProtectControlGroups=yes
 LockPersonality=yes
 RestrictRealtime=yes
 RestrictSUIDSGID=yes

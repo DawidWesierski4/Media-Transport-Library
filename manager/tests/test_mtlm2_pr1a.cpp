@@ -928,6 +928,7 @@ TEST(PackagingLintTest, ServiceAndSocketHardeningMatchReview4) {
   EXPECT_NE(svc.find("RuntimeDirectoryPreserve=yes"), std::string::npos);
   EXPECT_NE(svc.find("PrivateTmp=no"), std::string::npos);
   EXPECT_EQ(svc.find("PrivateTmp=yes"), std::string::npos);
+  EXPECT_NE(svc.find("ProtectControlGroups=yes"), std::string::npos);
   EXPECT_NE(svc.find("ReadWritePaths=-/tmp /run/imtl -/sys/fs/bpf"), std::string::npos);
   EXPECT_NE(svc.find("--policy-file /etc/mtl/manager2-policy.json"), std::string::npos);
   EXPECT_NE(svc.find("--socket-mode 0660"), std::string::npos);

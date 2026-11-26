@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "mt_varlink.h"
+#include "mtlm2_cgroup_verify.hpp"
 #include "mtlm2_heartbeat.hpp"
 #include "mtlm2_journal.hpp"
 #include "mtlm2_netdev.hpp"
@@ -31,6 +32,7 @@ struct UidQuota {
   uint32_t max_cpus = 0;
   uint32_t max_queues = 0;
   uint32_t max_flows = 0;
+  std::string expected_cgroup_pattern;
 };
 
 struct PolicyConfig {
@@ -42,6 +44,8 @@ struct PolicyConfig {
   UidQuota default_quota{};
   HeartbeatConfig heartbeat{};
   bool has_heartbeat = false;
+  CgroupVerifyConfig cgroup_verify{};
+  bool has_cgroup_verify = false;
 
   static PolicyConfig make_zero_arg_single_host();
   static bool load_file(const std::string& path, PolicyConfig* out, std::string* err_out);
@@ -52,6 +56,7 @@ struct PolicyConfig {
   uint32_t max_cpus_for_uid(uid_t uid) const;
   uint32_t max_queues_for_uid(uid_t uid) const;
   uint32_t max_flows_for_uid(uid_t uid) const;
+  std::string expected_cgroup_pattern_for_uid(uid_t uid) const;
 };
 
 struct ServerConfig {
@@ -66,6 +71,7 @@ struct ServerConfig {
   std::string proc_root = "/proc";
   PolicyConfig policy{};
   HeartbeatConfig heartbeat{};
+  CgroupVerifyConfig cgroup_verify{};
   ShmConfig shm{};
   bool teardown_on_exit = false;
   bool use_signalfd = true;
@@ -138,6 +144,9 @@ class MtlManagerServer {
     uint32_t epoll_events = 0;
     HeartbeatFloodTracker hb_flood;
     HeartbeatSessionState hb;
+    std::string cgroup_path;
+    std::string effective_cpus;
+    std::string effective_mems;
 
     Connection() {
       mt_varlink_reader_init(&reader);
@@ -306,8 +315,11 @@ class MtlManagerServer {
   void watch_lease_pidfd(CpuLease& lease);
   void watch_queue_pidfd(QueueLease& lease);
 
+  std::string resolve_expected_cgroup_pattern(uid_t uid) const;
+
   ServerConfig cfg_;
   PeerCredExtractor peer_extractor_;
+  CgroupVerifier cgroup_verifier_;
   StateJournal journal_;
   LegacyShmBridge shm_;
   std::unique_ptr<NetdevBackend> netdev_;
