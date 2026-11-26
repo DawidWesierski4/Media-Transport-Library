@@ -1,0 +1,380 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" font-family="DejaVu Sans, Arial, sans-serif" font-size="11">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <pattern id="wedged" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#fde9c8"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#d08a2a" stroke-width="3.5"/>
+    </pattern>
+    <style>
+      .title { font-size: 18.5px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 11.5px; fill: #4a5568; }
+      .ph { font-size: 13.5px; font-weight: bold; fill: #ffffff; }
+      .lane { font-size: 12px; font-weight: bold; fill: #1a202c; }
+      .lanesub { font-size: 10.5px; fill: #4a5568; }
+      .tick { font-size: 10.5px; font-weight: bold; fill: #2d3748; }
+      .cut { font-size: 11px; font-weight: bold; fill: #718096; }
+      .ev { font-size: 10.2px; fill: #1a202c; }
+      .evb { font-size: 10.5px; font-weight: bold; fill: #1a202c; }
+      .evw { font-size: 10.2px; fill: #ffffff; }
+      .evwb { font-size: 10.5px; font-weight: bold; fill: #ffffff; }
+      .err { font-size: 10.5px; font-weight: bold; fill: #9b1c1c; }
+      .ok { font-size: 10.5px; font-weight: bold; fill: #1e6024; }
+      .info { font-size: 10.5px; font-weight: bold; fill: #1e4e8c; }
+      .warn { font-size: 10.5px; font-weight: bold; fill: #8a5a10; }
+      .foot { font-size: 10.8px; fill: #4a5568; }
+      .leg { font-size: 11px; fill: #2d3748; }
+      .up { fill: #3a8a3a; }
+      .uphi { fill: #2f7d32; }
+      .down { fill: #c04040; }
+      .dead { fill: #7f1d1d; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="900" fill="#ffffff"/>
+  <text x="20" y="30" class="title">02-Timeline. st_tx_video_session.c: Redundant P+R Link Drop &amp; Wedged E610 Ring (Before vs. After)</text>
+  <text x="20" y="49" class="sub">ST 2022-7 dual-leg TX video session (P + R). Time axis is non-linear: "//" marks a cut. Source: lib/src/st2110/st_tx_video_session.c (15e2f411..c5f235c3).</text>
+
+  <!-- ==================== PANEL A: BEFORE ==================== -->
+  <rect x="20" y="64" width="1360" height="358" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="64" width="1360" height="28" rx="8" fill="#c04040"/>
+  <rect x="20" y="82" width="1360" height="10" fill="#c04040"/>
+  <text x="34" y="83" class="ph">PANEL A — BEFORE (base 15e2f411): P Loses Link &amp; Returns With Wedged E610 Ring -&gt; Fatal Cascade Kills P + R</text>
+
+  <!-- Lane dividers Panel A -->
+  <line x1="28" y1="120" x2="1370" y2="120" stroke="#e8d0d0" stroke-width="1"/>
+  <line x1="28" y1="184" x2="1370" y2="184" stroke="#f0dede" stroke-width="1"/>
+  <line x1="28" y1="252" x2="1370" y2="252" stroke="#f0dede" stroke-width="1"/>
+  <line x1="28" y1="320" x2="1370" y2="320" stroke="#f0dede" stroke-width="1"/>
+  <line x1="28" y1="394" x2="1370" y2="394" stroke="#e8d0d0" stroke-width="1"/>
+
+  <!-- Swimlane Labels Panel A -->
+  <text x="34" y="150" class="lane">Link P / R</text>
+  <text x="34" y="166" class="lanesub">(ST 2022-7 legs)</text>
+  <text x="190" y="144" text-anchor="end" class="evb">P</text>
+  <text x="190" y="168" text-anchor="end" class="evb">R</text>
+
+  <text x="34" y="214" class="lane">Builder</text>
+  <text x="34" y="230" class="lanesub">(tvs_tasklet)</text>
+
+  <text x="34" y="282" class="lane">Frames &amp;</text>
+  <text x="34" y="298" class="lanesub">sh_info[1]</text>
+
+  <text x="34" y="352" class="lane">Recovery /</text>
+  <text x="34" y="368" class="lanesub">Mempool</text>
+
+  <!-- Vertical Event Guides & Ticks Panel A -->
+  <line x1="200" y1="118" x2="200" y2="394" stroke="#cbd5e0" stroke-dasharray="3,3"/>
+  <text x="200" y="112" class="tick">t = 0</text>
+
+  <line x1="340" y1="118" x2="340" y2="394" stroke="#c04040" stroke-dasharray="3,3"/>
+  <text x="340" y="112" class="tick" fill="#9b1c1c">t = 50 ms (P DOWN)</text>
+
+  <line x1="518" y1="118" x2="518" y2="394" stroke="#d08a2a" stroke-dasharray="3,3"/>
+  <text x="518" y="112" class="tick" fill="#8a5a10">t = 350 ms (P UP wedged)</text>
+
+  <line x1="684" y1="100" x2="684" y2="394" stroke="#a0aec0" stroke-dasharray="4,4"/>
+  <rect x="672" y="99" width="24" height="17" fill="#fffafa"/>
+  <text x="684" y="112" text-anchor="middle" class="cut">//</text>
+
+  <line x1="704" y1="118" x2="704" y2="394" stroke="#c04040" stroke-dasharray="3,3"/>
+  <text x="704" y="112" class="tick" fill="#9b1c1c">t = 1.05 s (+1s hang)</text>
+
+  <line x1="1136" y1="118" x2="1136" y2="394" stroke="#7f1d1d" stroke-dasharray="3,3"/>
+  <text x="1136" y="112" class="tick" fill="#7f1d1d">Both legs dead</text>
+
+  <!-- Panel A Lane 1: Link P / R -->
+  <!-- Leg P -->
+  <rect x="200" y="130" width="140" height="19" rx="2" class="up"/>
+  <text x="270" y="143" text-anchor="middle" class="evwb">P: UP (streaming)</text>
+  <rect x="340" y="130" width="178" height="19" rx="2" class="down"/>
+  <text x="429" y="143" text-anchor="middle" class="evwb">P: DOWN (no carrier)</text>
+  <rect x="518" y="130" width="154" height="19" rx="2" fill="url(#wedged)" stroke="#d08a2a"/>
+  <text x="595" y="143" text-anchor="middle" class="evb">P: UP (wedged ring)</text>
+  <line x1="672" y1="139" x2="704" y2="139" stroke="#d08a2a" stroke-dasharray="3,3" stroke-width="2"/>
+  <rect x="704" y="130" width="424" height="19" rx="2" fill="#fde2e2" stroke="#c04040"/>
+  <text x="916" y="143" text-anchor="middle" class="err">P: dead TX ring still traps mbufs</text>
+  <rect x="1136" y="130" width="230" height="19" rx="2" class="dead"/>
+  <text x="1251" y="143" text-anchor="middle" class="evwb">P: DEAD (session stopped)</text>
+
+  <!-- Leg R -->
+  <rect x="200" y="155" width="472" height="19" rx="2" class="up"/>
+  <text x="436" y="168" text-anchor="middle" class="evwb">R: UP (healthy link, but starved as P ring stalls)</text>
+  <line x1="672" y1="164" x2="704" y2="164" stroke="#3a8a3a" stroke-dasharray="3,3" stroke-width="2"/>
+  <rect x="704" y="155" width="424" height="19" rx="2" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="916" y="168" text-anchor="middle" class="warn">R: flushed blindly during P recovery</text>
+  <rect x="1136" y="155" width="230" height="19" rx="2" class="dead"/>
+  <text x="1251" y="168" text-anchor="middle" class="evwb">R: DEAD (collateral loss)</text>
+
+  <!-- Panel A Lane 2: Builder -->
+  <rect x="200" y="194" width="136" height="48" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="268" y="213" text-anchor="middle" class="ok">Streaming P + R</text>
+  <text x="268" y="229" text-anchor="middle" class="ev">Normal TX pacing</text>
+
+  <rect x="342" y="194" width="328" height="48" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="506" y="213" text-anchor="middle" class="warn">Keeps feeding both legs (no resync / drain)</text>
+  <text x="506" y="229" text-anchor="middle" class="ev">P fills TX ring -&gt; reclaim stalls -&gt; R starves too</text>
+
+  <rect x="704" y="194" width="204" height="48" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="806" y="213" text-anchor="middle" class="err">tv_frames_out_hang()</text>
+  <text x="806" y="229" text-anchor="middle" class="ev">Flags recovery_pending[P]</text>
+
+  <line x1="908" y1="218" x2="918" y2="218" stroke="#c04040" stroke-width="1.5" marker-end="url(#arr-red)"/>
+
+  <rect x="920" y="194" width="206" height="48" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="1023" y="213" text-anchor="middle" class="err">Builder stopped on error</text>
+  <text x="1023" y="229" text-anchor="middle" class="ev">Recovery fails with -EBUSY</text>
+
+  <line x1="1126" y1="218" x2="1134" y2="218" stroke="#c04040" stroke-width="1.5" marker-end="url(#arr-red)"/>
+
+  <rect x="1136" y="194" width="230" height="48" rx="4" class="down"/>
+  <text x="1251" y="213" text-anchor="middle" class="evwb">s-&gt;active = false</text>
+  <text x="1251" y="229" text-anchor="middle" class="evw">No packets built on P or R</text>
+
+  <!-- Panel A Lane 3: Frames & sh_info[1] -->
+  <rect x="200" y="262" width="136" height="48" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="268" y="281" text-anchor="middle" class="info">Single sh_info</text>
+  <text x="268" y="297" text-anchor="middle" class="ev">refcnt cycles OK</text>
+
+  <rect x="342" y="262" width="328" height="48" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="506" y="281" text-anchor="middle" class="warn">P ring holds chain mbufs -&gt; sh_info stuck</text>
+  <text x="506" y="297" text-anchor="middle" class="ev">All frame slots lock up; no sh_info retirement</text>
+
+  <rect x="704" y="262" width="204" height="48" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="806" y="281" text-anchor="middle" class="err">Zeroes single sh_info</text>
+  <text x="806" y="297" text-anchor="middle" class="ev">ext_refcnt = 0 (UAF risk!)</text>
+
+  <rect x="920" y="262" width="206" height="48" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="1023" y="281" text-anchor="middle" class="err">Dead P ring keeps DMA ptrs</text>
+  <text x="1023" y="297" text-anchor="middle" class="ev">Points into freed frame mem</text>
+
+  <rect x="1136" y="262" width="230" height="48" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="1251" y="281" text-anchor="middle" class="err">Frames unrecoverable</text>
+  <text x="1251" y="297" text-anchor="middle" class="ev">Crash risk on later port stop</text>
+
+  <!-- Panel A Lane 4: Recovery / Mempool -->
+  <rect x="200" y="330" width="470" height="54" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="435" y="352" text-anchor="middle" class="evb">Single mempool (mbuf_mempool_hdr + chain)</text>
+  <text x="435" y="369" text-anchor="middle" class="ev">No pool parking, no atomic swap; in_use &gt; 0 as long as P ring is wedged</text>
+
+  <rect x="704" y="330" width="204" height="54" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="806" y="349" text-anchor="middle" class="warn">st20_tx_queue_fatal_error()</text>
+  <text x="806" y="364" text-anchor="middle" class="ev">Flushes R, swaps P txq,</text>
+  <text x="806" y="378" text-anchor="middle" class="ev">calls tv_mempool_free()</text>
+
+  <line x1="908" y1="357" x2="918" y2="357" stroke="#c04040" stroke-width="1.5" marker-end="url(#arr-red)"/>
+
+  <rect x="920" y="330" width="206" height="54" rx="4" class="down"/>
+  <text x="1023" y="349" text-anchor="middle" class="evwb">tv_mempool_free() -&gt; -EBUSY</text>
+  <text x="1023" y="365" text-anchor="middle" class="evw">"old mempool still in use"</text>
+  <text x="1023" y="379" text-anchor="middle" class="evw">(wedged P ring holds mbufs)</text>
+
+  <line x1="1126" y1="357" x2="1134" y2="357" stroke="#7f1d1d" stroke-width="1.5" marker-end="url(#arr-red)"/>
+
+  <rect x="1136" y="330" width="230" height="54" rx="4" class="dead"/>
+  <text x="1251" y="352" text-anchor="middle" class="evwb">ST_EVENT_FATAL_ERROR</text>
+  <text x="1251" y="370" text-anchor="middle" class="evw">Both P and R permanently dead!</text>
+
+  <text x="34" y="413" class="foot">Outcome (BEFORE): A single-leg link bounce with a wedged E610 ring stalls R, fails tv_mempool_free() with -EBUSY, and kills the entire redundant session.</text>
+
+  <!-- ==================== PANEL B: AFTER ==================== -->
+  <rect x="20" y="434" width="1360" height="414" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="20" y="434" width="1360" height="28" rx="8" fill="#2f7d32"/>
+  <rect x="20" y="452" width="1360" height="10" fill="#2f7d32"/>
+  <text x="34" y="453" class="ph">PANEL B — AFTER (PR #1951 HEAD c5f235c3): Link Resync/Drain, sh_info[4] Retirement &amp; Atomic Pool Renew</text>
+
+  <!-- Lane dividers Panel B -->
+  <line x1="28" y1="490" x2="1370" y2="490" stroke="#c8e2c8" stroke-width="1"/>
+  <line x1="28" y1="554" x2="1370" y2="554" stroke="#dcf0dc" stroke-width="1"/>
+  <line x1="28" y1="642" x2="1370" y2="642" stroke="#dcf0dc" stroke-width="1"/>
+  <line x1="28" y1="730" x2="1370" y2="730" stroke="#dcf0dc" stroke-width="1"/>
+  <line x1="28" y1="820" x2="1370" y2="820" stroke="#c8e2c8" stroke-width="1"/>
+
+  <!-- Swimlane Labels Panel B -->
+  <text x="34" y="520" class="lane">Link P / R</text>
+  <text x="34" y="536" class="lanesub">(ST 2022-7 legs)</text>
+  <text x="190" y="514" text-anchor="end" class="evb">P</text>
+  <text x="190" y="538" text-anchor="end" class="evb">R</text>
+
+  <text x="34" y="594" class="lane">Builder</text>
+  <text x="34" y="610" class="lanesub">(tvs_tasklet)</text>
+
+  <text x="34" y="682" class="lane">Frames &amp;</text>
+  <text x="34" y="698" class="lanesub">sh_info[0..3]</text>
+
+  <text x="34" y="772" class="lane">Recovery /</text>
+  <text x="34" y="788" class="lanesub">Mempool</text>
+
+  <!-- Vertical Event Guides & Ticks Panel B -->
+  <line x1="200" y1="488" x2="200" y2="820" stroke="#cbd5e0" stroke-dasharray="3,3"/>
+  <text x="200" y="482" class="tick">t=0</text>
+
+  <line x1="280" y1="488" x2="280" y2="820" stroke="#c04040" stroke-dasharray="3,3"/>
+  <text x="280" y="482" class="tick" fill="#9b1c1c">t=50ms</text>
+
+  <line x1="368" y1="488" x2="368" y2="820" stroke="#2b6cb0" stroke-dasharray="3,3"/>
+  <text x="368" y="482" class="tick" fill="#1e4e8c">t=150ms (resync)</text>
+
+  <line x1="562" y1="488" x2="562" y2="820" stroke="#2f7d32" stroke-dasharray="3,3"/>
+  <text x="562" y="482" class="tick" fill="#1e6024">t=152ms (release_tsc)</text>
+
+  <line x1="762" y1="488" x2="762" y2="820" stroke="#d08a2a" stroke-dasharray="3,3"/>
+  <text x="762" y="482" class="tick" fill="#8a5a10">t=350ms (P UP)</text>
+
+  <line x1="956" y1="470" x2="956" y2="820" stroke="#a0aec0" stroke-dasharray="4,4"/>
+  <rect x="944" y="469" width="24" height="17" fill="#f6fbf7"/>
+  <text x="956" y="482" text-anchor="middle" class="cut">//</text>
+
+  <line x1="972" y1="488" x2="972" y2="820" stroke="#2b6cb0" stroke-dasharray="3,3"/>
+  <text x="972" y="482" class="tick" fill="#1e4e8c">t=1.35s (+1s hang)</text>
+
+  <line x1="1196" y1="470" x2="1196" y2="820" stroke="#a0aec0" stroke-dasharray="4,4"/>
+  <rect x="1184" y="469" width="24" height="17" fill="#f6fbf7"/>
+  <text x="1196" y="482" text-anchor="middle" class="cut">//</text>
+
+  <line x1="1212" y1="488" x2="1212" y2="820" stroke="#2f7d32" stroke-dasharray="3,3"/>
+  <text x="1212" y="482" class="tick" fill="#1e6024">t=2.35s (+1s grace)</text>
+
+  <!-- Panel B Lane 1: Link P / R -->
+  <!-- Leg P -->
+  <rect x="200" y="500" width="80" height="19" rx="2" class="up"/>
+  <text x="240" y="513" text-anchor="middle" class="evwb">P: UP</text>
+  <rect x="280" y="500" width="482" height="19" rx="2" class="down"/>
+  <text x="521" y="513" text-anchor="middle" class="evwb">P: DOWN (outage; isolated from R)</text>
+  <rect x="762" y="500" width="182" height="19" rx="2" fill="url(#wedged)" stroke="#d08a2a"/>
+  <text x="853" y="513" text-anchor="middle" class="evb">P: UP (wedged E610 ring)</text>
+  <line x1="944" y1="509" x2="972" y2="509" stroke="#d08a2a" stroke-dasharray="3,3" stroke-width="2"/>
+  <rect x="972" y="500" width="212" height="19" rx="2" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="1078" y="513" text-anchor="middle" class="warn">P: dead txq swapped -&gt; new txq</text>
+  <line x1="1184" y1="509" x2="1212" y2="509" stroke="#3a8a3a" stroke-dasharray="3,3" stroke-width="2"/>
+  <rect x="1212" y="500" width="154" height="19" rx="2" class="uphi"/>
+  <text x="1289" y="513" text-anchor="middle" class="evwb">P: UP (new epoch)</text>
+
+  <!-- Leg R -->
+  <rect x="200" y="525" width="362" height="19" rx="2" class="up"/>
+  <text x="381" y="538" text-anchor="middle" class="evwb">R: UP (pre-resync ring drains by t=152ms)</text>
+  <rect x="562" y="525" width="382" height="19" rx="2" class="uphi"/>
+  <text x="753" y="538" text-anchor="middle" class="evwb">R: UP — streams FULL RATE during whole P outage!</text>
+  <line x1="944" y1="534" x2="972" y2="534" stroke="#2f7d32" stroke-dasharray="3,3" stroke-width="2"/>
+  <rect x="972" y="525" width="212" height="19" rx="2" class="up"/>
+  <text x="1078" y="538" text-anchor="middle" class="evwb">R: UP (flushed, kept alive)</text>
+  <line x1="1184" y1="534" x2="1212" y2="534" stroke="#2f7d32" stroke-dasharray="3,3" stroke-width="2"/>
+  <rect x="1212" y="525" width="154" height="19" rx="2" class="uphi"/>
+  <text x="1289" y="538" text-anchor="middle" class="evwb">R: UP (new epoch)</text>
+
+  <!-- Panel B Lane 2: Builder (tvs_tasklet) -->
+  <rect x="200" y="562" width="76" height="72" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="238" y="588" text-anchor="middle" class="ok">Stream</text>
+  <text x="238" y="604" text-anchor="middle" class="ev">P + R</text>
+  <text x="238" y="618" text-anchor="middle" class="ev">epoch 0</text>
+
+  <rect x="280" y="562" width="82" height="72" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="321" y="585" text-anchor="middle" class="warn">P drops</text>
+  <text x="321" y="601" text-anchor="middle" class="ev">Link down</text>
+  <text x="321" y="616" text-anchor="middle" class="ev">triggers</text>
+  <text x="321" y="629" text-anchor="middle" class="ev">resync</text>
+
+  <rect x="368" y="562" width="188" height="72" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="462" y="578" text-anchor="middle" class="info">tv_link_resync()</text>
+  <text x="462" y="594" text-anchor="middle" class="ev">Pin direct-chain; drop SW,</text>
+  <text x="462" y="609" text-anchor="middle" class="ev">RTCP &amp; RTP tail; link_held</text>
+  <text x="462" y="624" text-anchor="middle" class="ev">tv_link_start_drain()</text>
+
+  <rect x="562" y="562" width="194" height="72" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="659" y="578" text-anchor="middle" class="ok">tv_link_drain() (20 us tick)</text>
+  <text x="659" y="594" text-anchor="middle" class="ev">At tx_link_release_tsc:</text>
+  <text x="659" y="609" text-anchor="middle" class="ok">R streams full rate!</text>
+  <text x="659" y="624" text-anchor="middle" class="ev">tv_frames_out_hang paused</text>
+
+  <rect x="762" y="562" width="182" height="72" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="853" y="578" text-anchor="middle" class="warn">tv_link_drain() (20 us)</text>
+  <text x="853" y="594" text-anchor="middle" class="ev">tv_link_free_done(P) == 0</text>
+  <text x="853" y="609" text-anchor="middle" class="ev">Skips unsafe ci_tx_done_</text>
+  <text x="853" y="624" text-anchor="middle" class="ev">cleanup (iavf/ice/i40e)</text>
+
+  <rect x="972" y="562" width="212" height="72" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="1078" y="578" text-anchor="middle" class="info">tv_link_drain(): +1s hang</text>
+  <text x="1078" y="594" text-anchor="middle" class="ev">Flags recovery_pending[P]</text>
+  <text x="1078" y="609" text-anchor="middle" class="ev">Triggers P txq recovery;</text>
+  <text x="1078" y="624" text-anchor="middle" class="ev">sets pacing.epoch_resync</text>
+
+  <rect x="1212" y="562" width="154" height="72" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1289" y="582" text-anchor="middle" class="ok">P &amp; R both stream</text>
+  <text x="1289" y="598" text-anchor="middle" class="ev">on new epoch</text>
+  <text x="1289" y="614" text-anchor="middle" class="ev">Normal pacing</text>
+  <text x="1289" y="628" text-anchor="middle" class="ev">resumed</text>
+
+  <!-- Panel B Lane 3: Frames & sh_info[0..3] -->
+  <rect x="200" y="650" width="162" height="72" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="281" y="670" text-anchor="middle" class="info">sh_cur = sh_info[0]</text>
+  <text x="281" y="686" text-anchor="middle" class="ev">Slots [1..3] free</text>
+  <text x="281" y="702" text-anchor="middle" class="ev">build_hold/put guards ref</text>
+
+  <rect x="368" y="650" width="188" height="72" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="462" y="667" text-anchor="middle" class="warn">In-flight frames held</text>
+  <text x="462" y="683" text-anchor="middle" class="ev">Marked link_held = true</text>
+  <text x="462" y="698" text-anchor="middle" class="ev">Wait for R pre-resync ring</text>
+  <text x="462" y="713" text-anchor="middle" class="ev">to drain (tx_link_release_tsc)</text>
+
+  <rect x="562" y="650" width="194" height="72" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="659" y="667" text-anchor="middle" class="ok" font-size="9.5">tv_link_release_held_frames()</text>
+  <text x="659" y="683" text-anchor="middle" class="ev">Lib frames: retire sh_cur 0-&gt;1</text>
+  <text x="659" y="698" text-anchor="middle" class="ev">sets link_stale_sh; freed to R</text>
+  <text x="659" y="713" text-anchor="middle" class="warn">EXT frames stay link_held</text>
+
+  <rect x="762" y="650" width="182" height="72" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="853" y="667" text-anchor="middle" class="evb">sh_info[0] retired (P)</text>
+  <text x="853" y="683" text-anchor="middle" class="ev">sh_cur = sh_info[1] live</text>
+  <text x="853" y="698" text-anchor="middle" class="ev">R cycles lib frames cleanly</text>
+  <text x="853" y="713" text-anchor="middle" class="ev">EXT frames stay protected</text>
+
+  <rect x="972" y="650" width="212" height="72" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="1078" y="667" text-anchor="middle" class="info">tv_release_frames()</text>
+  <text x="1078" y="683" text-anchor="middle" class="ev">Pre-flight checks sh_info[0..3]</text>
+  <text x="1078" y="698" text-anchor="middle" class="ev">Retires busy sh_cur (stale cb)</text>
+  <text x="1078" y="713" text-anchor="middle" class="ev">Zero UAF on wedged P ring</text>
+
+  <rect x="1212" y="650" width="154" height="72" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1289" y="668" text-anchor="middle" class="ok">Clean sh_cur active</text>
+  <text x="1289" y="684" text-anchor="middle" class="ev">Retired slot waits</text>
+  <text x="1289" y="699" text-anchor="middle" class="ev">safely until port stop</text>
+  <text x="1289" y="713" text-anchor="middle" class="ev">(tv_frame_stale_free_cb)</text>
+
+  <!-- Panel B Lane 4: Recovery / Mempool -->
+  <rect x="200" y="738" width="744" height="74" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="572" y="762" text-anchor="middle" class="evb">Active Mempools Gen 0 (mbuf_mempool_hdr[P,R] + mbuf_mempool_chain)</text>
+  <text x="572" y="780" text-anchor="middle" class="ev">No fatal error fired while P is down or draining; R streams uninterrupted on Gen 0; mbuf_mempool_parked[16] empty.</text>
+  <text x="572" y="797" text-anchor="middle" class="ev">App thread reads pools via __ATOMIC_ACQUIRE in st20/st22_tx_get_mbuf() (never observes NULL).</text>
+
+  <rect x="972" y="738" width="212" height="74" rx="4" class="uphi"/>
+  <text x="1078" y="755" text-anchor="middle" class="evwb">st20_tx_queue_fatal_error()</text>
+  <text x="1078" y="771" text-anchor="middle" class="evw">Skips down sibling; retires sh_cur</text>
+  <text x="1078" y="786" text-anchor="middle" class="evw">tv_mempool_renew(): Gen 1</text>
+  <text x="1078" y="801" text-anchor="middle" class="evw">__ATOMIC_RELEASE &amp; parks Gen 0</text>
+
+  <rect x="1212" y="738" width="154" height="74" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1289" y="756" text-anchor="middle" class="ok">tv_mempool_reap()</text>
+  <text x="1289" y="772" text-anchor="middle" class="ev">(+1s PARK_NS grace)</text>
+  <text x="1289" y="788" text-anchor="middle" class="ev">Frees idle parked pools</text>
+  <text x="1289" y="803" text-anchor="middle" class="ok">Session live (Gen 1)</text>
+
+  <text x="34" y="839" class="foot">Outcome (AFTER): R streams full rate throughout P's outage; wedged P queue recovers cleanly via sh_info[4] retirement + atomic tv_mempool_renew(), and parked pools reap after 1 s.</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(20,864)">
+    <rect width="16" height="12" rx="2" class="up"/><text x="22" y="10" class="leg">Link UP / active</text>
+    <rect x="136" width="16" height="12" rx="2" class="down"/><text x="158" y="10" class="leg">Link DOWN / fatal error</text>
+    <rect x="316" width="16" height="12" rx="2" fill="url(#wedged)" stroke="#d08a2a"/><text x="338" y="10" class="leg">Link UP but E610 TX ring wedged</text>
+    <rect x="556" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="578" y="10" class="leg">Resync / sh_info[0..3] control</text>
+    <rect x="786" width="16" height="12" rx="2" class="uphi"/><text x="808" y="10" class="leg">Full-rate R / atomic renew</text>
+    <rect x="996" width="16" height="12" rx="2" class="dead"/><text x="1018" y="10" class="leg">Permanent session death</text>
+    <text x="1192" y="10" class="cut">// = non-linear time cut</text>
+  </g>
+</svg>

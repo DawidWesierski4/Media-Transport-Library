@@ -1,0 +1,341 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="960" viewBox="0 0 1400 960" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <marker id="arr-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b7791f"/>
+    </marker>
+    <pattern id="stale" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#fde9c8"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#d08a2a" stroke-width="3"/>
+    </pattern>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 12px; fill: #4a5568; }
+      .ph { font-size: 14.5px; font-weight: bold; fill: #ffffff; }
+      .lane { font-size: 12.5px; font-weight: bold; fill: #1a202c; }
+      .lane-sub { font-size: 10.5px; fill: #4a5568; }
+      .tmark { font-size: 11px; font-weight: bold; fill: #4a5568; text-anchor: middle; }
+      .ev { font-size: 10.5px; fill: #1a202c; }
+      .ev-b { font-size: 10.5px; font-weight: bold; fill: #1a202c; }
+      .ev-w { font-size: 10.5px; font-weight: bold; fill: #ffffff; }
+      .ev-s { font-size: 10px; fill: #2d3748; }
+      .ev-err { font-size: 10.5px; font-weight: bold; fill: #9b1c1c; }
+      .ev-ok { font-size: 10.5px; font-weight: bold; fill: #1e6024; }
+      .ev-info { font-size: 10.5px; font-weight: bold; fill: #1e4e8c; }
+      .ev-warn { font-size: 10.5px; font-weight: bold; fill: #8a5a10; }
+      .ev-warn-sm { font-size: 10px; font-weight: bold; fill: #8a5a10; }
+      .note { font-size: 11px; fill: #4a5568; }
+      .up { fill: #3a8a3a; }
+      .down { fill: #c04040; }
+      .grid { stroke: #cbd5e0; stroke-width: 1; stroke-dasharray: 4,4; }
+      .cut { stroke: #a0aec0; stroke-width: 1.4; stroke-dasharray: 3,4; }
+      .sep { stroke: #edf2f7; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <!-- White background -->
+  <rect width="1400" height="960" fill="#ffffff"/>
+
+  <!-- Title & subtitle -->
+  <text x="24" y="32" class="title">PR #1951 Scheduler Timeline: Link Loss &amp; Recovery (Before vs. After)</text>
+  <text x="24" y="52" class="sub">Horizontal swimlanes paired with 00-scheduler-overview-before-after.svg. Non-linear time axis: "//" marks a compressed ~1 s wait (hang timer / mempool park).</text>
+
+  <!-- ==================== PANEL A: BEFORE (15e2f411) ==================== -->
+  <rect x="20" y="66" width="1360" height="374" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="66" width="1360" height="32" rx="8" fill="#c04040"/>
+  <rect x="20" y="86" width="1360" height="12" fill="#c04040"/>
+  <text x="36" y="87" class="ph">Panel A — BEFORE (base 15e2f411): Link Loss Stalls Rings, Trips 1 s Hang Timer &amp; Kills Session (-EBUSY)</text>
+
+  <!-- Time axis labels (Panel A) -->
+  <text x="210" y="115" class="tmark">t=0</text>
+  <text x="320" y="115" class="tmark" fill="#9b1c1c">t=50ms</text>
+  <text x="476" y="115" class="tmark">t=150ms</text>
+  <text x="746" y="115" class="tmark">t=350ms</text>
+  <text x="964" y="115" class="tmark">//</text>
+  <text x="1004" y="115" class="tmark" fill="#9b1c1c">t=+1s</text>
+  <text x="1204" y="115" class="tmark">t=+2s</text>
+
+  <!-- Lane separator lines (Panel A) -->
+  <line x1="34" y1="168" x2="1368" y2="168" class="sep"/>
+  <line x1="34" y1="224" x2="1368" y2="224" class="sep"/>
+  <line x1="34" y1="282" x2="1368" y2="282" class="sep"/>
+  <line x1="34" y1="340" x2="1368" y2="340" class="sep"/>
+
+  <!-- Vertical dashed time grid lines (Panel A) -->
+  <line x1="210" y1="121" x2="210" y2="412" class="grid"/>
+  <line x1="320" y1="121" x2="320" y2="412" stroke="#e09a9a" stroke-width="1.2" stroke-dasharray="4,4"/>
+  <line x1="476" y1="121" x2="476" y2="412" class="grid"/>
+  <line x1="746" y1="121" x2="746" y2="412" class="grid"/>
+  <line x1="964" y1="121" x2="964" y2="412" class="cut"/>
+  <line x1="1004" y1="121" x2="1004" y2="412" stroke="#e09a9a" stroke-width="1.2" stroke-dasharray="4,4"/>
+  <line x1="1204" y1="121" x2="1204" y2="412" class="grid"/>
+
+  <!-- Swimlane labels (Panel A) -->
+  <text x="36" y="148" class="lane">Link / NIC</text>
+  <text x="36" y="198" class="lane">mtl_admin</text>
+  <text x="36" y="212" class="lane-sub">(6 s EAL alarm)</text>
+  <text x="36" y="256" class="lane">Builder tasklet</text>
+  <text x="36" y="270" class="lane-sub">(tvs_tasklet_handler)</text>
+  <text x="36" y="314" class="lane">Transmitter tasklet</text>
+  <text x="36" y="328" class="lane-sub">(video_trs / audio_trs)</text>
+  <text x="36" y="376" class="lane">Session / Mempool</text>
+  <text x="36" y="390" class="lane-sub">(sh_info &amp; pools)</text>
+
+  <!-- Panel A Lane 1: Link / NIC (y=130..156) -->
+  <rect x="210" y="130" width="110" height="26" rx="3" class="up"/>
+  <text x="265" y="147" text-anchor="middle" class="ev-w">Link UP</text>
+  <rect x="320" y="130" width="1048" height="26" rx="3" class="down"/>
+  <text x="844" y="147" text-anchor="middle" class="ev-w">Link DOWN (cable loss / E610 4.7 s autoneg) — NIC TX ring stops completing descriptors</text>
+
+  <!-- Panel A Lane 2: mtl_admin (y=182..210) -->
+  <rect x="210" y="182" width="1158" height="28" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="789" y="200" text-anchor="middle" class="ev-warn">Sleeps on 6 s EAL alarm doing nothing (no link poll, no atomic link_down flag; datapath is blind)</text>
+
+  <!-- Panel A Lane 3: Builder tasklet (y=236..270) -->
+  <rect x="210" y="236" width="110" height="34" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="265" y="257" text-anchor="middle" class="ev">Normal frames</text>
+  <rect x="320" y="236" width="156" height="34" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="398" y="251" text-anchor="middle" class="ev">Keeps building into</text>
+  <text x="398" y="264" text-anchor="middle" class="ev">SW ring[p]</text>
+  <rect x="476" y="236" width="528" height="34" rx="4" fill="url(#stale)" stroke="#d08a2a"/>
+  <rect x="526" y="242" width="428" height="22" rx="3" fill="#fffaf0" fill-opacity="0.94"/>
+  <text x="740" y="257" text-anchor="middle" class="ev-warn">SW ring full -&gt; builder stalls; tv_frames_out_hang() fires</text>
+  <rect x="1004" y="236" width="364" height="34" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="1186" y="257" text-anchor="middle" class="ev-err">Session inactive (!s-&gt;active); builder stops</text>
+
+  <!-- Panel A Lane 4: Transmitter tasklet (y=294..328) -->
+  <rect x="210" y="294" width="110" height="34" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="265" y="315" text-anchor="middle" class="ev">Normal burst</text>
+  <rect x="320" y="294" width="156" height="34" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="398" y="309" text-anchor="middle" class="ev-err">Bursts to dead NIC</text>
+  <text x="398" y="322" text-anchor="middle" class="ev-s">-&gt; NIC TX ring fills</text>
+  <rect x="476" y="294" width="528" height="34" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="740" y="309" text-anchor="middle" class="ev-err">mt_txq_burst() == 0; 1 s hang timer runs during link down</text>
+  <text x="740" y="322" text-anchor="middle" class="ev-s">Expires at t=1.05 s -&gt; sets tx_queue_recovery_pending[s_port]=true</text>
+  <rect x="1004" y="294" width="364" height="34" rx="4" fill="#c04040"/>
+  <text x="1186" y="309" text-anchor="middle" class="ev-w">Calls st20_tx_queue_fatal_error() at t=1.05 s</text>
+  <text x="1186" y="322" text-anchor="middle" fill="#ffe5e5" font-size="10">Dead session (!s-&gt;active) still scanned</text>
+
+  <!-- Trigger arrow Transmitter -> Session/Mempool at t=1.05s -->
+  <line x1="1018" y1="328" x2="1018" y2="352" stroke="#c04040" stroke-width="2" marker-end="url(#arr-red)"/>
+
+  <!-- Panel A Lane 5: Session / Mempool (y=354..398) -->
+  <rect x="210" y="354" width="110" height="44" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="265" y="380" text-anchor="middle" class="ev-ok">Streaming OK</text>
+  <rect x="320" y="354" width="684" height="44" rx="4" fill="url(#stale)" stroke="#d08a2a"/>
+  <rect x="382" y="362" width="560" height="28" rx="3" fill="#fffaf0" fill-opacity="0.94"/>
+  <text x="662" y="375" text-anchor="middle" class="ev-warn">Dead NIC TX ring holds mbufs &amp; single frame-&gt;sh_info in DMA</text>
+  <text x="662" y="387" text-anchor="middle" class="ev-s">No sh_info retirement, no mempool parking, no RTCP FIFO reset</text>
+  <rect x="1004" y="354" width="198" height="44" rx="4" fill="#c04040"/>
+  <text x="1103" y="372" text-anchor="middle" class="ev-w">tv_mempool_free() -EBUSY</text>
+  <text x="1103" y="387" text-anchor="middle" fill="#ffe5e5" font-size="10">"old mempool still in use"</text>
+  <rect x="1206" y="354" width="162" height="44" rx="4" fill="#7f1d1d"/>
+  <text x="1287" y="372" text-anchor="middle" class="ev-w">ST_EVENT_FATAL_ERROR</text>
+  <text x="1287" y="387" text-anchor="middle" fill="#fecaca" font-size="10">Session permanently dead</text>
+
+  <!-- Panel A summary footer -->
+  <text x="36" y="427" class="note">Failure mode: 1 s hang fires at t=1.05 s while link is down -&gt; st20_tx_queue_fatal_error() zeroes sh_info refcnt (DMA UAF), fails -EBUSY, sets s-&gt;active=false.</text>
+
+  <!-- ==================== PANEL B: AFTER (c5f235c3) ==================== -->
+  <rect x="20" y="454" width="1360" height="456" rx="8" fill="#f6fbf6" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="20" y="454" width="1360" height="32" rx="8" fill="#2f7d32"/>
+  <rect x="20" y="474" width="1360" height="12" fill="#2f7d32"/>
+  <text x="36" y="475" class="ph">Panel B — AFTER (c5f235c3): 100 ms Link Poll, Paced Drop, Drain/Resync &amp; Non-Fatal Mempool Renew</text>
+
+  <!-- Time axis labels (Panel B) -->
+  <text x="210" y="503" class="tmark">t=0</text>
+  <text x="320" y="503" class="tmark" fill="#9b1c1c">t=50ms</text>
+  <text x="476" y="503" class="tmark" fill="#1e4e8c">t&lt;=150ms</text>
+  <text x="746" y="503" class="tmark" fill="#1e6024">t=350ms</text>
+  <text x="964" y="503" class="tmark">//</text>
+  <text x="1004" y="503" class="tmark" fill="#1e4e8c">t=+1s</text>
+  <text x="1204" y="503" class="tmark" fill="#1e6024">t=+2s</text>
+
+  <!-- Lane separator lines (Panel B) -->
+  <line x1="34" y1="548" x2="1368" y2="548" class="sep"/>
+  <line x1="34" y1="600" x2="1368" y2="600" class="sep"/>
+  <line x1="34" y1="686" x2="1368" y2="686" class="sep"/>
+  <line x1="34" y1="772" x2="1368" y2="772" class="sep"/>
+
+  <!-- Vertical dashed time grid lines (Panel B) -->
+  <line x1="210" y1="509" x2="210" y2="880" class="grid"/>
+  <line x1="320" y1="509" x2="320" y2="880" stroke="#e09a9a" stroke-width="1.2" stroke-dasharray="4,4"/>
+  <line x1="476" y1="509" x2="476" y2="880" stroke="#90cdf4" stroke-width="1.2" stroke-dasharray="4,4"/>
+  <line x1="746" y1="509" x2="746" y2="880" stroke="#88c288" stroke-width="1.2" stroke-dasharray="4,4"/>
+  <line x1="964" y1="509" x2="964" y2="880" class="cut"/>
+  <line x1="1004" y1="509" x2="1004" y2="880" stroke="#90cdf4" stroke-width="1.2" stroke-dasharray="4,4"/>
+  <line x1="1204" y1="509" x2="1204" y2="880" stroke="#88c288" stroke-width="1.2" stroke-dasharray="4,4"/>
+
+  <!-- Swimlane labels (Panel B) -->
+  <text x="36" y="534" class="lane">Link / NIC</text>
+  <text x="36" y="574" class="lane">mtl_admin (100ms)</text>
+  <text x="36" y="588" class="lane-sub">(mt_dev_link_poll)</text>
+  <text x="36" y="640" class="lane">Builder tasklet</text>
+  <text x="36" y="654" class="lane-sub">(resync &amp; drain)</text>
+  <text x="36" y="726" class="lane">Transmitter tasklet</text>
+  <text x="36" y="740" class="lane-sub">(paced drop &amp; guard)</text>
+  <text x="36" y="822" class="lane">Session / Mempool</text>
+  <text x="36" y="836" class="lane-sub">(sh_info[4] &amp; parked)</text>
+
+  <!-- Panel B Lane 1: Link / NIC (y=516..542) -->
+  <rect x="210" y="516" width="110" height="26" rx="3" class="up"/>
+  <text x="265" y="533" text-anchor="middle" class="ev-w">Link UP</text>
+  <rect x="320" y="516" width="426" height="26" rx="3" class="down"/>
+  <text x="533" y="533" text-anchor="middle" class="ev-w">Link DOWN (50 ms .. 350 ms) — port carrier lost</text>
+  <rect x="746" y="516" width="622" height="26" rx="3" class="up"/>
+  <text x="1057" y="533" text-anchor="middle" class="ev-w">Link UP at t=350 ms (live ring drains; wedged E610 ring waits for queue swap)</text>
+
+  <!-- Panel B Lane 2: mtl_admin (100ms) (y=556..592) -->
+  <rect x="210" y="556" width="110" height="36" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="265" y="571" text-anchor="middle" class="ev-info">100 ms poll</text>
+  <text x="265" y="585" text-anchor="middle" class="ev-s">link_down = 0</text>
+  <rect x="320" y="556" width="156" height="36" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="398" y="571" text-anchor="middle" class="ev-info">Poll &lt;=150 ms</text>
+  <text x="398" y="585" text-anchor="middle" class="ev-b">inf-&gt;link_down = 1</text>
+  <rect x="476" y="556" width="270" height="36" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="611" y="571" text-anchor="middle" class="ev-info">100 ms poll: inf-&gt;link_down = 1</text>
+  <text x="611" y="585" text-anchor="middle" class="ev-s">6 s stats/migrate runs every 60 polls</text>
+  <rect x="746" y="556" width="200" height="36" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="846" y="571" text-anchor="middle" class="ev-ok">Poll detects link UP</text>
+  <text x="846" y="585" text-anchor="middle" class="ev-b">inf-&gt;link_down = 0</text>
+  <rect x="946" y="556" width="422" height="36" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="1157" y="571" text-anchor="middle" class="ev-info">100 ms link poll steady (inf-&gt;link_down = 0)</text>
+  <text x="1157" y="585" text-anchor="middle" class="ev-s">Zero PMD calls on datapath lcore (atomic read only)</text>
+
+  <!-- Atomic flag handoff arrows from mtl_admin -->
+  <line x1="476" y1="592" x2="476" y2="692" stroke="#2b6cb0" stroke-width="1.6" stroke-dasharray="3,2" marker-end="url(#arr-blue)"/>
+  <line x1="746" y1="592" x2="746" y2="692" stroke="#2f7d32" stroke-width="1.6" stroke-dasharray="3,2" marker-end="url(#arr-green)"/>
+
+  <!-- Panel B Lane 3: Builder tasklet (y=608..678) -->
+  <rect x="210" y="622" width="110" height="40" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="265" y="646" text-anchor="middle" class="ev">Normal frames</text>
+  <rect x="320" y="622" width="156" height="40" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="398" y="638" text-anchor="middle" class="ev">Builds normally</text>
+  <text x="398" y="652" text-anchor="middle" class="ev-s">until link_down=1</text>
+  <rect x="476" y="608" width="270" height="70" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="611" y="625" text-anchor="middle" class="ev-ok">tv_link_resync(): drops ring &amp; RTCP</text>
+  <text x="611" y="643" text-anchor="middle" class="ev-s">tv_link_drain() (20 us): retires sh_info[4]</text>
+  <text x="611" y="661" text-anchor="middle" class="ev-b">Redundant healthy leg keeps streaming</text>
+
+  <!-- Panel B Lane 3 split after t=350ms (Live upper vs Wedged E610 lower) -->
+  <rect x="746" y="608" width="200" height="31" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="846" y="627" text-anchor="middle" class="ev-ok">Live: drain -&gt; epoch_resync</text>
+  <rect x="746" y="645" width="200" height="33" rx="4" fill="url(#stale)" stroke="#d08a2a"/>
+  <rect x="754" y="651" width="184" height="21" rx="3" fill="#fffaf0" fill-opacity="0.94"/>
+  <text x="846" y="665" text-anchor="middle" class="ev-warn">E610 wedged: 0 freed</text>
+
+  <!-- Cut bridge connectors (Builder) -->
+  <line x1="946" y1="623" x2="1002" y2="623" stroke="#3a8a3a" stroke-width="1.4" stroke-dasharray="3,3" marker-end="url(#arr-green)"/>
+  <line x1="946" y1="661" x2="1002" y2="661" stroke="#b7791f" stroke-width="1.4" stroke-dasharray="3,3" marker-end="url(#arr-amber)"/>
+
+  <rect x="1004" y="608" width="200" height="31" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1104" y="627" text-anchor="middle" class="ev-ok">Live: normal frame build</text>
+  <rect x="1004" y="645" width="200" height="33" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="1104" y="659" text-anchor="middle" class="ev-info">E610 +1s: tv_link_drain dead</text>
+  <text x="1104" y="672" text-anchor="middle" class="ev-s">tx_queue_recovery_pending=true</text>
+
+  <rect x="1204" y="622" width="164" height="40" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1286" y="638" text-anchor="middle" class="ev-ok">Normal frame build</text>
+  <text x="1286" y="652" text-anchor="middle" class="ev-s">(both paths active)</text>
+
+  <!-- Panel B Lane 4: Transmitter tasklet (y=694..764) -->
+  <rect x="210" y="708" width="110" height="40" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="265" y="732" text-anchor="middle" class="ev">Normal burst</text>
+  <rect x="320" y="708" width="156" height="40" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="398" y="724" text-anchor="middle" class="ev">Bursts until &lt;=150 ms</text>
+  <text x="398" y="738" text-anchor="middle" class="ev-s">reads link_down=1</text>
+  <rect x="476" y="694" width="270" height="70" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="611" y="711" text-anchor="middle" class="ev-ok">Drops pkts at pacing time</text>
+  <text x="611" y="729" text-anchor="middle" class="ev-s">Pins started frame; sets tx_link_resync</text>
+  <text x="611" y="747" text-anchor="middle" class="ev-b">Hang timer paused (no false fatal)</text>
+
+  <!-- Panel B Lane 4 split after t=350ms -->
+  <rect x="746" y="694" width="200" height="31" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="846" y="713" text-anchor="middle" class="ev-info">trs_link_resume_tsc guard</text>
+  <rect x="746" y="731" width="200" height="33" rx="4" fill="url(#stale)" stroke="#d08a2a"/>
+  <rect x="754" y="737" width="184" height="21" rx="3" fill="#fffaf0" fill-opacity="0.94"/>
+  <text x="846" y="751" text-anchor="middle" class="ev-warn">E610: ring stays wedged</text>
+
+  <!-- Cut bridge connectors (Transmitter) -->
+  <line x1="946" y1="709" x2="1002" y2="709" stroke="#2b6cb0" stroke-width="1.4" stroke-dasharray="3,3" marker-end="url(#arr-blue)"/>
+  <line x1="946" y1="747" x2="1002" y2="747" stroke="#b7791f" stroke-width="1.4" stroke-dasharray="3,3" marker-end="url(#arr-amber)"/>
+
+  <rect x="1004" y="694" width="200" height="31" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1104" y="713" text-anchor="middle" class="ev-ok">Live: pkt 0 on new epoch</text>
+  <rect x="1004" y="731" width="200" height="33" rx="4" fill="#2f7d32"/>
+  <text x="1104" y="745" text-anchor="middle" class="ev-w">st20_tx_queue_fatal_error()</text>
+  <text x="1104" y="758" text-anchor="middle" fill="#e6ffea" font-size="10">Swaps to fresh TX queue</text>
+
+  <rect x="1204" y="708" width="164" height="40" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1286" y="724" text-anchor="middle" class="ev-ok">Streaming continues</text>
+  <text x="1286" y="738" text-anchor="middle" class="ev-s">(paced TX on wire)</text>
+
+  <!-- Trigger arrow Transmitter -> Session/Mempool at t=+1s -->
+  <line x1="1018" y1="764" x2="1018" y2="824" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <!-- Panel B Lane 5: Session / Mempool (y=780..872) -->
+  <rect x="210" y="804" width="110" height="44" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="265" y="830" text-anchor="middle" class="ev-ok">Streaming OK</text>
+  <rect x="320" y="804" width="156" height="44" rx="4" fill="url(#stale)" stroke="#d08a2a"/>
+  <rect x="326" y="810" width="144" height="32" rx="3" fill="#fffaf0" fill-opacity="0.94"/>
+  <text x="398" y="823" text-anchor="middle" class="ev-warn-sm">In-flight pkts held</text>
+  <text x="398" y="837" text-anchor="middle" class="ev-s">in NIC TX ring</text>
+
+  <rect x="476" y="788" width="270" height="76" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="611" y="807" text-anchor="middle" class="ev-ok">Healthy leg uses retired sh_info</text>
+  <text x="611" y="826" text-anchor="middle" class="ev-s">Held DMA frames stay pinned (zero UAF)</text>
+  <text x="611" y="845" text-anchor="middle" class="ev-s">RTCP FIFO reset -&gt; no seq-gap flood</text>
+
+  <!-- Panel B Lane 5 split after t=350ms -->
+  <rect x="746" y="780" width="200" height="40" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="846" y="796" text-anchor="middle" class="ev-ok">Live ring path:</text>
+  <text x="846" y="811" text-anchor="middle" class="ev-s">NIC drains -&gt; clean resume</text>
+  <rect x="746" y="826" width="200" height="42" rx="4" fill="url(#stale)" stroke="#d08a2a"/>
+  <rect x="754" y="832" width="184" height="30" rx="3" fill="#fffaf0" fill-opacity="0.94"/>
+  <text x="846" y="845" text-anchor="middle" class="ev-warn">Wedged E610 ring:</text>
+  <text x="846" y="858" text-anchor="middle" class="ev-s">Old mbufs stay pinned in DMA</text>
+
+  <!-- Cut bridge connectors (Session/Mempool) -->
+  <line x1="946" y1="800" x2="1002" y2="800" stroke="#3a8a3a" stroke-width="1.4" stroke-dasharray="3,3" marker-end="url(#arr-green)"/>
+  <line x1="946" y1="847" x2="1002" y2="847" stroke="#b7791f" stroke-width="1.4" stroke-dasharray="3,3" marker-end="url(#arr-amber)"/>
+
+  <rect x="1004" y="780" width="200" height="40" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1104" y="796" text-anchor="middle" class="ev-ok">Live: streams on new epoch</text>
+  <text x="1104" y="811" text-anchor="middle" class="ev-s">(no mempool swap needed)</text>
+  <rect x="1004" y="826" width="200" height="42" rx="4" fill="url(#stale)" stroke="#d08a2a"/>
+  <rect x="1010" y="832" width="188" height="30" rx="3" fill="#fffaf0" fill-opacity="0.94"/>
+  <text x="1104" y="845" text-anchor="middle" class="ev-warn-sm">tv_mempool_renew() new pool</text>
+  <text x="1104" y="858" text-anchor="middle" class="ev-s">Old pool in parked[16] (1 s)</text>
+
+  <rect x="1204" y="780" width="164" height="40" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1286" y="796" text-anchor="middle" class="ev-ok">Streaming continues</text>
+  <text x="1286" y="811" text-anchor="middle" class="ev-s">(session stays alive)</text>
+  <rect x="1204" y="826" width="164" height="42" rx="4" fill="#2f7d32"/>
+  <text x="1286" y="844" text-anchor="middle" class="ev-w">+1s: tv_mempool_reap()</text>
+  <text x="1286" y="858" text-anchor="middle" fill="#e6ffea" font-size="10">Old pool freed -&gt; streams</text>
+
+  <!-- Panel B summary footer -->
+  <text x="36" y="897" class="note">Result: Link drops are absorbed without tripping TX hang; live rings resume cleanly at pkt 0, and wedged E610 rings recover via parked mempool renew + 1 s reap.</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,924)">
+    <rect width="16" height="12" rx="2" class="up"/><text x="22" y="10" class="note">Link UP</text>
+    <rect x="86" width="16" height="12" rx="2" class="down"/><text x="108" y="10" class="note">Link DOWN / fatal</text>
+    <rect x="234" width="16" height="12" rx="2" fill="url(#stale)" stroke="#d08a2a"/><text x="256" y="10" class="note">Stale / held DMA / parked pool</text>
+    <rect x="462" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="484" y="10" class="note">Control-plane / guard / recovery trigger</text>
+    <rect x="742" width="16" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/><text x="764" y="10" class="note">Link-aware active path</text>
+    <rect x="920" width="16" height="12" rx="2" fill="#2f7d32"/><text x="942" y="10" class="note">Non-fatal recovery / reap</text>
+    <text x="1116" y="10" class="note">Base: 15e2f411 -&gt; Head: c5f235c3</text>
+  </g>
+</svg>

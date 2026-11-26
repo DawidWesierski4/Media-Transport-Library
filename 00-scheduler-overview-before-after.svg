@@ -1,0 +1,250 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="980" viewBox="0 0 1460 980" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 12.5px; fill: #4a5568; }
+      .ph { font-size: 15px; font-weight: bold; fill: #ffffff; }
+      .sh { font-size: 13px; font-weight: bold; fill: #1a202c; }
+      .mono { font-family: DejaVu Sans Mono, monospace; font-size: 11px; }
+      .s { font-size: 11.5px; fill: #4a5568; }
+      .b { font-weight: bold; fill: #1a202c; }
+      .err { font-weight: bold; fill: #9b1c1c; }
+      .ok { font-weight: bold; fill: #1e6024; }
+      .info { font-weight: bold; fill: #1e4e8c; }
+      .tag { font-size: 11px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="1460" height="980" fill="#ffffff"/>
+  <text x="24" y="34" class="title">PR #1951 Scheduler &amp; Runtime Overview: Before vs. After</text>
+  <text x="24" y="54" class="sub">End-to-end interaction across mtl_admin, scheduler lcore (video/audio builders &amp; transmitters), TX queue recovery, RTCP, PTP, and DPDK ixgbe (E610).</text>
+
+  <!-- ==================== LEFT PANEL: BEFORE ==================== -->
+  <rect x="20" y="70" width="700" height="845" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="70" width="700" height="34" rx="8" fill="#c04040"/>
+  <rect x="20" y="92" width="700" height="12" fill="#c04040"/>
+  <text x="36" y="93" class="ph">BEFORE (base 15e2f411) — Link Down Kills TX Sessions &amp; Breaks E610 PTP</text>
+
+  <!-- Layer 1: Admin Thread (BEFORE) -->
+  <rect x="38" y="118" width="664" height="122" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="52" y="138" class="sh">1. Control Plane: mtl_admin Thread (mt_admin.c)</text>
+  <rect x="52" y="148" width="295" height="80" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="64" y="166" class="b">Single 6 s EAL Alarm Loop</text>
+  <text x="64" y="183" class="s">- Wakes only every 6 s for stats / migration</text>
+  <text x="64" y="199" class="s">- No link polling; datapath has no link flag</text>
+  <text x="64" y="215" class="err">- Lost wakeup race &amp; unsafe cancel on uinit</text>
+
+  <rect x="365" y="148" width="323" height="80" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="377" y="166" class="err">No Link Awareness in Scheduler</text>
+  <text x="377" y="183" class="s">- Calling rte_eth_link_get_nowait() in tasklet</text>
+  <text x="377" y="199" class="s">  would block ~2.2 ms on E610 firmware ACI</text>
+  <text x="377" y="215" class="s">- Tasklets assume port link is always UP</text>
+
+  <!-- Layer 2: Scheduler Lcore (BEFORE) -->
+  <rect x="38" y="256" width="664" height="290" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="52" y="276" class="sh">2. Scheduler Lcore (mt_sch): Builder &amp; Transmitter Tasklets</text>
+
+  <!-- Builder box BEFORE -->
+  <rect x="52" y="288" width="308" height="148" rx="5" fill="#ffffff" stroke="#8a9bb0"/>
+  <text x="64" y="306" class="b">Video Builder (tvs_tasklet_handler)</text>
+  <text x="64" y="324" class="s">- Builds frames into SW ring[p] continuously</text>
+  <text x="64" y="340" class="s">- Single frame-&gt;sh_info per st_frame_trans</text>
+  <text x="64" y="356" class="s">- No sh_info build hold; no link resync/drain</text>
+  <text x="64" y="372" class="err">- tv_frames_out_hang() fires during link down</text>
+  <text x="64" y="388" class="s">- RTP mode: no stale tail-packet discard</text>
+  <text x="64" y="404" class="s">- tv_behind_err() blames scheduler on late app</text>
+  <text x="64" y="420" class="s">  frames even when epoch_drop &gt; 0</text>
+
+  <!-- Transmitter box BEFORE -->
+  <rect x="378" y="288" width="310" height="148" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="390" y="306" class="err">Video &amp; Audio Transmitters</text>
+  <text x="390" y="324" class="s">- video_trs (TSC/RL/TSN) &amp; st_audio_trs_burst</text>
+  <text x="390" y="340" class="s">  keep bursting to link-down NIC queue</text>
+  <text x="390" y="356" class="s">- NIC TX ring fills -&gt; mt_txq_burst() returns 0</text>
+  <text x="390" y="372" class="err">- Hang timer (1 s) trips while link is DOWN</text>
+  <text x="390" y="388" class="s">- Sets tx_queue_recovery_pending[s_port]=true</text>
+  <text x="390" y="404" class="s">- Dead sessions (!s-&gt;active) still scanned</text>
+  <text x="390" y="420" class="s">- Audio calls st_audio_queue_fatal_error()</text>
+
+  <!-- Arrow Builder -> Transmitter BEFORE -->
+  <line x1="360" y1="350" x2="376" y2="350" stroke="#4a5568" stroke-width="1.8" marker-end="url(#arr-gray)"/>
+
+  <!-- Recovery box BEFORE -->
+  <rect x="52" y="452" width="636" height="82" rx="5" fill="#c04040"/>
+  <text x="66" y="472" class="ph" font-size="13">st20_tx_queue_fatal_error() — Recovery Fails &amp; Kills Session</text>
+  <text x="66" y="490" fill="#ffe5e5" font-size="11.2">1. Flushes down sibling (fails)  2. Zeroes sh_info refcnt while dead NIC holds DMA (UAF!)</text>
+  <text x="66" y="507" fill="#ffe5e5" font-size="11.2">3. tv_mempool_free() -&gt; -EBUSY ("old mempool still in use") -&gt; s-&gt;active=false, FATAL_ERROR!</text>
+  <text x="66" y="524" fill="#ffe5e5" font-size="11.2">4. RTCP FIFO not reset (seq-gap flood); st_frame_trans_uinit() frees active DMA addr</text>
+
+  <line x1="533" y1="436" x2="533" y2="450" stroke="#c04040" stroke-width="2" marker-end="url(#arr-red)"/>
+
+  <!-- Layer 3: Datapath / Queues / RTCP / PTP (BEFORE) -->
+  <rect x="38" y="562" width="664" height="172" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="52" y="582" class="sh">3. Datapath, Queues, RTCP &amp; PTP (mt_queue.c, mt_shared_queue.c, mt_rtcp.c, mt_ptp.c)</text>
+
+  <rect x="52" y="594" width="308" height="126" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="64" y="612" class="b">Queue Flush &amp; Done Cleanup</text>
+  <text x="64" y="629" class="s">- mt_txq_done_cleanup() discards freed count</text>
+  <text x="64" y="645" class="s">- mt_dpdk_flush_tx_queue() &amp; mt_tsq_flush():</text>
+  <text x="64" y="661" class="s">  * No link-down check; ignores burst==0</text>
+  <text x="64" y="677" class="s">  * Leaks pad refcnt; returns 0 even if 0 sent</text>
+  <text x="64" y="693" class="s">- tv_uinit_hw() ignores flush failure</text>
+  <text x="64" y="709" class="s">- st_frame_trans_uinit() frees active DMA buf</text>
+
+  <rect x="378" y="594" width="310" height="126" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="390" y="612" class="err">RTCP FIFO &amp; Built-in PTP (E610)</text>
+  <text x="390" y="629" class="s">- mt_rtcp.c: no buffer reset on seq gap</text>
+  <text x="390" y="645" class="s">  -&gt; every post-drop pkt: "seq out of order"</text>
+  <text x="390" y="661" class="s">- mt_dev_create() enables timesync BEFORE</text>
+  <text x="390" y="677" class="s">  ixgbe_dev_start() -&gt; CTRL.RST wipes 1588 regs</text>
+  <text x="390" y="693" class="s">- mt_ptp.c: T3 timeouts loop silently forever</text>
+  <text x="390" y="709" class="s">  with no diagnostic error log</text>
+
+  <!-- Layer 4: DPDK / NIC Hardware (BEFORE) -->
+  <rect x="38" y="750" width="664" height="148" rx="6" fill="#fde2e2" stroke="#c04040"/>
+  <text x="52" y="770" class="err">4. DPDK 26.07 net/ixgbe PMD &amp; Intel E610 Hardware</text>
+  <rect x="52" y="782" width="308" height="102" rx="5" fill="#ffffff" stroke="#c04040"/>
+  <text x="64" y="800" class="err">ixgbe_dev_stop() Powers Off PHY</text>
+  <text x="64" y="817" class="s">- Calls ixgbe_set_phy_power(hw, false)</text>
+  <text x="64" y="833" class="s">- Next start sends ACI 0x0601 (power on)</text>
+  <text x="64" y="849" class="s">- Firmware reports false UP (50-100 ms),</text>
+  <text x="64" y="865" class="s">  then drops link for ~4.7 s autoneg!</text>
+
+  <rect x="378" y="782" width="310" height="102" rx="5" fill="#ffffff" stroke="#c04040"/>
+  <text x="390" y="800" class="err">ixgbe_xmit_pkts() Drops 1588 Bit</text>
+  <text x="390" y="817" class="s">- IXGBE_ADVTXD_MAC_1588 behind</text>
+  <text x="390" y="833" class="s">  #ifdef RTE_LIBRTE_IEEE1588</text>
+  <text x="390" y="849" class="s">- Off by default (enabling breaks vector RX)</text>
+  <text x="390" y="865" class="s">- NIC never latches PTP T3 TX timestamp</text>
+
+  <line x1="205" y1="734" x2="205" y2="748" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+  <line x1="533" y1="734" x2="533" y2="748" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <!-- ==================== RIGHT PANEL: AFTER ==================== -->
+  <rect x="740" y="70" width="700" height="845" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="740" y="70" width="700" height="34" rx="8" fill="#2f7d32"/>
+  <rect x="740" y="92" width="700" height="12" fill="#2f7d32"/>
+  <text x="756" y="93" class="ph">AFTER (c5f235c3) — Link-Aware Scheduler, Safe Recovery &amp; E610 Support</text>
+
+  <!-- Layer 1: Admin Thread (AFTER) -->
+  <rect x="758" y="118" width="664" height="122" rx="6" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="772" y="138" class="info">1. Control Plane: mtl_admin Thread (mt_admin.c + mt_dev.c)</text>
+  <rect x="772" y="148" width="318" height="80" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="784" y="166" class="info">100 ms Link Poll + 6 s Admin Work</text>
+  <text x="784" y="183" class="s">- MT_ADMIN_LINK_POLL_US = 100 ms alarm</text>
+  <text x="784" y="199" class="s">- Runs mt_dev_link_poll() every wake;</text>
+  <text x="784" y="215" class="s">  6 s stats/migrate every 60 polls (link_polls)</text>
+
+  <rect x="1104" y="148" width="304" height="80" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1116" y="166" class="ok">Atomic Link Flag &amp; Safe Wake/Stop</text>
+  <text x="1116" y="183" class="s">- Writes rte_atomic32_t inf-&gt;link_down</text>
+  <text x="1116" y="199" class="s">- Zero-cost read via mt_dev_link_down()</text>
+  <text x="1116" y="215" class="s">- admin_wake flag + -EINPROGRESS cancel loop</text>
+
+  <!-- Arrow Admin -> Scheduler (atomic link_down) -->
+  <line x1="1256" y1="228" x2="1256" y2="286" stroke="#2b6cb0" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr-blue)"/>
+  <rect x="1156" y="242" width="200" height="18" rx="4" fill="#2b6cb0"/>
+  <text x="1256" y="255" class="tag">atomic inf-&gt;link_down (0 ns)</text>
+
+  <!-- Layer 2: Scheduler Lcore (AFTER) -->
+  <rect x="758" y="264" width="664" height="282" rx="6" fill="#eef2f7" stroke="#3a8a3a"/>
+  <text x="772" y="284" class="ok">2. Scheduler Lcore (mt_sch): Link-Aware Builder &amp; Transmitter Tasklets</text>
+
+  <!-- Builder box AFTER -->
+  <rect x="772" y="294" width="318" height="148" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="784" y="312" class="ok">Video Builder (tvs_tasklet_handler)</text>
+  <text x="784" y="329" class="s">- tv_link_resync(): pins direct-chain, drops</text>
+  <text x="784" y="345" class="s">  SW rings + RTCP FIFO, sets epoch_resync</text>
+  <text x="784" y="361" class="s">- tv_link_drain() (20 us): reclaims NIC rings,</text>
+  <text x="784" y="377" class="s">  retires sh_info[4] on healthy leg, detects dead</text>
+  <text x="784" y="393" class="s">  E610 queue after hang thresh post-UP</text>
+  <text x="784" y="409" class="s">- tv_frame_build_hold/put + tv_rtp_dequeue()</text>
+  <text x="784" y="425" class="s">- tv_frames_out_hang() holds off on link down</text>
+
+  <!-- Transmitter box AFTER -->
+  <rect x="1104" y="294" width="304" height="148" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1116" y="312" class="ok">Video &amp; Audio Transmitters</text>
+  <text x="1116" y="329" class="s">- Reads mt_dev_link_down() (no PMD call!)</text>
+  <text x="1116" y="345" class="s">- DOWN: drops pkts at pacing time (stat_pkts_</text>
+  <text x="1116" y="361" class="s">  link_down_drop), pins started frame, signals</text>
+  <text x="1116" y="377" class="s">  tx_link_resync; hang timer paused</text>
+  <text x="1116" y="393" class="s">- UP: holds resume until NIC drains + RL</text>
+  <text x="1116" y="409" class="s">  warm-up/refill + pkt 0; unpins at nb_desc</text>
+  <text x="1116" y="425" class="s">- Skips !s-&gt;active; TSN tracks trs_wire_tsc</text>
+
+  <!-- Bidirectional sync arrows Builder <-> Transmitter AFTER -->
+  <line x1="1104" y1="350" x2="1092" y2="350" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+  <line x1="1090" y1="382" x2="1102" y2="382" stroke="#2b6cb0" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+
+  <!-- Recovery box AFTER -->
+  <rect x="772" y="454" width="636" height="82" rx="5" fill="#2f7d32"/>
+  <text x="786" y="473" class="ph" font-size="13">st20_tx_queue_fatal_error() — Non-Fatal Recovery (Survives 3 Dead Queues)</text>
+  <text x="786" y="491" fill="#e6ffea" font-size="11.2">1. Skips down/pending siblings  2. Retires busy sh_info[4] slots (no UAF, keeps EXT frames)</text>
+  <text x="786" y="508" fill="#e6ffea" font-size="11.2">3. tv_mempool_renew(): allocs new pools, RELEASE-publishes, parks old in parked[16] (1 s)</text>
+  <text x="786" y="525" fill="#e6ffea" font-size="11.2">4. Resets RTCP FIFO, clears stale flags, notifies RECOVERY_ERROR -&gt; session streams on!</text>
+
+  <line x1="1256" y1="442" x2="1256" y2="452" stroke="#2f7d32" stroke-width="2" marker-end="url(#arr-green)"/>
+
+  <!-- Layer 3: Datapath / Queues / RTCP / PTP (AFTER) -->
+  <rect x="758" y="562" width="664" height="172" rx="6" fill="#eef2f7" stroke="#3a8a3a"/>
+  <text x="772" y="582" class="ok">3. Datapath, Queues, RTCP &amp; PTP (mt_queue.c, mt_shared_queue.c, mt_rtcp.c, mt_ptp.c)</text>
+
+  <rect x="772" y="594" width="318" height="126" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="784" y="612" class="ok">Bounded Flush, Cleanup &amp; Safe Teardown</text>
+  <text x="784" y="629" class="s">- mt_txq_done_cleanup() returns freed count</text>
+  <text x="784" y="645" class="s">- Lazy flush checks link_down &amp; 64 ms stall,</text>
+  <text x="784" y="661" class="s">  fixes pad refcnt, returns -EBUSY if &lt; 50% sent</text>
+  <text x="784" y="677" class="s">- tv_uinit_hw() masks unflushed queue fatal</text>
+  <text x="784" y="693" class="s">- st_frame_trans_uinit() retains DMA buffer &amp;</text>
+  <text x="784" y="709" class="s">  tv_free_frames() keeps sh_info if refcnt &gt; 0</text>
+
+  <rect x="1104" y="594" width="304" height="126" rx="5" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="1116" y="612" class="info">RTCP Reset &amp; Built-in PTP (E610)</text>
+  <text x="1116" y="629" class="s">- mt_rtcp_tx_buffer_reset() cleans FIFO on</text>
+  <text x="1116" y="645" class="s">  resync &amp; recovery -&gt; no seq-gap error flood</text>
+  <text x="1116" y="661" class="s">- mt_dev_create() enables ixgbe timesync</text>
+  <text x="1116" y="677" class="s">  AFTER dev_start_port() (before link check)</text>
+  <text x="1116" y="693" class="s">- mt_ptp.c: logs actionable error once after</text>
+  <text x="1116" y="709" class="s">  8 consecutive T3 timeouts (names patch 0016)</text>
+
+  <!-- Layer 4: DPDK / NIC Hardware (AFTER) -->
+  <rect x="758" y="750" width="664" height="148" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="772" y="770" class="ok">4. DPDK 26.07.95_mtl_ net/ixgbe PMD &amp; Intel E610 Hardware</text>
+  <rect x="772" y="782" width="318" height="102" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="784" y="800" class="ok">Patch 0015: Keep E610 PHY Powered</text>
+  <text x="784" y="817" class="s">- ixgbe_dev_stop() skips set_phy_power(false)</text>
+  <text x="784" y="833" class="s">  when hw-&gt;mac.type == ixgbe_mac_E610</text>
+  <text x="784" y="849" class="s">- Matches Linux ixgbe_down() with WoL on</text>
+  <text x="784" y="865" class="s">- Zero ACI 0x0601 on next start -&gt; stays UP!</text>
+
+  <rect x="1104" y="782" width="304" height="102" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="1116" y="800" class="info">Patch 0016: Runtime 1588 TX Bit</text>
+  <text x="1116" y="817" class="s">- ixgbe_xmit_pkts() honors RTE_MBUF_F_TX_</text>
+  <text x="1116" y="833" class="s">  IEEE1588_TMST without RTE_LIBRTE_IEEE1588</text>
+  <text x="1116" y="849" class="s">- E610 latches T3 timestamps at runtime</text>
+  <text x="1116" y="865" class="s">- Vector RX path stays ON for ixgbe &amp; i40e</text>
+
+  <line x1="931" y1="734" x2="931" y2="748" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+  <line x1="1256" y1="734" x2="1256" y2="748" stroke="#2b6cb0" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,934)">
+    <rect width="16" height="12" rx="2" fill="#fde2e2" stroke="#c04040"/><text x="22" y="10" class="s">Before: fault / fatal path</text>
+    <rect x="195" width="16" height="12" rx="2" fill="#fde9c8" stroke="#d08a2a"/><text x="217" y="10" class="s">Before: missing guard / race</text>
+    <rect x="410" width="16" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/><text x="432" y="10" class="s">After: datapath / recovery fix</text>
+    <rect x="630" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="652" y="10" class="s">After: control-plane / PTP / RTCP fix</text>
+    <text x="900" y="10" class="s">See diagrams 01..06 for per-file flow details</text>
+  </g>
+</svg>

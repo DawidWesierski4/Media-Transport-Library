@@ -1,0 +1,325 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <pattern id="stale" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#fde9c8"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#d08a2a" stroke-width="4"/>
+    </pattern>
+    <style>
+      .title { font-size: 19px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 11.5px; fill: #4a5568; }
+      .ph { font-size: 13.5px; font-weight: bold; fill: #ffffff; }
+      .lane { font-size: 11.5px; font-weight: bold; fill: #1a202c; }
+      .lsub { font-size: 10.2px; fill: #555555; }
+      .tick { font-size: 10.5px; fill: #4a5568; }
+      .cut { font-size: 11px; font-weight: bold; fill: #666666; }
+      .ev { font-size: 10px; fill: #1a202c; }
+      .evb { font-size: 10px; font-weight: bold; fill: #1a202c; }
+      .evs { font-size: 9.5px; fill: #333333; }
+      .mono { font-family: DejaVu Sans Mono, monospace; font-size: 9.2px; fill: #1a202c; }
+      .err { font-size: 10px; font-weight: bold; fill: #9b1c1c; }
+      .errs { font-size: 9.5px; font-weight: bold; fill: #9b1c1c; }
+      .warn { font-size: 10px; font-weight: bold; fill: #8a5a10; }
+      .ok { font-size: 9.8px; font-weight: bold; fill: #1e6024; }
+      .oks { font-size: 9.4px; font-weight: bold; fill: #1e6024; }
+      .info { font-size: 10px; font-weight: bold; fill: #1e4e8c; }
+      .up { fill: #3a8a3a; }
+      .down { fill: #c04040; }
+      .wtxt { font-size: 10.2px; font-weight: bold; fill: #ffffff; }
+      .wsub { font-size: 9.6px; fill: #ffe8e8; }
+      .s { font-size: 11px; fill: #4a5568; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="860" fill="#ffffff"/>
+  <text x="24" y="30" class="title">01. Timeline: mt_dev_create(), mtl_admin, inf-&gt;link_down &amp; TX Flush / Teardown</text>
+  <text x="24" y="50" class="sub">Source: lib/src/mt_admin.c &amp; lib/src/dev/mt_dev.c (15e2f411 vs c5f235c3). Time axis is non-linear: "//" marks a time cut; panels share aligned X events.</text>
+
+  <!-- ==================== TOP PANEL A: BEFORE ==================== -->
+  <rect x="20" y="64" width="1360" height="360" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="64" width="1360" height="30" rx="8" fill="#c04040"/>
+  <rect x="20" y="82" width="1360" height="12" fill="#c04040"/>
+  <text x="34" y="84" class="ph">BEFORE (base 15e2f411) — CTRL.RST wipes timesync, 6 s blind admin loop, silent TX flush leak, unsafe mutex destroy</text>
+
+  <!-- Panel A time axis -->
+  <line x1="204" y1="114" x2="1368" y2="114" stroke="#d8b8b8" stroke-width="1.2"/>
+  <line x1="204" y1="110" x2="204" y2="118" stroke="#888"/>
+  <line x1="418" y1="110" x2="418" y2="118" stroke="#888"/>
+  <line x1="565" y1="110" x2="565" y2="118" stroke="#888"/>
+  <line x1="882" y1="110" x2="882" y2="118" stroke="#c04040" stroke-width="1.8"/>
+  <line x1="932" y1="110" x2="932" y2="118" stroke="#999"/>
+  <line x1="1266" y1="110" x2="1266" y2="118" stroke="#888"/>
+  <text x="204" y="107" class="tick">t0 (init)</text>
+  <text x="418" y="107" text-anchor="middle" class="tick">dev_start_port</text>
+  <text x="565" y="107" text-anchor="middle" class="tick">link check</text>
+  <text x="650" y="107" text-anchor="middle" class="cut">//</text>
+  <text x="758" y="107" text-anchor="middle" class="tick">steady run (0..6 s)</text>
+  <text x="866" y="107" text-anchor="middle" class="cut">//</text>
+  <text x="886" y="107" class="err">t_drop</text>
+  <text x="936" y="107" class="tick">+100 ms</text>
+  <text x="1058" y="107" text-anchor="middle" class="tick">TX flush</text>
+  <text x="1154" y="107" text-anchor="middle" class="cut">//</text>
+  <text x="1266" y="107" text-anchor="middle" class="tick">teardown (uinit)</text>
+
+  <!-- Panel A lane labels & dividers -->
+  <text x="30" y="147" class="lane">mt_dev_create (init)</text>
+  <text x="30" y="163" class="lsub">(ixgbe / E610 PF)</text>
+  <line x1="28" y1="188" x2="1370" y2="188" stroke="#ecd5d5"/>
+
+  <text x="30" y="217" class="lane">mtl_admin alarm</text>
+  <text x="30" y="233" class="lsub">(period_us = 6 s)</text>
+  <line x1="28" y1="258" x2="1370" y2="258" stroke="#ecd5d5"/>
+
+  <text x="30" y="287" class="lane">inf-&gt;link_down</text>
+  <text x="30" y="303" class="lsub">(no cached flag)</text>
+  <line x1="28" y1="328" x2="1370" y2="328" stroke="#ecd5d5"/>
+
+  <text x="30" y="357" class="lane">mt_dpdk_flush / uinit</text>
+  <text x="30" y="373" class="lsub">(lazy loop &amp; cancel)</text>
+
+  <!-- Panel A cut lines & t_drop marker -->
+  <line x1="650" y1="114" x2="650" y2="396" stroke="#bbb" stroke-dasharray="3,4"/>
+  <line x1="866" y1="114" x2="866" y2="396" stroke="#bbb" stroke-dasharray="3,4"/>
+  <line x1="1154" y1="114" x2="1154" y2="396" stroke="#bbb" stroke-dasharray="3,4"/>
+  <line x1="882" y1="114" x2="882" y2="396" stroke="#c04040" stroke-width="1.6" stroke-dasharray="4,2"/>
+
+  <!-- Panel A Lane 1: mt_dev_create (init) -->
+  <rect x="204" y="126" width="142" height="52" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="275" y="141" text-anchor="middle" class="evb">1. Pre-start timesync</text>
+  <text x="275" y="156" text-anchor="middle" class="mono">dev_start_timesync()</text>
+  <text x="275" y="170" text-anchor="middle" class="evs">sets TIMESYNC flag</text>
+
+  <line x1="346" y1="152" x2="355" y2="152" stroke="#c04040" stroke-width="1.6" marker-end="url(#arr-red)"/>
+
+  <rect x="356" y="126" width="124" height="52" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="418" y="141" text-anchor="middle" class="err">2. dev_start_port()</text>
+  <text x="418" y="156" text-anchor="middle" class="errs">ixgbe CTRL.RST</text>
+  <text x="418" y="170" text-anchor="middle" class="evs">wipes TIMINCA/TSYNC</text>
+
+  <line x1="480" y1="152" x2="489" y2="152" stroke="#c04040" stroke-width="1.6" marker-end="url(#arr-red)"/>
+
+  <rect x="490" y="126" width="150" height="52" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="565" y="141" text-anchor="middle" class="evb">3. dev_detect_link()</text>
+  <text x="565" y="156" text-anchor="middle" class="errs">post-link retry skipped</text>
+  <text x="565" y="170" text-anchor="middle" class="evs">(flag set / link down)</text>
+
+  <!-- Panel A Lane 2: mtl_admin alarm -->
+  <rect x="514" y="204" width="126" height="38" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="577" y="219" text-anchor="middle" class="evb">mt_admin_init()</text>
+  <text x="577" y="234" text-anchor="middle" class="evs">arms 6 s EAL alarm</text>
+
+  <rect x="660" y="196" width="196" height="52" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="758" y="212" text-anchor="middle" class="warn">Sleeps 6 s (no link polling)</text>
+  <text x="758" y="227" text-anchor="middle" class="mono">if (!stop) cond_wait(&amp;c,&amp;m)</text>
+  <text x="758" y="241" text-anchor="middle" class="errs">Early signal = missed wake race!</text>
+
+  <rect x="890" y="196" width="254" height="52" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="1017" y="213" text-anchor="middle" class="warn">Still asleep (6 s alarm period)</text>
+  <text x="1017" y="228" text-anchor="middle" class="evs">No mt_dev_link_poll() exists</text>
+  <text x="1017" y="242" text-anchor="middle" class="errs">Carrier drop goes unnoticed</text>
+
+  <rect x="1164" y="196" width="152" height="52" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="1240" y="212" text-anchor="middle" class="err">Alarm in-flight</text>
+  <text x="1240" y="227" text-anchor="middle" class="evs">locks admin_wake_mutex</text>
+  <text x="1240" y="241" text-anchor="middle" class="mono">cancel -&gt; -EINPROGRESS</text>
+
+  <!-- Panel A Lane 3: inf->link_down -->
+  <rect x="660" y="272" width="196" height="24" rx="3" fill="#edf2f7" stroke="#94a3b8" stroke-dasharray="4,3"/>
+  <text x="758" y="288" text-anchor="middle" class="s">no inf-&gt;link_down field</text>
+  <text x="758" y="313" text-anchor="middle" class="lsub">no cached link state per port</text>
+
+  <rect x="882" y="272" width="262" height="24" fill="url(#stale)" stroke="#d08a2a"/>
+  <text x="1013" y="313" text-anchor="middle" class="warn">link drop invisible to tasklets &amp; TX flush</text>
+
+  <!-- Panel A Lane 4: mt_dpdk_flush / uinit -->
+  <line x1="660" y1="362" x2="856" y2="362" stroke="#cbd5e0" stroke-width="1.5" stroke-dasharray="4,4"/>
+  <text x="758" y="356" text-anchor="middle" class="lsub">normal TX running</text>
+
+  <rect x="920" y="336" width="224" height="52" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="1032" y="351" text-anchor="middle" class="err">mt_dpdk_flush_tx_queue()</text>
+  <text x="1032" y="366" text-anchor="middle" class="evs">loops blindly (no link check)</text>
+  <text x="1032" y="380" text-anchor="middle" class="errs">leaks pad refcnt, returns 0!</text>
+
+  <rect x="1164" y="336" width="204" height="52" rx="4" fill="#c04040"/>
+  <text x="1266" y="351" text-anchor="middle" class="wtxt">mt_admin_uinit()</text>
+  <text x="1266" y="366" text-anchor="middle" class="wsub">ignores -EINPROGRESS;</text>
+  <text x="1266" y="380" text-anchor="middle" class="wtxt">destroys mutex in-flight (UB!)</text>
+
+  <!-- Panel A race arrow between Lane 2 and Lane 4 -->
+  <line x1="1240" y1="248" x2="1240" y2="334" stroke="#c04040" stroke-width="1.8" stroke-dasharray="3,2" marker-end="url(#arr-red)"/>
+  <rect x="1186" y="274" width="108" height="22" rx="3" fill="#fde2e2" stroke="#c04040"/>
+  <text x="1240" y="289" text-anchor="middle" class="errs">RACE: UB / crash</text>
+
+  <!-- Panel A footer -->
+  <text x="34" y="414" class="s">Impact: E610 PTP clock stays dead after CTRL.RST; link down is unseen during flush; pad mbufs leak with false-clean return 0; uinit races alarm handler.</text>
+
+  <!-- ==================== BOTTOM PANEL B: AFTER ==================== -->
+  <rect x="20" y="438" width="1360" height="366" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="20" y="438" width="1360" height="30" rx="8" fill="#2f7d32"/>
+  <rect x="20" y="456" width="1360" height="12" fill="#2f7d32"/>
+  <text x="34" y="458" class="ph">AFTER (PR #1951 HEAD c5f235c3) — Driver-aware timesync, 100 ms link poll + wake latch, bounded flush, drained cancel</text>
+
+  <!-- Panel B time axis (aligned X) -->
+  <line x1="204" y1="488" x2="1368" y2="488" stroke="#b8d8be" stroke-width="1.2"/>
+  <line x1="204" y1="484" x2="204" y2="492" stroke="#888"/>
+  <line x1="418" y1="484" x2="418" y2="492" stroke="#888"/>
+  <line x1="565" y1="484" x2="565" y2="492" stroke="#2f7d32"/>
+  <line x1="882" y1="484" x2="882" y2="492" stroke="#c04040" stroke-width="1.8"/>
+  <line x1="932" y1="484" x2="932" y2="492" stroke="#2b6cb0" stroke-width="1.8"/>
+  <line x1="1266" y1="484" x2="1266" y2="492" stroke="#2f7d32"/>
+  <text x="204" y="481" class="tick">t0 (init)</text>
+  <text x="418" y="481" text-anchor="middle" class="tick">dev_start_port</text>
+  <text x="565" y="481" text-anchor="middle" class="ok">timesync -&gt; link</text>
+  <text x="650" y="481" text-anchor="middle" class="cut">//</text>
+  <text x="758" y="481" text-anchor="middle" class="tick">steady run (100 ms ticks)</text>
+  <text x="866" y="481" text-anchor="middle" class="cut">//</text>
+  <text x="886" y="481" class="err">t_drop</text>
+  <text x="936" y="481" class="info">+100 ms</text>
+  <text x="1058" y="481" text-anchor="middle" class="tick">TX flush</text>
+  <text x="1154" y="481" text-anchor="middle" class="cut">//</text>
+  <text x="1266" y="481" text-anchor="middle" class="tick">teardown (uinit)</text>
+
+  <!-- Panel B lane labels & dividers -->
+  <text x="30" y="521" class="lane">mt_dev_create (init)</text>
+  <text x="30" y="537" class="lsub">(driver-aware order)</text>
+  <line x1="28" y1="562" x2="1370" y2="562" stroke="#cfe5d2"/>
+
+  <text x="30" y="591" class="lane">mtl_admin (100ms)</text>
+  <text x="30" y="607" class="lsub">(MT_ADMIN_LINK_POLL_US)</text>
+  <line x1="28" y1="632" x2="1370" y2="632" stroke="#cfe5d2"/>
+
+  <text x="30" y="661" class="lane">inf-&gt;link_down (atomic)</text>
+  <text x="30" y="677" class="lsub">(rte_atomic32_t, 0 ns)</text>
+  <line x1="28" y1="702" x2="1370" y2="702" stroke="#cfe5d2"/>
+
+  <text x="30" y="731" class="lane">mt_dpdk_flush / uinit</text>
+  <text x="30" y="747" class="lsub">(fast-fail &amp; drain)</text>
+
+  <!-- Panel B cut lines & t_drop marker -->
+  <line x1="650" y1="488" x2="650" y2="772" stroke="#bbb" stroke-dasharray="3,4"/>
+  <line x1="866" y1="488" x2="866" y2="772" stroke="#bbb" stroke-dasharray="3,4"/>
+  <line x1="1154" y1="488" x2="1154" y2="772" stroke="#bbb" stroke-dasharray="3,4"/>
+  <line x1="882" y1="488" x2="882" y2="772" stroke="#c04040" stroke-width="1.6" stroke-dasharray="4,2"/>
+
+  <!-- Panel B Lane 1: mt_dev_create (init) -->
+  <rect x="204" y="500" width="142" height="52" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="275" y="515" text-anchor="middle" class="info">1. Pre-start check</text>
+  <text x="275" y="530" text-anchor="middle" font-size="9.2" fill="#1a202c">dev_start_clears_timesync</text>
+  <text x="275" y="544" text-anchor="middle" class="evs">skips pre-start on ixgbe</text>
+
+  <line x1="346" y1="526" x2="355" y2="526" stroke="#2b6cb0" stroke-width="1.6" marker-end="url(#arr-blue)"/>
+
+  <rect x="356" y="500" width="124" height="52" rx="4" fill="#ffffff" stroke="#6b7c93"/>
+  <text x="418" y="515" text-anchor="middle" class="evb">2. dev_start_port()</text>
+  <text x="418" y="530" text-anchor="middle" class="mono">rte_eth_dev_start()</text>
+  <text x="418" y="544" text-anchor="middle" class="evs">CTRL.RST runs first</text>
+
+  <line x1="480" y1="526" x2="489" y2="526" stroke="#2f7d32" stroke-width="1.6" marker-end="url(#arr-green)"/>
+
+  <rect x="490" y="500" width="150" height="52" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="565" y="515" text-anchor="middle" class="ok">3. dev_enable_timesync()</text>
+  <text x="565" y="530" text-anchor="middle" class="oks">before dev_detect_link()</text>
+  <text x="565" y="544" text-anchor="middle" class="evs">1588 clock intact (E610)</text>
+
+  <!-- Panel B Lane 2: mtl_admin (100ms) -->
+  <rect x="514" y="578" width="126" height="38" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="577" y="593" text-anchor="middle" class="info">mt_admin_init()</text>
+  <text x="577" y="608" text-anchor="middle" class="evs">arms 100 ms alarm</text>
+
+  <!-- 100 ms periodic tick strip above Zone 2 box -->
+  <rect x="664" y="566" width="16" height="13" rx="2" fill="#2b6cb0"/>
+  <rect x="689" y="566" width="16" height="13" rx="2" fill="#2b6cb0"/>
+  <rect x="714" y="566" width="16" height="13" rx="2" fill="#2b6cb0"/>
+  <rect x="739" y="566" width="16" height="13" rx="2" fill="#2b6cb0"/>
+  <rect x="764" y="566" width="16" height="13" rx="2" fill="#2b6cb0"/>
+  <rect x="789" y="566" width="16" height="13" rx="2" fill="#2b6cb0"/>
+  <rect x="814" y="566" width="38" height="13" rx="2" fill="#2f7d32"/>
+  <text x="833" y="575.5" text-anchor="middle" font-size="8.2" font-weight="bold" fill="#ffffff">60th</text>
+
+  <rect x="660" y="583" width="196" height="45" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="758" y="596" text-anchor="middle" class="info">100 ms mt_dev_link_poll()</text>
+  <text x="758" y="609" text-anchor="middle" class="evs">6 s stats run every 60 ticks</text>
+  <text x="758" y="622" text-anchor="middle" class="oks">admin_wake latch: no lost wake</text>
+
+  <!-- Zone 3 poll tick at x=932 -->
+  <rect x="932" y="570" width="212" height="52" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="1038" y="586" text-anchor="middle" class="info">&lt;=100 ms: mt_dev_link_poll()</text>
+  <text x="1038" y="601" text-anchor="middle" class="mono">rte_eth_link_get_nowait() -&gt; DOWN</text>
+  <text x="1038" y="615" text-anchor="middle" class="oks">stores link_down=1 + logs warn</text>
+
+  <line x1="932" y1="622" x2="932" y2="644" stroke="#2b6cb0" stroke-width="1.6" marker-end="url(#arr-blue)"/>
+
+  <!-- Zone 4 in-flight alarm -->
+  <rect x="1164" y="570" width="118" height="52" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="1223" y="586" text-anchor="middle" class="info">In-flight alarm</text>
+  <text x="1223" y="601" text-anchor="middle" class="evs">finishes &amp; unlocks</text>
+  <text x="1223" y="615" text-anchor="middle" class="mono">admin_wake_mutex</text>
+
+  <!-- Panel B Lane 3: inf->link_down (atomic) -->
+  <rect x="660" y="646" width="196" height="24" rx="2" class="up"/>
+  <text x="758" y="662" text-anchor="middle" class="wtxt">0 (UP)</text>
+  <text x="758" y="687" text-anchor="middle" class="oks">updated every 100 ms (0 ns tasklet read)</text>
+
+  <rect x="882" y="646" width="50" height="24" fill="url(#stale)" stroke="#d08a2a"/>
+  <text x="907" y="687" text-anchor="middle" class="warn">&lt;=100 ms</text>
+
+  <rect x="932" y="646" width="212" height="24" class="down"/>
+  <text x="1038" y="662" text-anchor="middle" class="wtxt">1 (DOWN)</text>
+  <text x="1046" y="687" text-anchor="middle" class="errs">visible to all tasklets (0 ns)</text>
+
+  <!-- Panel B Lane 4: mt_dpdk_flush / uinit -->
+  <line x1="660" y1="736" x2="856" y2="736" stroke="#a3cfa7" stroke-width="1.5" stroke-dasharray="4,4"/>
+  <text x="758" y="730" text-anchor="middle" class="lsub">normal TX running</text>
+
+  <!-- Arrow from link_down=1 to flush fast-fail -->
+  <line x1="950" y1="670" x2="950" y2="708" stroke="#2f7d32" stroke-width="1.6" marker-end="url(#arr-green)"/>
+
+  <rect x="938" y="710" width="206" height="52" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1041" y="725" text-anchor="middle" class="ok">mt_dpdk_flush_tx_queue()</text>
+  <text x="1041" y="740" text-anchor="middle" class="evs">fast-fails -EBUSY (link_down)</text>
+  <text x="1041" y="754" text-anchor="middle" class="evs">or caps stall 64 ms, refunds pad</text>
+
+  <!-- Zone 4 safe uinit -->
+  <rect x="1164" y="710" width="112" height="52" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="1220" y="725" text-anchor="middle" class="info">mt_admin_uinit()</text>
+  <text x="1220" y="740" text-anchor="middle" class="evs">spins 1 ms while</text>
+  <text x="1220" y="754" text-anchor="middle" class="mono">== -EINPROGRESS</text>
+
+  <line x1="1276" y1="736" x2="1285" y2="736" stroke="#2f7d32" stroke-width="1.6" marker-end="url(#arr-green)"/>
+
+  <rect x="1286" y="710" width="82" height="52" rx="4" fill="#2f7d32"/>
+  <text x="1327" y="727" text-anchor="middle" class="wtxt">Safe</text>
+  <text x="1327" y="741" text-anchor="middle" class="wtxt">destroy</text>
+  <text x="1327" y="755" text-anchor="middle" class="wsub">mutex</text>
+
+  <!-- Arrow from in-flight alarm done to safe destroy -->
+  <line x1="1282" y1="610" x2="1327" y2="610" stroke="#2f7d32" stroke-width="1.5"/>
+  <line x1="1327" y1="610" x2="1327" y2="708" stroke="#2f7d32" stroke-width="1.6" marker-end="url(#arr-green)"/>
+  <rect x="1296" y="647" width="62" height="22" rx="3" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1327" y="662" text-anchor="middle" class="oks">drained</text>
+
+  <!-- Panel B footer -->
+  <text x="34" y="792" class="s">Outcome: E610 1588 clock stays enabled; link drop reaches tasklets in &lt;=100 ms; flush fast-fails -EBUSY or caps stall at 64 ms (no leak); uinit drains alarm.</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,824)">
+    <rect width="18" height="12" rx="2" class="up"/><text x="24" y="10" class="s">link_down = 0 (UP)</text>
+    <rect x="165" width="18" height="12" rx="2" class="down"/><text x="189" y="10" class="s">link_down = 1 (DOWN) / bug</text>
+    <rect x="382" width="18" height="12" fill="url(#stale)" stroke="#d08a2a"/><text x="406" y="10" class="s">stale / blind link-down window</text>
+    <rect x="615" width="18" height="12" rx="2" fill="#fde2e2" stroke="#c04040"/><text x="639" y="10" class="s">Before: race / leak</text>
+    <rect x="780" width="18" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/><text x="804" y="10" class="s">After: fixed path / guard</text>
+    <rect x="975" width="18" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="999" y="10" class="s">After: control-plane / 100 ms tick</text>
+    <text x="1232" y="10" class="cut">//</text><text x="1248" y="10" class="s">time cut</text>
+  </g>
+</svg>

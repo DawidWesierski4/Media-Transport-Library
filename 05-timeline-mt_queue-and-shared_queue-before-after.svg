@@ -1,0 +1,316 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="840" viewBox="0 0 1400 840" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <pattern id="danger-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#fde2e2"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#e58a8a" stroke-width="3.5"/>
+    </pattern>
+    <pattern id="retained-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#e3f4e3"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#9cd39e" stroke-width="3.5"/>
+    </pattern>
+    <style>
+      .title { font-size: 19px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 11.8px; fill: #4a5568; }
+      .ph { font-size: 13.5px; font-weight: bold; fill: #ffffff; }
+      .lane { font-size: 12px; font-weight: bold; fill: #1a202c; }
+      .lsub { font-size: 10px; fill: #556270; }
+      .tick { font-size: 10.8px; font-weight: bold; fill: #334155; }
+      .ev { font-size: 10.8px; fill: #1a202c; }
+      .ev-b { font-size: 10.8px; font-weight: bold; fill: #1a202c; }
+      .ev-w { font-size: 10.8px; font-weight: bold; fill: #ffffff; }
+      .mono { font-family: DejaVu Sans Mono, monospace; font-size: 10px; fill: #1a202c; }
+      .note { font-size: 9.8px; fill: #4a5568; }
+      .note-err { font-size: 9.8px; fill: #9b1c1c; }
+      .note-ok { font-size: 9.8px; fill: #1e6024; }
+      .note-info { font-size: 9.8px; fill: #1e4e8c; }
+      .foot { font-size: 10.2px; fill: #4a5568; }
+      .foot-err { font-size: 10.2px; fill: #9b1c1c; }
+      .foot-ok { font-size: 10.2px; fill: #1e6024; }
+      .foot-info { font-size: 10.2px; fill: #1e4e8c; }
+      .leg { font-size: 11px; fill: #334155; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="840" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="24" y="30" class="title">05. Timeline: Session Teardown While Link Is Down — TX Queue Flush &amp; DMA Buffer Lifetime</text>
+  <text x="24" y="50" class="sub">Paired with 05-mt_queue-and-shared_queue-before-after.svg  |  Non-linear time axis: "//" marks a cut  |  Base 15e2f411 vs. PR c5f235c3</text>
+
+  <!-- ==================== PANEL A: BEFORE (15e2f411) ==================== -->
+  <rect x="20" y="64" width="1360" height="338" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="64" width="1360" height="28" rx="8" fill="#c04040"/>
+  <rect x="20" y="80" width="1360" height="12" fill="#c04040"/>
+  <text x="34" y="83" class="ph">Panel A — BEFORE (15e2f411): Unbounded Pad Flush, False Healthy Queue &amp; Premature DMA Free -&gt; UAF on Link Up</text>
+
+  <!-- Panel A lane separator lines & left column divider -->
+  <line x1="216" y1="98" x2="216" y2="366" stroke="#e2c6c6" stroke-width="1"/>
+  <line x1="28" y1="181" x2="1370" y2="181" stroke="#f0dede" stroke-width="1"/>
+  <line x1="28" y1="241" x2="1370" y2="241" stroke="#f0dede" stroke-width="1"/>
+  <line x1="28" y1="301" x2="1370" y2="301" stroke="#f0dede" stroke-width="1"/>
+
+  <!-- Panel A time axis & cut markers -->
+  <line x1="224" y1="115" x2="1366" y2="115" stroke="#cbd5e1" stroke-width="1"/>
+  <line x1="224" y1="110" x2="224" y2="120" stroke="#64748b" stroke-width="1.5"/>
+  <text x="228" y="109" class="tick">t = 0 ms (link drops)</text>
+
+  <line x1="406" y1="100" x2="406" y2="364" stroke="#b0b8c4" stroke-dasharray="3,4"/>
+  <rect x="396" y="106" width="20" height="16" fill="#fffafa"/>
+  <text x="406" y="118" text-anchor="middle" class="tick">//</text>
+
+  <line x1="420" y1="110" x2="420" y2="120" stroke="#64748b" stroke-width="1.5"/>
+  <text x="424" y="109" class="tick">t = 300 ms (st20_tx_free)</text>
+
+  <line x1="768" y1="110" x2="768" y2="120" stroke="#64748b" stroke-width="1.5"/>
+  <text x="772" y="109" class="tick">teardown: tv_free_frames()</text>
+
+  <line x1="1024" y1="100" x2="1024" y2="364" stroke="#b0b8c4" stroke-dasharray="3,4"/>
+  <rect x="1014" y="106" width="20" height="16" fill="#fffafa"/>
+  <text x="1024" y="118" text-anchor="middle" class="tick">//</text>
+
+  <line x1="1040" y1="110" x2="1040" y2="120" stroke="#64748b" stroke-width="1.5"/>
+  <text x="1044" y="109" class="tick">t = 500 ms (link UP / port stop)</text>
+
+  <!-- Panel A Lane Labels -->
+  <text x="32" y="143" class="lane">App / tv_uinit()</text>
+  <text x="32" y="158" class="lsub">st20_tx_free(), tv_uinit_hw()</text>
+
+  <text x="32" y="203" class="lane">mt_txq_flush / queue</text>
+  <text x="32" y="218" class="lsub">mt_dev.c, mt_shared_queue.c</text>
+
+  <text x="32" y="263" class="lane">st_frame_trans_uinit</text>
+  <text x="32" y="278" class="lsub">tv_free_frames(), mt_util.c</text>
+
+  <text x="32" y="323" class="lane">NIC ring / DMA memory</text>
+  <text x="32" y="338" class="lsub">255 chain mbufs + frame-&gt;addr</text>
+
+  <!-- Panel A Lane 1: App / tv_uinit() -->
+  <rect x="224" y="128" width="168" height="28" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="308" y="146" text-anchor="middle" class="ev">TX active (link lost)</text>
+
+  <rect x="420" y="128" width="130" height="28" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="485" y="146" text-anchor="middle" class="ev-b">st20_tx_free()</text>
+  <line x1="550" y1="142" x2="564" y2="142" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+  <rect x="566" y="128" width="182" height="28" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="657" y="146" text-anchor="middle" class="ev">tv_uinit_hw(): ignores ret</text>
+  <text x="420" y="171" class="note">tv_uinit() calls mt_txq_flush(q, pad), then mt_txq_put(q)</text>
+  <line x1="748" y1="142" x2="766" y2="142" stroke="#c04040" stroke-width="1.5" marker-end="url(#arr-red)"/>
+
+  <rect x="768" y="128" width="240" height="28" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="888" y="146" text-anchor="middle" class="ev-b">tv_free_frames() frees array</text>
+  <text x="768" y="171" class="note-err">mt_rte_free(st20_frames); session freed</text>
+
+  <rect x="1040" y="128" width="326" height="28" rx="4" fill="#c04040"/>
+  <text x="1203" y="146" text-anchor="middle" class="ev-w">tv_frame_free_cb() runs on FREED session!</text>
+  <text x="1040" y="171" class="note-err">dangling sh_info.free_cb + opaque ptr -&gt; UAF / crash</text>
+
+  <!-- Panel A Lane 2: mt_txq_flush / queue -->
+  <rect x="224" y="188" width="168" height="28" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="308" y="206" text-anchor="middle" class="ev">TX queue (255 pkts)</text>
+
+  <rect x="420" y="188" width="212" height="28" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="526" y="200" text-anchor="middle" class="mono">mt_dpdk_flush_tx_queue()</text>
+  <text x="526" y="212" text-anchor="middle" class="mono">/ mt_tsq_flush() loop</text>
+  <text x="420" y="231" class="note-err">no link check; spins pads; leaks pad refcnt (+1)</text>
+  <line x1="632" y1="202" x2="646" y2="202" stroke="#c04040" stroke-width="1.5" marker-end="url(#arr-red)"/>
+
+  <rect x="648" y="188" width="100" height="28" rx="4" fill="#c04040"/>
+  <text x="698" y="206" text-anchor="middle" class="ev-w">returns 0!</text>
+  <line x1="748" y1="202" x2="766" y2="202" stroke="#c04040" stroke-width="1.5" marker-end="url(#arr-red)"/>
+
+  <rect x="768" y="188" width="240" height="28" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="888" y="206" text-anchor="middle" class="ev-b">mt_txq_put(): marked HEALTHY!</text>
+  <text x="768" y="231" class="note-err">unflushed queue returned to pool for reuse</text>
+
+  <rect x="1040" y="188" width="326" height="28" rx="4" fill="url(#danger-hatch)" stroke="#c04040"/>
+  <text x="1203" y="206" text-anchor="middle" class="ev-b">Dirty queue drains stale mbufs into live pool</text>
+  <text x="1040" y="231" class="note">no fatal-error retirement; stale mbufs stay on HW ring</text>
+
+  <!-- Panel A Lane 3: st_frame_trans_uinit -->
+  <rect x="224" y="248" width="168" height="28" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="308" y="266" text-anchor="middle" class="ev">sh_info refcnt = 255</text>
+
+  <rect x="420" y="248" width="328" height="28" rx="4" fill="#f5f5f5" stroke="#b8c2cc" stroke-dasharray="4,3"/>
+  <text x="584" y="266" text-anchor="middle" class="note">waiting while tv_uinit_hw() runs unbounded pad flush</text>
+
+  <rect x="768" y="248" width="240" height="28" rx="4" fill="#c04040"/>
+  <text x="888" y="266" text-anchor="middle" class="ev-w">FREES frame-&gt;addr (mt_rte_free)</text>
+  <text x="768" y="291" class="note-err">warns only; frees DMA while refcnt &gt; 0!</text>
+
+  <rect x="1040" y="248" width="326" height="28" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="1203" y="266" text-anchor="middle" class="ev-b">sh_info &amp; frame-&gt;addr already FREED!</text>
+  <text x="1040" y="291" class="note-err">DPDK decrements refcnt in freed st_frame_trans</text>
+
+  <!-- Panel A Lane 4: NIC ring / DMA memory -->
+  <rect x="224" y="308" width="168" height="28" rx="4" fill="#c04040"/>
+  <text x="308" y="326" text-anchor="middle" class="ev-w">LINK DOWN: 255 in ring</text>
+  <text x="224" y="351" class="note">mbufs point to frame-&gt;addr</text>
+
+  <rect x="420" y="308" width="328" height="28" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="584" y="326" text-anchor="middle" class="ev">TX ring stalled — 255 chain mbufs pinned in NIC</text>
+  <text x="420" y="351" class="note">flush pads rejected (0 sent); descriptors cannot drain</text>
+
+  <rect x="768" y="308" width="240" height="28" rx="4" fill="url(#danger-hatch)" stroke="#c04040"/>
+  <text x="888" y="326" text-anchor="middle" class="ev-b">255 slots point to FREED mem!</text>
+  <text x="768" y="351" class="note-err">DMA pages returned to heap / reallocated</text>
+
+  <rect x="1040" y="308" width="326" height="28" rx="4" fill="#9b1c1c"/>
+  <text x="1203" y="326" text-anchor="middle" class="ev-w">LINK UP: NIC DMAs 255 FREED slots (UAF!)</text>
+  <text x="1040" y="351" class="note-err">corrupt DMA / IOMMU fault + invokes stale free_cb</text>
+
+  <!-- Panel A Footer Callout -->
+  <rect x="32" y="368" width="1334" height="26" rx="4" fill="#fdeaea" stroke="#e09a9a"/>
+  <text x="44" y="385" class="foot-err"><tspan font-weight="bold">Blind cleanup bug:</tspan> mt_txq_done_cleanup() and mt_tsq_done_cleanup() discard rte_eth_tx_done_cleanup() return value and always return 0, hiding dead rings.</text>
+
+  <!-- ==================== PANEL B: AFTER (c5f235c3) ==================== -->
+  <rect x="20" y="414" width="1360" height="372" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="20" y="414" width="1360" height="28" rx="8" fill="#2f7d32"/>
+  <rect x="20" y="430" width="1360" height="12" fill="#2f7d32"/>
+  <text x="34" y="433" class="ph">Panel B — AFTER (c5f235c3): Bounded Flush (-EBUSY), Queue Fatal-Marking &amp; Multi-Slot DMA Retention -&gt; Zero UAF</text>
+
+  <!-- Panel B lane separator lines & left column divider -->
+  <line x1="216" y1="448" x2="216" y2="716" stroke="#c5e0c7" stroke-width="1"/>
+  <line x1="28" y1="531" x2="1370" y2="531" stroke="#dceee0" stroke-width="1"/>
+  <line x1="28" y1="591" x2="1370" y2="591" stroke="#dceee0" stroke-width="1"/>
+  <line x1="28" y1="651" x2="1370" y2="651" stroke="#dceee0" stroke-width="1"/>
+
+  <!-- Panel B time axis & cut markers -->
+  <line x1="224" y1="465" x2="1366" y2="465" stroke="#cbd5e1" stroke-width="1"/>
+  <line x1="224" y1="460" x2="224" y2="470" stroke="#64748b" stroke-width="1.5"/>
+  <text x="228" y="459" class="tick">t = 0 ms (link drops)</text>
+
+  <line x1="406" y1="450" x2="406" y2="714" stroke="#b0b8c4" stroke-dasharray="3,4"/>
+  <rect x="396" y="456" width="20" height="16" fill="#f6fbf7"/>
+  <text x="406" y="468" text-anchor="middle" class="tick">//</text>
+
+  <line x1="420" y1="460" x2="420" y2="470" stroke="#64748b" stroke-width="1.5"/>
+  <text x="424" y="459" class="tick">t = 300 ms (st20_tx_free)</text>
+
+  <line x1="768" y1="460" x2="768" y2="470" stroke="#64748b" stroke-width="1.5"/>
+  <text x="772" y="459" class="tick">teardown: tv_free_frames()</text>
+
+  <line x1="1024" y1="450" x2="1024" y2="714" stroke="#b0b8c4" stroke-dasharray="3,4"/>
+  <rect x="1014" y="456" width="20" height="16" fill="#f6fbf7"/>
+  <text x="1024" y="468" text-anchor="middle" class="tick">//</text>
+
+  <line x1="1040" y1="460" x2="1040" y2="470" stroke="#64748b" stroke-width="1.5"/>
+  <text x="1044" y="459" class="tick">t = 500 ms (link UP / port stop)</text>
+
+  <!-- Panel B Lane Labels -->
+  <text x="32" y="493" class="lane">App / tv_uinit()</text>
+  <text x="32" y="508" class="lsub">st20_tx_free(), tv_uinit_hw()</text>
+
+  <text x="32" y="553" class="lane">mt_txq_flush / queue</text>
+  <text x="32" y="568" class="lsub">mt_dev.c, mt_shared_queue.c</text>
+
+  <text x="32" y="613" class="lane">st_frame_trans_uinit</text>
+  <text x="32" y="628" class="lsub">tv_free_frames(), mt_util.c</text>
+
+  <text x="32" y="673" class="lane">NIC ring / DMA memory</text>
+  <text x="32" y="688" class="lsub">255 chain mbufs + frame-&gt;addr</text>
+
+  <!-- Panel B Lane 1: App / tv_uinit() -->
+  <rect x="224" y="478" width="168" height="28" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="308" y="496" text-anchor="middle" class="ev">TX active (link lost)</text>
+  <text x="224" y="521" class="note-info">link_poll() sets link_down=1</text>
+
+  <rect x="420" y="478" width="130" height="28" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="485" y="496" text-anchor="middle" class="ev-b">st20_tx_free()</text>
+  <line x1="550" y1="492" x2="564" y2="492" stroke="#2b6cb0" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+
+  <rect x="566" y="478" width="182" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="657" y="496" text-anchor="middle" class="ev-b">tv_uinit_hw(): -EBUSY</text>
+  <text x="420" y="521" class="note-ok">if (mt_txq_flush(q, pad) &lt; 0) mt_txq_fatal_error(q);</text>
+  <line x1="748" y1="492" x2="766" y2="492" stroke="#2f7d32" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <rect x="768" y="478" width="240" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="888" y="496" text-anchor="middle" class="ev-b">tv_free_frames(): stale_free_cb</text>
+  <text x="768" y="521" class="note-ok">sh_info[0..3] = stale_cb; keeps frames</text>
+
+  <rect x="1040" y="478" width="326" height="28" rx="4" fill="#2f7d32"/>
+  <text x="1203" y="496" text-anchor="middle" class="ev-w">DPDK calls no-op tv_frame_stale_free_cb</text>
+  <text x="1040" y="521" class="note-ok">safe no-op callback — never touches freed session</text>
+
+  <!-- Panel B Lane 2: mt_txq_flush / queue -->
+  <rect x="224" y="538" width="168" height="28" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="308" y="556" text-anchor="middle" class="ev">TX queue (255 pkts)</text>
+
+  <rect x="420" y="538" width="208" height="28" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="524" y="550" text-anchor="middle" class="mono">mt_dpdk_flush_tx_queue()</text>
+  <text x="524" y="562" text-anchor="middle" class="mono">/ mt_tsq_flush() guard</text>
+  <text x="420" y="581" class="note-info">link_down or &gt;64ms stall; pad refcnt -1; &lt;burst/2</text>
+  <line x1="628" y1="552" x2="642" y2="552" stroke="#2b6cb0" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+
+  <rect x="644" y="538" width="104" height="28" rx="4" fill="#2b6cb0"/>
+  <text x="696" y="556" text-anchor="middle" class="ev-w">returns -EBUSY</text>
+  <line x1="748" y1="552" x2="766" y2="552" stroke="#2f7d32" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <rect x="768" y="538" width="240" height="28" rx="4" fill="#2f7d32"/>
+  <text x="888" y="556" text-anchor="middle" class="ev-w">mt_txq_fatal_error(): RETIRED</text>
+  <text x="768" y="581" class="note-ok">unflushed queue quarantined; never reused</text>
+
+  <rect x="1040" y="538" width="326" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1203" y="556" text-anchor="middle" class="ev-b">Retired queue drains / freed at port stop</text>
+  <text x="1040" y="581" class="note">isolated from pool; new sessions get clean queues</text>
+
+  <!-- Panel B Lane 3: st_frame_trans_uinit -->
+  <rect x="224" y="598" width="168" height="28" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="308" y="616" text-anchor="middle" class="ev">sh_info[0..3] = 255</text>
+
+  <rect x="420" y="598" width="328" height="28" rx="4" fill="#f5f5f5" stroke="#b8c2cc" stroke-dasharray="4,3"/>
+  <text x="584" y="616" text-anchor="middle" class="note">tv_uinit_hw() completes before tv_free_frames()</text>
+
+  <rect x="768" y="598" width="240" height="28" rx="4" fill="#2f7d32"/>
+  <text x="888" y="616" text-anchor="middle" class="ev-w">sh_active == true -&gt; RETAINS DMA</text>
+  <text x="768" y="641" class="note-ok">scans sh_info[0..3]; skips mt_rte_free</text>
+
+  <rect x="1040" y="598" width="326" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1203" y="616" text-anchor="middle" class="ev-b">sh_info[0..3] &amp; frame-&gt;addr remain valid</text>
+  <text x="1040" y="641" class="note-ok">refcnt decrements cleanly to 0; zero use-after-free</text>
+
+  <!-- Panel B Lane 4: NIC ring / DMA memory -->
+  <rect x="224" y="658" width="168" height="28" rx="4" fill="#c04040"/>
+  <text x="308" y="676" text-anchor="middle" class="ev-w">LINK DOWN: 255 in ring</text>
+  <text x="224" y="701" class="note">mbufs point to frame-&gt;addr</text>
+
+  <rect x="420" y="658" width="328" height="28" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="584" y="676" text-anchor="middle" class="ev">Fast exit (&lt;1ms down / &lt;=64ms stall); 0 leak</text>
+  <text x="420" y="701" class="note">255 mbufs stay intact; refused pad refcnt refunded (-1)</text>
+
+  <rect x="768" y="658" width="240" height="28" rx="4" fill="url(#retained-hatch)" stroke="#2f7d32"/>
+  <text x="888" y="676" text-anchor="middle" class="ev-b">255 slots point to VALID mem</text>
+  <text x="768" y="701" class="note-ok">frame-&gt;addr &amp; st20_frames stay pinned</text>
+
+  <rect x="1040" y="658" width="326" height="28" rx="4" fill="#2f7d32"/>
+  <text x="1203" y="676" text-anchor="middle" class="ev-w">LINK UP / STOP: Valid DMA + Zero UAF!</text>
+  <text x="1040" y="701" class="note-ok">NIC reads valid pages; DPDK frees mbufs cleanly</text>
+
+  <!-- Panel B Footer Callout -->
+  <rect x="32" y="718" width="1334" height="58" rx="5" fill="#e9f5ec" stroke="#88c288"/>
+  <text x="44" y="736" class="foot-ok"><tspan font-weight="bold">Done-cleanup propagation:</tspan><tspan fill="#1a202c"> mt_txq_done_cleanup() and mt_tsq_done_cleanup() now return the actual rte_eth_tx_done_cleanup() freed count (or -ENOTSUP) instead of returning 0.</tspan></text>
+  <text x="44" y="753" class="foot-info"><tspan font-weight="bold">Flush invariants:</tspan><tspan fill="#1a202c"> mt_dpdk_flush_tx_queue() and mt_tsq_flush() pre-check mt_dev_link_down(), refund refused pad refcnt (-1), cap stalls at 64 ms, and return -EBUSY if sent_total &lt; burst_pkts/2.</tspan></text>
+  <text x="44" y="769" class="foot">Source: lib/src/datapath/mt_queue.c, lib/src/datapath/mt_shared_queue.c, lib/src/dev/mt_dev.c, lib/src/mt_util.c, lib/src/st2110/st_tx_video_session.c (15e2f411..c5f235c3)</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,804)">
+    <rect width="16" height="12" rx="2" fill="#c04040"/><text x="22" y="10" class="leg">Link down / UAF fault</text>
+    <rect x="180" width="16" height="12" rx="2" fill="#fde2e2" stroke="#c04040"/><text x="202" y="10" class="leg">Unsafe flush / refcnt leak</text>
+    <rect x="385" width="16" height="12" rx="2" fill="url(#danger-hatch)" stroke="#c04040"/><text x="407" y="10" class="leg">Stale ring -&gt; freed DMA (hazard)</text>
+    <rect x="635" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="657" y="10" class="leg">Bounded flush / link-down guard</text>
+    <rect x="885" width="16" height="12" rx="2" fill="#2f7d32"/><text x="907" y="10" class="leg">Safe retirement / DMA retained</text>
+    <rect x="1125" width="16" height="12" rx="2" fill="url(#retained-hatch)" stroke="#2f7d32"/><text x="1147" y="10" class="leg">Pinned valid DMA (until stop)</text>
+  </g>
+</svg>

@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="820" viewBox="0 0 1460 820" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 12.5px; fill: #4a5568; }
+      .ph { font-size: 14.5px; font-weight: bold; fill: #ffffff; }
+      .sh { font-size: 13px; font-weight: bold; fill: #1a202c; }
+      .mono { font-family: DejaVu Sans Mono, monospace; font-size: 10.8px; fill: #1a202c; }
+      .s { font-size: 11.4px; fill: #4a5568; }
+      .b { font-weight: bold; fill: #1a202c; }
+      .err { font-weight: bold; fill: #9b1c1c; }
+      .ok { font-weight: bold; fill: #1e6024; }
+      .info { font-weight: bold; fill: #1e4e8c; }
+    </style>
+  </defs>
+
+  <rect width="1460" height="820" fill="#ffffff"/>
+  <text x="24" y="34" class="title">04. st_tx_audio_session.c &amp; st_audio_transmitter.c: Link-Down Drop, Hang Holdoff &amp; Stats</text>
+  <text x="24" y="54" class="sub">Files: lib/src/st2110/st_audio_transmitter.c (+17/-2), lib/src/st2110/st_tx_audio_session.c (+5), st_tx_link.h, st_header.h</text>
+
+  <!-- ==================== LEFT PANEL: BEFORE ==================== -->
+  <rect x="20" y="70" width="700" height="690" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="70" width="700" height="34" rx="8" fill="#c04040"/>
+  <rect x="20" y="92" width="700" height="12" fill="#c04040"/>
+  <text x="36" y="93" class="ph">BEFORE (base 15e2f411) — Link Down Triggers Audio Queue Fatal Error</text>
+
+  <!-- Step 1 BEFORE -->
+  <rect x="38" y="120" width="664" height="114" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="52" y="140" class="sh">1. st_audio_trs_session_tasklet(impl, trs, mgr, port)</text>
+  <rect x="52" y="152" width="636" height="68" rx="5" fill="#ffffff" stroke="#8a9bb0"/>
+  <text x="64" y="170" class="s">- Retries trs-&gt;inflight[port] first, then dequeues up to mgr-&gt;max_idx pkts from mgr-&gt;ring[port].</text>
+  <text x="64" y="187" class="s">- Calls n = st_audio_trs_burst(impl, mgr, port, pkt).</text>
+  <text x="64" y="204" class="err">- Unconditionally adds `mgr-&gt;stat_pkts_burst += n` at BOTH caller sites (conflates drop &amp; send).</text>
+
+  <line x1="370" y1="234" x2="370" y2="254" stroke="#4a5568" stroke-width="1.8" marker-end="url(#arr-gray)"/>
+
+  <!-- Step 2 BEFORE -->
+  <rect x="38" y="256" width="664" height="136" rx="6" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="52" y="276" class="sh">2. st_audio_trs_burst() — No Link State Check</text>
+  <rect x="52" y="288" width="636" height="90" rx="5" fill="#ffffff" stroke="#d08a2a"/>
+  <text x="64" y="307" class="mono">uint16_t tx = mt_txq_burst(mgr-&gt;queue[port], &amp;pkt, 1);</text>
+  <text x="64" y="324" class="mono">if (!tx) return st_audio_trs_burst_fail(impl, mgr, port);</text>
+  <text x="64" y="344" class="s">- No mgr-&gt;tx_link[port] tracking and no mt_dev_link_down() check.</text>
+  <text x="64" y="361" class="err">- On link down, NIC ring fills -&gt; mt_txq_burst() returns 0 repeatedly -&gt; inflight stalls!</text>
+
+  <line x1="370" y1="392" x2="370" y2="412" stroke="#c04040" stroke-width="2" marker-end="url(#arr-red)"/>
+
+  <!-- Step 3 BEFORE -->
+  <rect x="38" y="414" width="664" height="162" rx="6" fill="#c04040"/>
+  <text x="52" y="435" class="ph" font-size="13.5">3. st_audio_trs_burst_fail() — Hang Detector Fires on Link Down</text>
+  <rect x="52" y="448" width="636" height="114" rx="5" fill="#fde2e2" stroke="#9b1c1c"/>
+  <text x="64" y="468" class="mono">fail_duration = cur_tsc - mgr-&gt;last_burst_succ_time_tsc[port];</text>
+  <text x="64" y="485" class="mono">if (fail_duration &gt; mgr-&gt;tx_hang_detect_time_thresh) {</text>
+  <text x="64" y="502" class="err">  st_audio_queue_fatal_error(impl, mgr, port);  // marks shared audio TX queue fatal!</text>
+  <text x="64" y="519" class="mono">}</text>
+  <text x="64" y="540" class="s">- Does not check mt_dev_link_down(impl, port).</text>
+  <text x="64" y="555" class="err">- A single link outage &gt; hang threshold tears down the shared audio TX queue for all sessions!</text>
+
+  <!-- Step 4 BEFORE -->
+  <rect x="38" y="592" width="664" height="150" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="52" y="612" class="sh">4. st_tx_audio_session.c — st_tx_audio_sessions_stat()</text>
+  <rect x="52" y="624" width="636" height="104" rx="5" fill="#ffffff" stroke="#8a9bb0"/>
+  <text x="64" y="644" class="s">- Logs only per-session stats and mgr-&gt;stat_recoverable_error / stat_unrecoverable_error.</text>
+  <text x="64" y="662" class="s">- No `stat_pkts_link_down_drop` counter in struct st_tx_audio_sessions_mgr.</text>
+  <text x="64" y="680" class="s">- Operators cannot distinguish intentional link-down packet drops from real bursts or queue hangs.</text>
+  <text x="64" y="704" class="err">- Impact on E610: 4.7 s autoneg outage triggers hang error and disrupts all ST 30/31 streams.</text>
+
+  <!-- ==================== RIGHT PANEL: AFTER ==================== -->
+  <rect x="740" y="70" width="700" height="690" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="740" y="70" width="700" height="34" rx="8" fill="#2f7d32"/>
+  <rect x="740" y="92" width="700" height="12" fill="#2f7d32"/>
+  <text x="756" y="93" class="ph">AFTER (PR #1951 HEAD c5f235c3) — Smooth Link-Down Drop &amp; Accurate Stats</text>
+
+  <!-- Step 1 AFTER -->
+  <rect x="758" y="120" width="664" height="114" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="772" y="140" class="ok">1. st_audio_trs_session_tasklet(impl, trs, mgr, port)</text>
+  <rect x="772" y="152" width="636" height="68" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="784" y="170" class="s">- Same inflight retry + ring dequeue loop, calling n = st_audio_trs_burst(impl, mgr, port, pkt).</text>
+  <text x="784" y="187" class="ok">- Removed `mgr-&gt;stat_pkts_burst += n` from both caller sites so link-down drops (returning 1)</text>
+  <text x="784" y="204" class="ok">  NEVER inflate stat_pkts_burst!</text>
+
+  <line x1="1090" y1="234" x2="1090" y2="254" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <!-- Step 2 AFTER -->
+  <rect x="758" y="256" width="664" height="184" rx="6" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="772" y="276" class="info">2. st_audio_trs_burst() — Link Transition &amp; Link-Down Drop</text>
+
+  <rect x="772" y="288" width="308" height="138" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="784" y="306" class="info">A) Link Change &amp; Down Branch</text>
+  <text x="784" y="324" class="mono">if (st_tx_link_changed(..., &amp;link))</text>
+  <text x="784" y="339" class="mono">  last_burst_succ[port] = link-&gt;tsc;</text>
+  <text x="784" y="357" class="mono">if (unlikely(link-&gt;down)) {</text>
+  <text x="784" y="372" class="mono">  rte_pktmbuf_free(pkt);</text>
+  <text x="784" y="387" class="mono">  mgr-&gt;stat_pkts_link_down_drop++;</text>
+  <text x="784" y="402" class="mono">  return 1; // keep ring draining</text>
+  <text x="784" y="417" class="mono">}</text>
+
+  <rect x="1096" y="288" width="312" height="138" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1108" y="306" class="ok">B) Link Up Burst Branch</text>
+  <text x="1108" y="324" class="mono">tx = mt_txq_burst(queue, &amp;pkt, 1);</text>
+  <text x="1108" y="341" class="mono">if (!tx) return burst_fail(...);</text>
+  <text x="1108" y="359" class="ok">mgr-&gt;stat_pkts_burst += tx;</text>
+  <text x="1108" y="376" class="mono">last_burst_succ[port] = now;</text>
+  <text x="1108" y="393" class="mono">return tx;</text>
+  <text x="1108" y="414" class="s">Only real NIC sends bump burst stat!</text>
+
+  <line x1="1252" y1="426" x2="1252" y2="454" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <!-- Step 3 AFTER -->
+  <rect x="758" y="456" width="664" height="120" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="772" y="476" class="ok">3. st_audio_trs_burst_fail() — Defense-in-Depth Link Holdoff</text>
+  <rect x="772" y="488" width="636" height="74" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="784" y="506" class="mono">if (mt_dev_link_down(impl, port)) {</text>
+  <text x="784" y="522" class="mono">  mgr-&gt;last_burst_succ_time_tsc[port] = cur_tsc;  return 0;</text>
+  <text x="784" y="538" class="mono">}</text>
+  <text x="784" y="555" class="ok">Hang clock resets while link is down and only starts measuring once link returns UP!</text>
+
+  <!-- Step 4 AFTER -->
+  <rect x="758" y="592" width="664" height="150" rx="6" fill="#2f7d32"/>
+  <text x="772" y="613" class="ph" font-size="13.5">4. st_tx_audio_session.c — Stat Reporting &amp; Session Continuity</text>
+  <rect x="772" y="626" width="636" height="102" rx="5" fill="#ffffff" stroke="#1e6024"/>
+  <text x="784" y="646" class="mono">if (mgr-&gt;stat_pkts_link_down_drop) {</text>
+  <text x="784" y="662" class="mono">  notice("TX_AUDIO_MGR(%d): pkts link down drop %d\n", m_idx, ...);</text>
+  <text x="784" y="678" class="mono">  mgr-&gt;stat_pkts_link_down_drop = 0;  }</text>
+  <text x="784" y="700" class="ok">- Audio builders keep pacing uninterrupted; ring never backs up; queue stays healthy.</text>
+  <text x="784" y="717" class="ok">- When link returns UP, audio TX resumes immediately with zero fatal queue errors!</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,782)">
+    <rect width="16" height="12" rx="2" fill="#fde2e2" stroke="#c04040"/><text x="22" y="10" class="s">Before: fatal audio hang / wrong stats</text>
+    <rect x="250" width="16" height="12" rx="2" fill="#fde9c8" stroke="#d08a2a"/><text x="272" y="10" class="s">Before: unchecked burst</text>
+    <rect x="440" width="16" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/><text x="462" y="10" class="s">After: link-aware burst &amp; hang holdoff</text>
+    <rect x="705" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="727" y="10" class="s">After: st_tx_link_changed() gate</text>
+  </g>
+</svg>

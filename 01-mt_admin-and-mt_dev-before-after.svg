@@ -1,0 +1,225 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="980" viewBox="0 0 1460 980" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 12.5px; fill: #4a5568; }
+      .ph { font-size: 14.5px; font-weight: bold; fill: #ffffff; }
+      .sh { font-size: 13px; font-weight: bold; fill: #1a202c; }
+      .mono { font-family: DejaVu Sans Mono, monospace; font-size: 11px; fill: #1a202c; }
+      .s { font-size: 11.5px; fill: #4a5568; }
+      .b { font-weight: bold; fill: #1a202c; }
+      .err { font-weight: bold; fill: #9b1c1c; }
+      .ok { font-weight: bold; fill: #1e6024; }
+      .info { font-weight: bold; fill: #1e4e8c; }
+    </style>
+  </defs>
+
+  <rect width="1460" height="980" fill="#ffffff"/>
+  <text x="24" y="34" class="title">01. mt_admin.c &amp; mt_dev.c: Admin Thread, Link Polling, TX Flush &amp; Timesync</text>
+  <text x="24" y="54" class="sub">Files: lib/src/mt_admin.c, lib/src/mt_admin.h, lib/src/dev/mt_dev.c, lib/src/dev/mt_dev.h, lib/src/mt_main.h</text>
+
+  <!-- ==================== LEFT PANEL: BEFORE ==================== -->
+  <rect x="20" y="70" width="700" height="848" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="70" width="700" height="34" rx="8" fill="#c04040"/>
+  <rect x="20" y="92" width="700" height="12" fill="#c04040"/>
+  <text x="36" y="93" class="ph">BEFORE (base 15e2f411)</text>
+
+  <!-- Section A: mt_admin.c BEFORE -->
+  <rect x="36" y="118" width="668" height="270" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="138" class="sh">A. mt_admin.c — Alarm Wake, Thread Loop &amp; Teardown</text>
+
+  <rect x="50" y="150" width="180" height="72" rx="5" fill="#ffffff" stroke="#6b7c93"/>
+  <text x="60" y="168" class="b">mt_admin_init()</text>
+  <text x="60" y="185" class="mono">period_us = 6 s</text>
+  <text x="60" y="201" class="s">Arms 6 s EAL alarm</text>
+  <text x="60" y="216" class="s">(no link polling)</text>
+
+  <line x1="230" y1="186" x2="256" y2="186" stroke="#4a5568" stroke-width="1.8" marker-end="url(#arr-gray)"/>
+
+  <rect x="258" y="150" width="212" height="72" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="268" y="168" class="err">admin_thread() Wait</text>
+  <text x="268" y="185" class="mono">if (!admin_stop)</text>
+  <text x="268" y="200" class="mono">  cond_wait(&amp;cond, &amp;mtx)</text>
+  <text x="268" y="216" class="err">Lost wakeup on early signal!</text>
+
+  <line x1="470" y1="186" x2="494" y2="186" stroke="#4a5568" stroke-width="1.8" marker-end="url(#arr-gray)"/>
+
+  <rect x="496" y="150" width="194" height="72" rx="5" fill="#ffffff" stroke="#6b7c93"/>
+  <text x="506" y="168" class="b">admin_func() (6 s)</text>
+  <text x="506" y="185" class="s">- Port stats + CPU busy</text>
+  <text x="506" y="200" class="s">- TX/RX video migrate</text>
+  <text x="506" y="215" class="s">- Re-arms 6 s alarm</text>
+
+  <rect x="50" y="236" width="640" height="62" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="62" y="255" class="err">Race 1: Lost Wakeup (admin_wakeup_thread vs admin_thread)</text>
+  <text x="62" y="272" class="s">admin_alarm_handler() calls pthread_cond_signal() with no boolean latch. If it runs while admin_thread</text>
+  <text x="62" y="288" class="s">is outside cond_wait, the signal is lost and admin_thread sleeps forever until shutdown!</text>
+
+  <rect x="50" y="310" width="640" height="64" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="62" y="329" class="err">Race 2: mt_admin_uinit() Mutex Destroy While Alarm In-Flight</text>
+  <text x="62" y="346" class="mono">rte_eal_alarm_cancel(admin_alarm_handler, impl);  // ignores -EINPROGRESS!</text>
+  <text x="62" y="363" class="s">Immediately calls pthread_mutex_destroy(&amp;admin_wake_mutex) while handler may still lock it (UB/crash).</text>
+
+  <!-- Section B: mt_dev.c Link & Flush BEFORE -->
+  <rect x="36" y="402" width="668" height="246" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="422" class="sh">B. mt_dev.c — No Link Flag &amp; Unbounded Lazy TX Flush</text>
+
+  <rect x="50" y="434" width="640" height="58" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="62" y="453" class="err">Missing mt_dev_link_poll() / inf-&gt;link_down</text>
+  <text x="62" y="470" class="s">No cached link state per mt_interface. Tasklets cannot poll rte_eth_link_get_nowait() directly because</text>
+  <text x="62" y="485" class="s">on E610 each link read issues 2 ACI firmware commands and blocks ~2.2 ms under a mutex.</text>
+
+  <rect x="50" y="504" width="640" height="130" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="62" y="523" class="err">mt_dpdk_flush_tx_queue() Lazy Loop Flaws</text>
+  <text x="62" y="542" class="mono">for (i = 0; i &lt; nb_tx_burst * 2; i++) {</text>
+  <text x="62" y="558" class="mono">  rte_mbuf_refcnt_update(pad, 1);</text>
+  <text x="62" y="574" class="mono">  mt_dpdk_tx_burst_busy(impl, queue, &amp;pads[0], 1, 1); // return ignored!</text>
+  <text x="62" y="590" class="mono">}  return 0;  // always reports success!</text>
+  <text x="62" y="610" class="s">- No link-down pre-check; leaks pad refcnt whenever burst returns 0; stalls across full loop;</text>
+  <text x="62" y="625" class="s">  returns 0 even if 0 pads sent, hiding an unflushed/dead queue from caller (tv_uinit_hw).</text>
+
+  <!-- Section C: mt_dev_create() Timesync BEFORE -->
+  <rect x="36" y="662" width="668" height="242" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="682" class="sh">C. mt_dev.c — mt_dev_create() ixgbe (E610) Timesync Ordering Bug</text>
+
+  <rect x="50" y="696" width="192" height="68" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="60" y="714" class="b">1. Pre-Start Enable</text>
+  <text x="60" y="730" class="mono">dev_start_timesync()</text>
+  <text x="60" y="746" class="s">Succeeds on ixgbe;</text>
+  <text x="60" y="759" class="s">sets FEATURE_TIMESYNC</text>
+
+  <line x1="242" y1="730" x2="266" y2="730" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <rect x="268" y="696" width="204" height="68" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="278" y="714" class="err">2. dev_start_port()</text>
+  <text x="278" y="730" class="mono">ixgbe_dev_start()</text>
+  <text x="278" y="746" class="err">Issues MAC CTRL.RST!</text>
+  <text x="278" y="759" class="s">Clears TIMINCA/TSYNC</text>
+
+  <line x1="472" y1="730" x2="496" y2="730" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <rect x="498" y="696" width="192" height="68" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="508" y="714" class="err">3. Post-Link Retry</text>
+  <text x="508" y="730" class="s">Skipped because flag</text>
+  <text x="508" y="745" class="s">is already set! (And</text>
+  <text x="508" y="759" class="s">skipped if link down)</text>
+
+  <rect x="50" y="778" width="640" height="112" rx="5" fill="#c04040"/>
+  <text x="64" y="799" class="ph" font-size="13">Result on E610 (ixgbe): Built-in PTP Hardware Clock Is Dead</text>
+  <text x="64" y="819" fill="#ffe5e5" font-size="11.5">- CTRL.RST wipes TIMINCA, TSYNCRXCTL, TSYNCTXCTL, and the 1588 filter configured in step 1.</text>
+  <text x="64" y="837" fill="#ffe5e5" font-size="11.5">- Because MT_IF_FEATURE_TIMESYNC was set before start, step 3 never re-enables timesync.</text>
+  <text x="64" y="855" fill="#ffe5e5" font-size="11.5">- Even for other NICs, placing step 3 AFTER dev_detect_link() meant an allow_port_down port</text>
+  <text x="64" y="873" fill="#ffe5e5" font-size="11.5">  starting with link down executed `continue` and NEVER got timesync enabled.</text>
+
+  <!-- ==================== RIGHT PANEL: AFTER ==================== -->
+  <rect x="740" y="70" width="700" height="848" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="740" y="70" width="700" height="34" rx="8" fill="#2f7d32"/>
+  <rect x="740" y="92" width="700" height="12" fill="#2f7d32"/>
+  <text x="756" y="93" class="ph">AFTER (PR #1951 HEAD c5f235c3)</text>
+
+  <!-- Section A: mt_admin.c AFTER -->
+  <rect x="756" y="118" width="668" height="270" rx="6" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="770" y="138" class="info">A. mt_admin.c — 100 ms Poll Tick, Latched Wakeup &amp; Safe Cancel</text>
+
+  <rect x="770" y="150" width="186" height="72" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="780" y="168" class="info">mt_admin_init()</text>
+  <text x="780" y="185" class="mono">LINK_POLL = 100 ms</text>
+  <text x="780" y="201" class="s">period_us = 6 s</text>
+  <text x="780" y="216" class="s">Arms 100 ms alarm</text>
+
+  <line x1="956" y1="186" x2="980" y2="186" stroke="#2b6cb0" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+
+  <rect x="982" y="150" width="218" height="72" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="992" y="168" class="ok">admin_thread() Wait</text>
+  <text x="992" y="185" class="mono">while (!wake &amp;&amp; !stop)</text>
+  <text x="992" y="200" class="mono">  cond_wait(&amp;cond, &amp;mtx)</text>
+  <text x="992" y="216" class="mono">admin-&gt;admin_wake = false</text>
+
+  <line x1="1200" y1="186" x2="1220" y2="186" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <rect x="1222" y="150" width="188" height="72" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1232" y="168" class="ok">admin_func()</text>
+  <text x="1232" y="184" class="s">1. mt_dev_link_poll()</text>
+  <text x="1232" y="199" class="s">2. Re-arm 100 ms alarm</text>
+  <text x="1232" y="214" class="s">3. Every 60th: 6 s work</text>
+
+  <rect x="770" y="236" width="640" height="62" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="782" y="255" class="ok">Fix 1: Latched admin-&gt;admin_wake Flag (Under admin_wake_mutex)</text>
+  <text x="782" y="272" class="s">admin_wakeup_thread() sets admin_wake = true before cond_signal(). admin_thread() checks</text>
+  <text x="782" y="288" class="s">while (!admin_wake &amp;&amp; !admin_stop) so an early alarm signal or spurious wake can never stall it.</text>
+
+  <rect x="770" y="310" width="640" height="64" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="782" y="329" class="ok">Fix 2: Drain In-Flight Alarm Handler in mt_admin_uinit()</text>
+  <text x="782" y="346" class="mono">while (rte_eal_alarm_cancel(admin_alarm_handler, impl) == -EINPROGRESS) mt_sleep_ms(1);</text>
+  <text x="782" y="363" class="s">Waits until any running DPDK alarm callback finishes locking admin_wake_mutex before destroying it.</text>
+
+  <!-- Section B: mt_dev.c Link & Flush AFTER -->
+  <rect x="756" y="402" width="668" height="246" rx="6" fill="#eef2f7" stroke="#3a8a3a"/>
+  <text x="770" y="422" class="ok">B. mt_dev.c — Control-Path Link Poll &amp; Bounded Lazy TX Flush</text>
+
+  <rect x="770" y="434" width="640" height="68" rx="5" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="782" y="452" class="info">mt_dev_link_poll(impl) -&gt; rte_atomic32_t inf-&gt;link_down</text>
+  <text x="782" y="469" class="s">Every 100 ms on mtl_admin: calls rte_eth_link_get_nowait() for each DPDK user PMD port, logs state</text>
+  <text x="782" y="484" class="s">transitions (warn/notice), stores atomic flag. Tasklets read inline mt_dev_link_down() (0 ns).</text>
+
+  <rect x="770" y="514" width="640" height="120" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="782" y="532" class="ok">mt_dpdk_flush_tx_queue() — Link-Aware &amp; Stall-Bounded</text>
+  <text x="782" y="550" class="s">1. Fast fail: if (mt_dev_link_down(impl, port)) return -EBUSY;</text>
+  <text x="782" y="567" class="s">2. Eager path (reclaim ports): dev_flush_tx_eager() unchanged; fallback if -ENOMEM &amp;&amp; lazy_fallback</text>
+  <text x="782" y="584" class="s">3. Lazy loop: if burst==1 -&gt; sent_total++, stall_start=0; else refcnt(-1) and check link_down ||</text>
+  <text x="782" y="601" class="s">   mt_dev_tx_flush_stalled(now, &amp;stall_start) (&gt; MT_DEV_TX_FLUSH_LAZY_STALL_NS = 64 ms) -&gt; -EBUSY</text>
+  <text x="782" y="618" class="ok">4. Return: sent_total &lt; burst_pkts / 2 ? -EBUSY : 0  (no false-clean return!)</text>
+
+  <!-- Section C: mt_dev_create() Timesync AFTER -->
+  <rect x="756" y="662" width="668" height="242" rx="6" fill="#eef2f7" stroke="#2b6cb0"/>
+  <text x="770" y="682" class="info">C. mt_dev.c — mt_dev_create() Driver-Aware Timesync Sequencing</text>
+
+  <rect x="770" y="696" width="194" height="72" rx="5" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="780" y="714" class="info">1. Pre-Start Enable</text>
+  <text x="780" y="730" class="mono">if (wanted &amp;&amp;</text>
+  <text x="780" y="744" class="mono">  !start_clears_ts)</text>
+  <text x="780" y="760" class="s">Skipped on MT_DRV_IXGBE</text>
+
+  <line x1="964" y1="732" x2="988" y2="732" stroke="#2b6cb0" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+
+  <rect x="990" y="696" width="196" height="72" rx="5" fill="#ffffff" stroke="#6b7c93"/>
+  <text x="1000" y="714" class="b">2. dev_start_port()</text>
+  <text x="1000" y="730" class="mono">rte_eth_dev_start()</text>
+  <text x="1000" y="746" class="s">ixgbe MAC reset runs</text>
+  <text x="1000" y="760" class="s">BEFORE 1588 enable</text>
+
+  <line x1="1186" y1="732" x2="1208" y2="732" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <rect x="1210" y="696" width="200" height="72" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1220" y="714" class="ok">3. Post-Start Enable</text>
+  <text x="1220" y="730" class="mono">if (wanted &amp;&amp; !flag)</text>
+  <text x="1220" y="744" class="mono">  dev_enable_timesync()</text>
+  <text x="1220" y="760" class="ok">BEFORE dev_detect_link()</text>
+
+  <rect x="770" y="782" width="640" height="108" rx="5" fill="#2f7d32"/>
+  <text x="784" y="803" class="ph" font-size="13">Result: Reliable Timesync on E610 &amp; All Other PF NICs</text>
+  <text x="784" y="823" fill="#e6ffea" font-size="11.2">- dev_start_clears_timesync(inf) is true on MT_DRV_IXGBE, deferring enable past CTRL.RST.</text>
+  <text x="784" y="841" fill="#e6ffea" font-size="11.2">- Other PFs (ice, i40e, mlx5) still enable before start and retry after start if pre-start failed.</text>
+  <text x="784" y="859" fill="#e6ffea" font-size="11.2">- Running step 3 BEFORE dev_detect_link() ensures allow_port_down ports still get timesync.</text>
+  <text x="784" y="877" fill="#e6ffea" font-size="11.2">- On ixgbe, rte_eth_timesync_enable() (ixgbe_start_timecounters) waits up to 9 s for link.</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,940)">
+    <rect width="16" height="12" rx="2" fill="#fde2e2" stroke="#c04040"/><text x="22" y="10" class="s">Before: race / silent failure</text>
+    <rect x="200" width="16" height="12" rx="2" fill="#fde9c8" stroke="#d08a2a"/><text x="222" y="10" class="s">Before: incomplete path</text>
+    <rect x="385" width="16" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/><text x="407" y="10" class="s">After: fixed runtime / guard</text>
+    <rect x="595" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="617" y="10" class="s">After: control-plane / config path</text>
+  </g>
+</svg>

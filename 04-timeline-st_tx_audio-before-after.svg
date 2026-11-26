@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="780" viewBox="0 0 1400 780" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-axis" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L10,5 L0,9 z" fill="#4a5568"/>
+    </marker>
+    <pattern id="stale" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#fde9c8"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#d08a2a" stroke-width="3.5"/>
+    </pattern>
+    <style>
+      .title { font-size: 19px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 12px; fill: #4a5568; }
+      .ph { font-size: 13.8px; font-weight: bold; fill: #ffffff; }
+      .lane { font-size: 12.5px; font-weight: bold; fill: #1a202c; }
+      .lsub { font-size: 10.5px; fill: #556070; }
+      .tick { font-size: 11px; fill: #334155; }
+      .tick-red { font-size: 11px; font-weight: bold; fill: #9b1c1c; }
+      .tick-blue { font-size: 11px; font-weight: bold; fill: #1e4e8c; }
+      .tick-green { font-size: 11px; font-weight: bold; fill: #1e6024; }
+      .cut { font-size: 12px; font-weight: bold; fill: #64748b; }
+      .bar-w { font-size: 11px; font-weight: bold; fill: #ffffff; }
+      .bar-d { font-size: 11px; fill: #1a202c; }
+      .bar-db { font-size: 11px; font-weight: bold; fill: #1a202c; }
+      .bar-err { font-size: 11px; font-weight: bold; fill: #9b1c1c; }
+      .bar-ok { font-size: 11px; font-weight: bold; fill: #1e6024; }
+      .bar-info { font-size: 11px; font-weight: bold; fill: #1e4e8c; }
+      .bar-warn { font-size: 11px; font-weight: bold; fill: #7c4a03; }
+      .cap { font-size: 10.5px; fill: #475569; }
+      .cap-err { font-size: 10.5px; font-weight: bold; fill: #9b1c1c; }
+      .cap-ok { font-size: 10.5px; font-weight: bold; fill: #1e6024; }
+      .cap-info { font-size: 10.5px; fill: #1e4e8c; }
+      .foot { font-size: 11.2px; fill: #334155; }
+      .leg { font-size: 11.2px; fill: #334155; }
+    </style>
+  </defs>
+
+  <!-- White Canvas -->
+  <rect width="1400" height="780" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="24" y="28" class="title">04. ST 30 Audio TX Timeline Across Link Down: Before (15e2f411) vs. After (c5f235c3)</text>
+  <text x="24" y="48" class="sub">Horizontal swimlane timeline for 1 ms ptime audio bursts (st_audio_transmitter.c, st_tx_audio_session.c, st_tx_link.h). Axis is non-linear; "//" marks a time cut.</text>
+
+  <!-- ==================== PANEL A: BEFORE ==================== -->
+  <rect x="20" y="60" width="1360" height="324" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.4"/>
+  <rect x="20" y="60" width="1360" height="30" rx="8" fill="#c04040"/>
+  <rect x="20" y="80" width="1360" height="10" fill="#c04040"/>
+  <text x="34" y="80" class="ph">Panel A — BEFORE (15e2f411): Unchecked 1 ms bursts fill NIC ring, hang detector kills shared audio TX queue</text>
+
+  <!-- Panel A Time Axis -->
+  <line x1="210" y1="112" x2="1365" y2="112" stroke="#64748b" stroke-width="1.3" marker-end="url(#arr-axis)"/>
+  <line x1="210" y1="108" x2="210" y2="116" stroke="#475569" stroke-width="1.3"/>
+  <line x1="355" y1="108" x2="355" y2="116" stroke="#c04040" stroke-width="1.6"/>
+  <line x1="525" y1="108" x2="525" y2="116" stroke="#475569" stroke-width="1.3"/>
+  <line x1="845" y1="108" x2="845" y2="116" stroke="#c04040" stroke-width="1.6"/>
+  <line x1="1130" y1="108" x2="1130" y2="116" stroke="#2f7d32" stroke-width="1.6"/>
+
+  <text x="210" y="105" text-anchor="start" class="tick">t = 0</text>
+  <text x="355" y="105" text-anchor="middle" class="tick-red">t = 50 ms (link down)</text>
+  <text x="525" y="105" text-anchor="middle" class="tick">t = 150 ms (ring full)</text>
+  <text x="685" y="105" text-anchor="middle" class="cut">//</text>
+  <text x="845" y="105" text-anchor="middle" class="tick-red">t = 1.05 s (&gt; 1 s hang)</text>
+  <text x="1030" y="105" text-anchor="middle" class="cut">//</text>
+  <text x="1130" y="105" text-anchor="middle" class="tick-green">t = 4.7 s (link UP)</text>
+  <text x="1365" y="105" text-anchor="end" class="tick">t = 5.0 s+</text>
+
+  <!-- Panel A Vertical Guides (behind bars) -->
+  <line x1="355" y1="116" x2="355" y2="350" stroke="#e09a9a" stroke-dasharray="3,3"/>
+  <line x1="525" y1="116" x2="525" y2="350" stroke="#cbd5e1" stroke-dasharray="3,3"/>
+  <line x1="685" y1="116" x2="685" y2="350" stroke="#94a3b8" stroke-dasharray="2,4"/>
+  <line x1="845" y1="116" x2="845" y2="350" stroke="#c04040" stroke-dasharray="3,3"/>
+  <line x1="1030" y1="116" x2="1030" y2="350" stroke="#94a3b8" stroke-dasharray="2,4"/>
+  <line x1="1130" y1="116" x2="1130" y2="350" stroke="#88c288" stroke-dasharray="3,3"/>
+
+  <!-- Panel A Lane Labels -->
+  <text x="34" y="143" class="lane">Link / NIC</text>
+  <text x="34" y="158" class="lsub">(carrier &amp; TX ring)</text>
+
+  <text x="34" y="213" class="lane">st_audio_trs_burst</text>
+  <text x="34" y="228" class="lsub">(1 ms ptime bursts)</text>
+
+  <text x="34" y="287" class="lane">Hang timer / stats</text>
+  <text x="34" y="302" class="lsub">(thresh = 1000 ms)</text>
+
+  <!-- Panel A Lane 1: Link / NIC -->
+  <rect x="210" y="128" width="145" height="24" rx="3" fill="#3a8a3a"/>
+  <text x="282" y="144" text-anchor="middle" class="bar-w">Link UP</text>
+  <text x="282" y="167" text-anchor="middle" class="cap">draining normally</text>
+
+  <rect x="355" y="128" width="170" height="24" fill="#c04040"/>
+  <text x="440" y="144" text-anchor="middle" class="bar-w">DOWN: ring filling</text>
+  <text x="440" y="167" text-anchor="middle" class="cap">nb_tx_desc slots fill up</text>
+
+  <rect x="525" y="128" width="605" height="24" fill="#9b1c1c"/>
+  <text x="827" y="144" text-anchor="middle" class="bar-w">Link DOWN (4.7 s outage) — NIC TX ring FULL, no packets leave wire</text>
+  <text x="827" y="167" text-anchor="middle" class="cap">no carrier; descriptors remain unfreed in hardware ring</text>
+
+  <rect x="1130" y="128" width="235" height="24" rx="3" fill="#3a8a3a"/>
+  <text x="1247" y="144" text-anchor="middle" class="bar-w">Link UP</text>
+  <text x="1247" y="167" text-anchor="middle" class="cap">carrier restored</text>
+
+  <!-- Panel A Lane 2: st_audio_trs_burst -->
+  <rect x="210" y="196" width="145" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="282" y="214" text-anchor="middle" class="bar-ok">1 ms audio bursts</text>
+  <text x="282" y="239" text-anchor="middle" class="cap">mt_txq_burst() == 1</text>
+
+  <rect x="355" y="196" width="170" height="28" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="440" y="214" text-anchor="middle" class="bar-warn">keeps pushing pkts</text>
+  <text x="440" y="239" text-anchor="middle" class="cap">no link check; fills ring</text>
+
+  <rect x="525" y="196" width="320" height="28" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="685" y="214" text-anchor="middle" class="bar-err">mt_txq_burst() == 0 -&gt; inflight stalls</text>
+  <text x="685" y="239" text-anchor="middle" class="cap">st_audio_trs_burst_fail() runs every tick</text>
+
+  <rect x="845" y="196" width="285" height="28" rx="4" fill="#c04040"/>
+  <text x="987" y="214" text-anchor="middle" class="bar-w">st_audio_queue_fatal_error()</text>
+  <text x="987" y="239" text-anchor="middle" class="cap-err">kills / recovers shared audio TX queue!</text>
+
+  <rect x="1130" y="196" width="235" height="28" rx="4" fill="#fde2e2" stroke="#c04040" stroke-dasharray="4,3"/>
+  <text x="1247" y="214" text-anchor="middle" class="bar-err">disrupted / recovering</text>
+  <text x="1247" y="239" text-anchor="middle" class="cap">all ST 30/31 streams impacted</text>
+
+  <!-- Panel A Lane 3: Hang timer / stats -->
+  <rect x="210" y="270" width="145" height="28" rx="4" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="282" y="288" text-anchor="middle" class="bar-d">stat_pkts_burst++</text>
+  <text x="282" y="313" text-anchor="middle" class="cap">caller adds += n</text>
+
+  <rect x="355" y="270" width="170" height="28" rx="4" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="440" y="288" text-anchor="middle" class="bar-warn">last_burst_succ stops</text>
+  <text x="440" y="313" text-anchor="middle" class="cap">last ok pkt freezes clock</text>
+
+  <rect x="525" y="270" width="320" height="28" rx="4" fill="#fde2e2" stroke="#c04040"/>
+  <text x="685" y="288" text-anchor="middle" class="bar-err">fail_duration climbs: 0 -&gt; 1000 ms</text>
+  <text x="685" y="313" text-anchor="middle" class="cap">no mt_dev_link_down() holdoff</text>
+
+  <rect x="845" y="270" width="520" height="28" rx="4" fill="#9b1c1c"/>
+  <text x="1105" y="288" text-anchor="middle" class="bar-w">&gt; tx_hang_detect_time_thresh -&gt; queue fatal error (no link-down stat)</text>
+  <text x="1105" y="313" text-anchor="middle" class="cap-err">stat_recoverable_error / unrecoverable_error; link outage misclassified as TX hang</text>
+
+  <!-- Panel A Cut markers at bottom + Footnote -->
+  <text x="685" y="346" text-anchor="middle" class="cut">//</text>
+  <text x="1030" y="346" text-anchor="middle" class="cut">//</text>
+  <text x="34" y="370" class="foot">Before (15e2f411): Link down at t = 50 ms fills the NIC TX ring; at t = 1.05 s fail_duration passes tx_hang_detect_time_thresh (1000 ms) and tears down the shared audio TX queue.</text>
+
+  <!-- ==================== PANEL B: AFTER ==================== -->
+  <rect x="20" y="396" width="1360" height="334" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.4"/>
+  <rect x="20" y="396" width="1360" height="30" rx="8" fill="#2f7d32"/>
+  <rect x="20" y="416" width="1360" height="10" fill="#2f7d32"/>
+  <text x="34" y="416" class="ph">Panel B — AFTER (c5f235c3): Atomic link flag gates burst, frees mbufs at pacing time, holds off hang timer</text>
+
+  <!-- Panel B Time Axis -->
+  <line x1="210" y1="448" x2="1365" y2="448" stroke="#64748b" stroke-width="1.3" marker-end="url(#arr-axis)"/>
+  <line x1="210" y1="444" x2="210" y2="452" stroke="#475569" stroke-width="1.3"/>
+  <line x1="355" y1="444" x2="355" y2="452" stroke="#c04040" stroke-width="1.6"/>
+  <line x1="525" y1="444" x2="525" y2="452" stroke="#2b6cb0" stroke-width="1.6"/>
+  <line x1="845" y1="444" x2="845" y2="452" stroke="#2f7d32" stroke-width="1.6"/>
+  <line x1="1130" y1="444" x2="1130" y2="452" stroke="#2f7d32" stroke-width="1.6"/>
+
+  <text x="210" y="441" text-anchor="start" class="tick">t = 0</text>
+  <text x="355" y="441" text-anchor="middle" class="tick-red">t = 50 ms (link down)</text>
+  <text x="525" y="441" text-anchor="middle" class="tick-blue">t &lt;= 150 ms (poll DOWN)</text>
+  <text x="685" y="441" text-anchor="middle" class="cut">//</text>
+  <text x="845" y="441" text-anchor="middle" class="tick-green">t = 1.05 s (no hang!)</text>
+  <text x="1030" y="441" text-anchor="middle" class="cut">//</text>
+  <text x="1130" y="441" text-anchor="middle" class="tick-green">t = 4.7 s (link UP)</text>
+  <text x="1365" y="441" text-anchor="end" class="tick">t = 5.0 s+</text>
+
+  <!-- Panel B Vertical Guides (behind bars) -->
+  <line x1="355" y1="452" x2="355" y2="692" stroke="#e09a9a" stroke-dasharray="3,3"/>
+  <line x1="525" y1="452" x2="525" y2="692" stroke="#90cdf4" stroke-dasharray="3,3"/>
+  <line x1="685" y1="452" x2="685" y2="692" stroke="#94a3b8" stroke-dasharray="2,4"/>
+  <line x1="845" y1="452" x2="845" y2="692" stroke="#88c288" stroke-dasharray="3,3"/>
+  <line x1="1030" y1="452" x2="1030" y2="692" stroke="#94a3b8" stroke-dasharray="2,4"/>
+  <line x1="1130" y1="452" x2="1130" y2="692" stroke="#88c288" stroke-dasharray="3,3"/>
+
+  <!-- Panel B Lane Labels -->
+  <text x="34" y="479" class="lane">Link / atomic flag</text>
+  <text x="34" y="494" class="lsub">(mt_dev_link_down)</text>
+
+  <text x="34" y="549" class="lane">st_audio_trs_burst</text>
+  <text x="34" y="564" class="lsub">(1 ms ptime bursts)</text>
+
+  <text x="34" y="623" class="lane">Hang timer / stats</text>
+  <text x="34" y="638" class="lsub">(holdoff &amp; counters)</text>
+
+  <!-- Panel B Lane 1: Link / atomic flag -->
+  <rect x="210" y="464" width="145" height="24" rx="3" fill="#3a8a3a"/>
+  <text x="282" y="480" text-anchor="middle" class="bar-w">UP (flag = 0)</text>
+  <text x="282" y="503" text-anchor="middle" class="cap">carrier UP</text>
+
+  <rect x="355" y="464" width="170" height="24" fill="url(#stale)" stroke="#d08a2a"/>
+  <text x="440" y="480" text-anchor="middle" class="bar-warn">DOWN, poll &lt;= 100 ms</text>
+  <text x="440" y="503" text-anchor="middle" class="cap">mt_dev_link_poll() @ 100 ms</text>
+
+  <rect x="525" y="464" width="605" height="24" fill="#c04040"/>
+  <text x="827" y="480" text-anchor="middle" class="bar-w">mt_dev_link_down() == true (flag = 1) — link-&gt;down = true</text>
+  <text x="827" y="503" text-anchor="middle" class="cap">st_tx_link_changed() logs warn on UP-&gt;DOWN and notice on DOWN-&gt;UP</text>
+
+  <rect x="1130" y="464" width="235" height="24" rx="3" fill="#3a8a3a"/>
+  <text x="1247" y="480" text-anchor="middle" class="bar-w">UP (flag = 0)</text>
+  <text x="1247" y="503" text-anchor="middle" class="cap">flag clears &lt;= 100 ms</text>
+
+  <!-- Panel B Lane 2: st_audio_trs_burst -->
+  <rect x="210" y="532" width="145" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="282" y="550" text-anchor="middle" class="bar-ok">1 ms audio bursts</text>
+  <text x="282" y="575" text-anchor="middle" class="cap">stat_pkts_burst += tx</text>
+
+  <rect x="355" y="532" width="170" height="28" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="440" y="550" text-anchor="middle" class="bar-info">st_tx_link_changed()</text>
+  <text x="440" y="575" text-anchor="middle" class="cap-info">UP-&gt;DOWN, resets tsc</text>
+
+  <rect x="525" y="532" width="605" height="28" rx="4" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="827" y="550" text-anchor="middle" class="bar-info">link-&gt;down: rte_pktmbuf_free(pkt) at pacing time, return 1 (ring keeps draining)</text>
+  <text x="827" y="575" text-anchor="middle" class="cap-info">zero mt_txq_burst() calls while down; ring never stalls; audio builders pace normally</text>
+
+  <rect x="1130" y="532" width="235" height="28" rx="4" fill="#2f7d32"/>
+  <text x="1247" y="550" text-anchor="middle" class="bar-w">Clean audio TX resumes</text>
+  <text x="1247" y="575" text-anchor="middle" class="cap-ok">DOWN-&gt;UP resets hang clock</text>
+
+  <!-- Panel B Lane 3: Hang timer / stats -->
+  <rect x="210" y="606" width="145" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="282" y="624" text-anchor="middle" class="bar-ok" font-size="9.8">stat_pkts_burst += tx</text>
+  <text x="282" y="649" text-anchor="middle" class="cap">counted in burst()</text>
+
+  <rect x="355" y="606" width="170" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="440" y="624" text-anchor="middle" class="bar-ok">reset last_burst_succ</text>
+  <text x="440" y="649" text-anchor="middle" class="cap">sets = link-&gt;tsc</text>
+
+  <rect x="525" y="606" width="605" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="827" y="624" text-anchor="middle" class="bar-ok">stat_pkts_link_down_drop++ (stat_pkts_burst unchanged) | hang timer held off</text>
+  <text x="827" y="649" text-anchor="middle" class="cap-ok">defense-in-depth: st_audio_trs_burst_fail() checks mt_dev_link_down() -&gt; resets tsc</text>
+
+  <rect x="1130" y="606" width="235" height="28" rx="4" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1247" y="624" text-anchor="middle" class="bar-ok">stat_pkts_burst += tx</text>
+  <text x="1247" y="649" text-anchor="middle" class="cap-ok">stat logs pkts link down drop</text>
+
+  <!-- Panel B Cut markers at bottom + Footnote -->
+  <text x="685" y="688" text-anchor="middle" class="cut">//</text>
+  <text x="1030" y="688" text-anchor="middle" class="cut">//</text>
+  <text x="34" y="714" class="foot">After (c5f235c3): Zero fatal queue errors across the 4.7 s outage; st_tx_audio_sessions_stat() reports "pkts link down drop N" while stat_pkts_burst counts real TX sends only.</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,748)">
+    <rect width="16" height="12" rx="2" fill="#3a8a3a"/>
+    <text x="22" y="10" class="leg">Link UP</text>
+
+    <rect x="86" width="16" height="12" rx="2" fill="#c04040"/>
+    <text x="108" y="10" class="leg">Link DOWN / fatal error</text>
+
+    <rect x="266" width="16" height="12" rx="2" fill="url(#stale)" stroke="#d08a2a"/>
+    <text x="288" y="10" class="leg">Admin poll (&lt;= 100 ms)</text>
+
+    <rect x="448" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/>
+    <text x="470" y="10" class="leg">After: link-down drop path</text>
+
+    <rect x="652" width="16" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/>
+    <text x="674" y="10" class="leg">After: hang holdoff &amp; accurate stats</text>
+
+    <text x="920" y="10" class="leg">// = non-linear cut (100 ms poll, 1 s hang, 4.7 s outage)</text>
+  </g>
+</svg>

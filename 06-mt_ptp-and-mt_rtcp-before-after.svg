@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="980" viewBox="0 0 1460 980" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 12.5px; fill: #4a5568; }
+      .ph { font-size: 14.5px; font-weight: bold; fill: #ffffff; }
+      .sh { font-size: 13px; font-weight: bold; fill: #1a202c; }
+      .mono { font-family: DejaVu Sans Mono, monospace; font-size: 10.8px; fill: #1a202c; }
+      .s { font-size: 11.4px; fill: #4a5568; }
+      .b { font-weight: bold; fill: #1a202c; }
+      .err { font-weight: bold; fill: #9b1c1c; }
+      .ok { font-weight: bold; fill: #1e6024; }
+      .info { font-weight: bold; fill: #1e4e8c; }
+    </style>
+  </defs>
+
+  <rect width="1460" height="980" fill="#ffffff"/>
+  <text x="24" y="34" class="title">06. mt_ptp.c, mt_rtcp.c &amp; DPDK E610 Patches (0015 &amp; 0016): Before vs. After</text>
+  <text x="24" y="54" class="sub">Files: lib/src/mt_ptp.c/.h, lib/src/mt_rtcp.c/.h, patches/dpdk/26.07/0015-*.patch &amp; 0016-*.patch, doc/chunks/_ptp_setup.md</text>
+
+  <!-- ==================== LEFT PANEL: BEFORE ==================== -->
+  <rect x="20" y="70" width="700" height="848" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="70" width="700" height="34" rx="8" fill="#c04040"/>
+  <rect x="20" y="92" width="700" height="12" fill="#c04040"/>
+  <text x="36" y="93" class="ph">BEFORE (base 15e2f411) — Broken E610 PTP, RTCP Seq Flood &amp; PHY Power-Off</text>
+
+  <!-- Section 1: PTP + Patch 0016 BEFORE -->
+  <rect x="36" y="118" width="668" height="286" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="138" class="sh">1. Built-in PTP T3 Timestamp Path (mt_ptp.c + DPDK ixgbe_rxtx.c)</text>
+
+  <rect x="50" y="150" width="308" height="114" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="62" y="168" class="err">DPDK ixgbe_xmit_pkts() Without 0016</text>
+  <text x="62" y="186" class="mono">#ifdef RTE_LIBRTE_IEEE1588</text>
+  <text x="62" y="201" class="mono">  IXGBE_TX_IEEE1588_TMST = F_TX_...</text>
+  <text x="62" y="216" class="mono">  cmd |= IXGBE_ADVTXD_MAC_1588;</text>
+  <text x="62" y="231" class="mono">#endif // OFF by default!</text>
+  <text x="62" y="250" class="err">NIC never latches Delay_Req T3 TX ts!</text>
+
+  <line x1="358" y1="207" x2="376" y2="207" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <rect x="378" y="150" width="312" height="114" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="390" y="168" class="err">mt_ptp.c: ptp_delay_req_read_tx_time</text>
+  <text x="390" y="186" class="s">- Retries every 200 us up to 2000 us deadline</text>
+  <text x="390" y="202" class="s">- On timeout: `ptp-&gt;stat_t3_timeout++`,</text>
+  <text x="390" y="217" class="s">  clears partial result and returns silently</text>
+  <text x="390" y="234" class="err">- Zero err() logs! User sees PTP never lock</text>
+  <text x="390" y="250" class="s">  with no hint why T3 never arrives.</text>
+
+  <rect x="50" y="276" width="640" height="114" rx="5" fill="#c04040"/>
+  <text x="64" y="297" class="ph" font-size="13">Double E610 PTP Failure + Vector RX Trap</text>
+  <text x="64" y="317" fill="#ffe5e5" font-size="11.5">1. mt_dev_create() enabled timesync before ixgbe_dev_start() -&gt; CTRL.RST wiped 1588 hardware regs.</text>
+  <text x="64" y="335" fill="#ffe5e5" font-size="11.5">2. Even with timesync on, DPDK compiled without RTE_LIBRTE_IEEE1588 dropped IXGBE_ADVTXD_MAC_1588.</text>
+  <text x="64" y="353" fill="#ffe5e5" font-size="11.5">3. Enabling global RTE_LIBRTE_IEEE1588 is NOT acceptable: it disables vector RX on ixgbe and i40e!</text>
+  <text x="64" y="371" fill="#ffe5e5" font-size="11.5">4. Built-in PTP silently failed every cycle forever.</text>
+
+  <!-- Section 2: RTCP BEFORE -->
+  <rect x="36" y="418" width="668" height="226" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="438" class="sh">2. RTCP TX Buffer (mt_rtcp.c) Across Link Resync &amp; Queue Recovery</text>
+
+  <rect x="50" y="452" width="194" height="84" rx="5" fill="#ffffff" stroke="#6b7c93"/>
+  <text x="60" y="470" class="b">Pre-Gap Buffer</text>
+  <text x="60" y="487" class="s">tx-&gt;mbuf_ring holds</text>
+  <text x="60" y="502" class="s">seq 100..115</text>
+  <text x="60" y="518" class="mono">last_seq = 115</text>
+
+  <line x1="244" y1="494" x2="266" y2="494" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <rect x="268" y="452" width="196" height="84" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="278" y="470" class="err">SW Drop / Resync</text>
+  <text x="278" y="487" class="s">Drops pkts 116..200</text>
+  <text x="278" y="502" class="err">No RTCP FIFO reset!</text>
+  <text x="278" y="518" class="s">count(ring) != 0</text>
+
+  <line x1="464" y1="494" x2="486" y2="494" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <rect x="488" y="452" width="202" height="84" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="498" y="470" class="err">Next Packet (seq 201)</text>
+  <text x="498" y="487" class="mono">diff = 201 - 115 != 1</text>
+  <text x="498" y="503" class="err">returns -EIO forever!</text>
+  <text x="498" y="519" class="s">"seq out of order" flood</text>
+
+  <rect x="50" y="548" width="640" height="82" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="62" y="568" class="err">Consequence: Permanent RTCP Breakage &amp; Pinned Frame Mbufs</text>
+  <text x="62" y="586" class="s">- mt_rtcp_tx_buffer_rtp_packets() rejects every subsequent burst because old mbufs keep count != 0.</text>
+  <text x="62" y="603" class="s">- Those stale buffered mbufs also hold extra refcnts on frame sh_info and mempool objects!</text>
+  <text x="62" y="620" class="s">- No mt_rtcp_tx_buffer_reset() API existed in mt_rtcp.h / mt_rtcp.c.</text>
+
+  <!-- Section 3: DPDK Patch 0015 BEFORE -->
+  <rect x="36" y="658" width="668" height="246" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="678" class="sh">3. DPDK net/ixgbe Port Stop (ixgbe_ethdev.c) Without Patch 0015</text>
+
+  <rect x="50" y="692" width="640" height="90" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="62" y="712" class="mono">ixgbe_dev_stop(dev):</text>
+  <text x="62" y="729" class="mono">  if (get_media_type(hw) == ixgbe_media_type_copper)</text>
+  <text x="62" y="746" class="err">    ixgbe_set_phy_power(hw, false);  // ACI 0x0601 LOW_POWER on E610!</text>
+  <text x="62" y="766" class="s">Next run's ixgbe_dev_start() calls ixgbe_set_phy_power(hw, true) -&gt; firmware restarts autoneg!</text>
+
+  <rect x="50" y="794" width="640" height="96" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="62" y="814" class="err">Measured E610 Chain Reaction</text>
+  <text x="62" y="832" class="s">1. Stop puts PHY in low power -&gt; peer drops &amp; re-links in 4.4 s in low-power state.</text>
+  <text x="62" y="849" class="s">2. Next start powers PHY on (0x0601) -&gt; firmware replies stale LINK_UP for 50..100 ms.</text>
+  <text x="62" y="866" class="s">3. MTL starts TX in the false-UP window -&gt; link drops for 4.7 s autoneg -&gt; TX hang kills run #2!</text>
+
+  <!-- ==================== RIGHT PANEL: AFTER ==================== -->
+  <rect x="740" y="70" width="700" height="848" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="740" y="70" width="700" height="34" rx="8" fill="#2f7d32"/>
+  <rect x="740" y="92" width="700" height="12" fill="#2f7d32"/>
+  <text x="756" y="93" class="ph">AFTER (c5f235c3) — E610 PTP Syncs, RTCP Reset &amp; Continuous Link</text>
+
+  <!-- Section 1: PTP + Patch 0016 AFTER -->
+  <rect x="756" y="118" width="668" height="286" rx="6" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="770" y="138" class="info">1. Built-in PTP T3 Timestamp Path (mt_ptp.c + DPDK Patch 0016)</text>
+
+  <rect x="770" y="150" width="312" height="114" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="782" y="168" class="ok">Patch 0016: Runtime 1588 TX Bit</text>
+  <text x="782" y="186" class="mono">#define IXGBE_TX_IEEE1588_TMST \</text>
+  <text x="782" y="201" class="mono">  RTE_MBUF_F_TX_IEEE1588_TMST</text>
+  <text x="782" y="217" class="mono">if (ol_flags &amp; F_TX_IEEE1588_TMST)</text>
+  <text x="782" y="232" class="ok">  cmd |= IXGBE_ADVTXD_MAC_1588;</text>
+  <text x="782" y="250" class="ok">No macro needed; vector RX stays ON!</text>
+
+  <line x1="1082" y1="207" x2="1096" y2="207" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <rect x="1098" y="150" width="312" height="114" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="1110" y="168" class="info">mt_ptp.c: Single-Report T3 Guard</text>
+  <text x="1110" y="186" class="s">- On valid t3 &gt; t2: resets `t3_timeout_in_a_row`</text>
+  <text x="1110" y="201" class="s">  = 0 and `t3_no_tx_ts_reported = false`</text>
+  <text x="1110" y="218" class="s">- On timeout: `t3_timeout_in_a_row++`; once</text>
+  <text x="1110" y="233" class="ok">  &gt;= MT_PTP_T3_NO_TX_TS_LIMIT (8), logs ONE</text>
+  <text x="1110" y="249" class="info">  err() (+ names patch 0016 on MT_DRV_IXGBE)</text>
+
+  <rect x="770" y="276" width="640" height="114" rx="5" fill="#2f7d32"/>
+  <text x="784" y="297" class="ph" font-size="13">Result: E610 Built-in PTP Syncs Every Second (DPDK 26.07.95_mtl_)</text>
+  <text x="784" y="317" fill="#e6ffea" font-size="11.5">1. mt_dev_create() enables timesync AFTER ixgbe_dev_start() (survives CTRL.RST).</text>
+  <text x="784" y="335" fill="#e6ffea" font-size="11.5">2. Patch 0016 latches TX timestamp on full-featured TX path; simple/vector TX &amp; vector RX untouched.</text>
+  <text x="784" y="353" fill="#e6ffea" font-size="11.2">3. On unpatched DPDK, mt_ptp.c logs one clear error after 8 timeouts (no log flood).</text>
+  <text x="784" y="371" fill="#e6ffea" font-size="11.5">4. Documented in doc/chunks/_ptp_setup.md and CHANGELOG.md (PF + DPDK 26.07.95_mtl_).</text>
+
+  <!-- Section 2: RTCP AFTER -->
+  <rect x="756" y="418" width="668" height="226" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="770" y="438" class="ok">2. RTCP TX Buffer Reset (mt_rtcp.c) Called From tv_drop_sw_pkts()</text>
+
+  <rect x="770" y="452" width="194" height="84" rx="5" fill="#ffffff" stroke="#6b7c93"/>
+  <text x="780" y="470" class="b">Pre-Gap Buffer</text>
+  <text x="780" y="487" class="s">tx-&gt;mbuf_ring holds</text>
+  <text x="780" y="502" class="s">seq 100..115</text>
+  <text x="780" y="518" class="mono">last_seq = 115</text>
+
+  <line x1="964" y1="494" x2="986" y2="494" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <rect x="988" y="452" width="204" height="84" rx="5" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="998" y="470" class="info">tv_drop_sw_pkts()</text>
+  <text x="998" y="487" class="mono">mt_rtcp_tx_buffer_reset</text>
+  <text x="998" y="503" class="mono">mt_fifo_mbuf_clean()</text>
+  <text x="998" y="519" class="ok">Frees mbufs; count = 0!</text>
+
+  <line x1="1192" y1="494" x2="1210" y2="494" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <rect x="1212" y="452" width="198" height="84" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="1222" y="470" class="ok">Next Packet (seq 201)</text>
+  <text x="1222" y="487" class="mono">count(ring) == 0</text>
+  <text x="1222" y="503" class="ok">Accepted cleanly!</text>
+  <text x="1222" y="519" class="mono">last_seq = 201</text>
+
+  <rect x="770" y="548" width="640" height="82" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="782" y="568" class="ok">Clean Restart on Both Link Resync &amp; TX Queue Recovery</text>
+  <text x="782" y="586" class="s">- Releases all pre-gap mbufs immediately so sh_info refcnts and mempools can drain cleanly.</text>
+  <text x="782" y="603" class="s">- Because mt_u64_fifo_count(tx-&gt;mbuf_ring) == 0, the seq-continuity check restarts from the new</text>
+  <text x="782" y="620" class="s">  post-resync sequence number with zero "seq out of order" errors.</text>
+
+  <!-- Section 3: DPDK Patch 0015 AFTER -->
+  <rect x="756" y="658" width="668" height="246" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="770" y="678" class="ok">3. DPDK Patch 0015: Keep E610 Copper PHY Powered at Port Stop</text>
+
+  <rect x="770" y="692" width="640" height="94" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="782" y="712" class="mono">ixgbe_dev_stop(dev):</text>
+  <text x="782" y="729" class="mono">  if (get_media_type(hw) == ixgbe_media_type_copper) {</text>
+  <text x="782" y="746" class="ok">    if (hw-&gt;mac.type != ixgbe_mac_E610)</text>
+  <text x="782" y="762" class="mono">      ixgbe_set_phy_power(hw, false);  }</text>
+  <text x="782" y="778" class="s">(Explicit rte_eth_dev_set_link_down() still powers the PHY off when requested.)</text>
+
+  <rect x="770" y="798" width="640" height="92" rx="5" fill="#2f7d32"/>
+  <text x="784" y="818" class="ph" font-size="13">Result: Zero Autoneg Restarts Across Consecutive MTL Runs</text>
+  <text x="784" y="837" fill="#e6ffea" font-size="11.5">- Matches Linux kernel ixgbe_down() with WoL enabled: PHY stays powered across stop / close / start.</text>
+  <text x="784" y="854" fill="#e6ffea" font-size="11.5">- Subsequent rte_eth_dev_start() sends zero ACI 0x0601 commands; peer carrier never drops.</text>
+  <text x="784" y="871" fill="#e6ffea" font-size="11.5">- Even if an external cable pull occurs mid-stream, PR #1951's link-aware scheduler survives cleanly!</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,940)">
+    <rect width="16" height="12" rx="2" fill="#fde2e2" stroke="#c04040"/><text x="22" y="10" class="s">Before: broken PTP / RTCP flood / PHY drop</text>
+    <rect x="285" width="16" height="12" rx="2" fill="#fde9c8" stroke="#d08a2a"/><text x="307" y="10" class="s">Before: silent timeout / missing reset</text>
+    <rect x="540" width="16" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/><text x="562" y="10" class="s">After: DPDK patch / RTCP reset fix</text>
+    <rect x="785" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="807" y="10" class="s">After: diagnostic &amp; control path fix</text>
+  </g>
+</svg>

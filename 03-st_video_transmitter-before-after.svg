@@ -1,0 +1,205 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="980" viewBox="0 0 1460 980" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 12.5px; fill: #4a5568; }
+      .ph { font-size: 14.5px; font-weight: bold; fill: #ffffff; }
+      .sh { font-size: 13px; font-weight: bold; fill: #1a202c; }
+      .mono { font-family: DejaVu Sans Mono, monospace; font-size: 10.8px; fill: #1a202c; }
+      .s { font-size: 11.4px; fill: #4a5568; }
+      .b { font-weight: bold; fill: #1a202c; }
+      .err { font-weight: bold; fill: #9b1c1c; }
+      .ok { font-weight: bold; fill: #1e6024; }
+      .info { font-weight: bold; fill: #1e4e8c; }
+    </style>
+  </defs>
+
+  <rect width="1460" height="980" fill="#ffffff"/>
+  <text x="24" y="34" class="title">03. st_video_transmitter.c: Link-Down Drop, Resume Guard, Direct-Chain Pins &amp; RL/TSN</text>
+  <text x="24" y="54" class="sub">Files: lib/src/st2110/st_video_transmitter.c (+125/-6), lib/src/st2110/st_tx_link.h, st_tx_video_session.h</text>
+
+  <!-- ==================== LEFT PANEL: BEFORE ==================== -->
+  <rect x="20" y="70" width="700" height="848" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="70" width="700" height="34" rx="8" fill="#c04040"/>
+  <rect x="20" y="92" width="700" height="12" fill="#c04040"/>
+  <text x="36" y="93" class="ph">BEFORE (base 15e2f411) — Blind Bursting &amp; Hang False Positives</text>
+
+  <!-- L1: Tasklet Loop BEFORE -->
+  <rect x="36" y="118" width="668" height="128" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="138" class="sh">1. video_trs_tasklet_handler() + RL Release / Catch-Up Loops</text>
+  <rect x="50" y="150" width="640" height="84" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="62" y="168" class="err">No !s-&gt;active Guard on Dead Sessions</text>
+  <text x="62" y="185" class="s">- video_trs_tasklet_handler(), rl_release(), and rl_catch_up() check only `if (!s)`.</text>
+  <text x="62" y="201" class="s">- After st20_tx_queue_fatal_error() marks s-&gt;active = false, the loop continues to the next s_port</text>
+  <text x="62" y="217" class="s">  and future passes keep invoking pacing callbacks on a dead session.</text>
+
+  <!-- L2: Burst Paths BEFORE -->
+  <rect x="36" y="260" width="668" height="304" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="280" class="sh">2. Pacing &amp; Burst Paths (TSC, RL, TSN Launch-Time)</text>
+
+  <rect x="50" y="294" width="204" height="126" rx="5" fill="#ffffff" stroke="#c04040"/>
+  <text x="60" y="312" class="b">TSC: video_trs_burst()</text>
+  <text x="60" y="329" class="s">- No !nb_pkts guard</text>
+  <text x="60" y="345" class="s">- Bursts straight to NIC</text>
+  <text x="60" y="361" class="err">- Reads tx_pkts[0] &amp;</text>
+  <text x="60" y="376" class="err">  pkt_len AFTER tx_burst</text>
+  <text x="60" y="391" class="s">  (PMD may have freed it!)</text>
+  <text x="60" y="407" class="s">- No trs_frame_started</text>
+
+  <rect x="268" y="294" width="204" height="126" rx="5" fill="#ffffff" stroke="#c04040"/>
+  <text x="278" y="312" class="b">RL: rl_burst / tail / pad</text>
+  <text x="278" y="329" class="s">- No link-down drop</text>
+  <text x="278" y="345" class="s">- Keeps pumping pads &amp;</text>
+  <text x="278" y="360" class="s">  pkts into stalled queue</text>
+  <text x="278" y="376" class="s">- video_trs_rl_short()</text>
+  <text x="278" y="391" class="s">  flags short bursts while</text>
+  <text x="278" y="407" class="s">  link is down</text>
+
+  <rect x="486" y="294" width="204" height="126" rx="5" fill="#ffffff" stroke="#c04040"/>
+  <text x="496" y="312" class="b">TSN: launch_time</text>
+  <text x="496" y="329" class="s">- Calls video_trs_burst()</text>
+  <text x="496" y="345" class="s">  directly</text>
+  <text x="496" y="361" class="s">- Never records launch</text>
+  <text x="496" y="376" class="s">  TSC into trs_wire_tsc</text>
+  <text x="496" y="391" class="s">- Future-scheduled pkts</text>
+  <text x="496" y="407" class="s">  untracked during drain</text>
+
+  <line x1="152" y1="420" x2="152" y2="444" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+  <line x1="370" y1="420" x2="370" y2="444" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+  <line x1="588" y1="420" x2="588" y2="444" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <rect x="50" y="446" width="640" height="104" rx="5" fill="#c04040"/>
+  <text x="64" y="466" class="ph" font-size="13">mt_txq_burst() Returns 0 on Link-Down NIC -&gt; video_trs_burst_fail()</text>
+  <text x="64" y="486" fill="#ffe5e5" font-size="11.5">1. While link is down, NIC TX ring fills (up to nb_tx_desc pkts) and stops taking packets.</text>
+  <text x="64" y="503" fill="#ffe5e5" font-size="11.5">2. After tx_hang_detect_time_thresh (1000 ms), video_trs_burst_fail() declares a TX hang.</text>
+  <text x="64" y="520" fill="#ffe5e5" font-size="11.5">3. Sets s-&gt;tx_queue_recovery_pending[s_port] = true -&gt; triggers st20_tx_queue_fatal_error().</text>
+  <text x="64" y="537" fill="#ffe5e5" font-size="11.5">4. Stale packets held in NIC ring leave late after link up, colliding with mid-frame packets!</text>
+
+  <!-- L3: Direct-chain frame hazard BEFORE -->
+  <rect x="36" y="578" width="668" height="326" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="598" class="sh">3. Direct-Chain Frame Safety &amp; Post-Link-Up Behavior</text>
+  <rect x="50" y="610" width="640" height="132" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="62" y="630" class="err">Direct-Chain Packet Drop Hazard (Why Pinning Is Essential)</text>
+  <text x="62" y="648" class="s">- In tx_direct_chain mode, ONLY the last packet of a frame holds a reference on sh_info.</text>
+  <text x="62" y="665" class="s">- Packets 0..N-2 already sitting in a stalled NIC TX ring hold NO count on sh_info.</text>
+  <text x="62" y="682" class="s">- If link goes down mid-frame and the transmitter drops packet N-1, sh_info refcnt hits 0</text>
+  <text x="62" y="699" class="s">  immediately -&gt; frame returns to app and gets overwritten while NIC ring still holds pkts 0..N-2!</text>
+  <text x="62" y="716" class="err">- No trs_frame_started, no sh_pins, no nb_tx_desc unpin fence existed before PR #1951.</text>
+
+  <rect x="50" y="754" width="640" height="136" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="62" y="774" class="err">No Link-Up Resume Holdoff or Frame-Start Alignment</text>
+  <text x="62" y="792" class="s">- On link return, TX immediately injects packets into a NIC ring still draining stale pre-down pkts.</text>
+  <text x="62" y="809" class="s">- On RL pacing, warm-up pads and armed shaper bucket refill_ns are not waited for.</text>
+  <text x="62" y="826" class="s">- A leg can resume mid-frame instead of cleanly at packet 0 with its warm-up / pre-arm.</text>
+  <text x="62" y="843" class="s">- No notification to builder (tx_link_resync) to drop queued SW rings and advance to a fresh epoch.</text>
+
+  <!-- ==================== RIGHT PANEL: AFTER ==================== -->
+  <rect x="740" y="70" width="700" height="848" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="740" y="70" width="700" height="34" rx="8" fill="#2f7d32"/>
+  <rect x="740" y="92" width="700" height="12" fill="#2f7d32"/>
+  <text x="756" y="93" class="ph">AFTER (PR #1951 HEAD c5f235c3) — Link State Machine, Frame Pins &amp; Clean Resume</text>
+
+  <!-- R1: Tasklet Loop AFTER -->
+  <rect x="756" y="118" width="668" height="108" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="770" y="138" class="ok">1. Active-Session Guards Across All Transmitter Loops</text>
+  <rect x="770" y="150" width="640" height="64" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="782" y="168" class="s">- tasklet_handler(), rl_release(), rl_catch_up(): `if (!s || !s-&gt;active) continue;`</text>
+  <text x="782" y="185" class="s">- After st20_tx_queue_fatal_error(): `if (!s-&gt;active) break;` skips remaining legs of dead session.</text>
+  <text x="782" y="201" class="s">- video_trs_rl_short(): returns false while `tx_link[s_port].down || trs_link_resume_tsc[s_port]`.</text>
+
+  <!-- R2: video_trs_link_down() State Machine AFTER -->
+  <rect x="756" y="240" width="668" height="316" rx="6" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="770" y="260" class="info">2. video_trs_link_down(impl, s, s_port, first) — Called at Every Burst Entry</text>
+
+  <!-- Entry badges -->
+  <rect x="770" y="270" width="640" height="28" rx="4" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="782" y="288" class="mono">Entries: trs_burst | rl_burst | rl_tail_burst | burst_pad | _rl_tasklet (before pkt 0 pads)</text>
+
+  <!-- State 1: UP -> DOWN -->
+  <rect x="770" y="310" width="202" height="156" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="780" y="328" class="b">Edge: UP -&gt; DOWN</text>
+  <text x="780" y="345" class="s">- st_tx_link_changed()</text>
+  <text x="780" y="361" class="s">- Reset last_burst_succ</text>
+  <text x="780" y="376" class="s">  = link-&gt;tsc; clear</text>
+  <text x="780" y="391" class="s">  fence &amp; resume_tsc</text>
+  <text x="780" y="407" class="ok">- If tx_direct_chain:</text>
+  <text x="780" y="422" class="s">  pin(trs_frame_started)</text>
+  <text x="780" y="437" class="s">  BEFORE drop!</text>
+  <text x="780" y="453" class="info">- tx_link_resync |= bit</text>
+
+  <line x1="972" y1="388" x2="990" y2="388" stroke="#2b6cb0" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+
+  <!-- State 2: WHILE DOWN -->
+  <rect x="992" y="310" width="194" height="156" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="1002" y="328" class="ok">While DOWN</text>
+  <text x="1002" y="345" class="s">- Returns true to caller</text>
+  <text x="1002" y="362" class="s">- Caller invokes:</text>
+  <text x="1002" y="378" class="mono">  video_trs_link_</text>
+  <text x="1002" y="392" class="mono">  down_drop()</text>
+  <text x="1002" y="409" class="s">- rte_pktmbuf_free_bulk</text>
+  <text x="1002" y="425" class="s">- stat_pkts_link_down_</text>
+  <text x="1002" y="440" class="s">  drop += nb_pkts</text>
+  <text x="1002" y="455" class="ok">- Returns nb_pkts</text>
+
+  <line x1="1186" y1="388" x2="1204" y2="388" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <!-- State 3: DOWN -> UP -->
+  <rect x="1206" y="310" width="204" height="156" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="1216" y="328" class="ok">Edge: DOWN -&gt; UP</text>
+  <text x="1216" y="345" class="s">- Reset last_burst_succ</text>
+  <text x="1216" y="361" class="s">- Set resume_tsc = now</text>
+  <text x="1216" y="376" class="s">  + nb_tx_desc * trs</text>
+  <text x="1216" y="391" class="s">  + RL(warm + refill_ns)</text>
+  <text x="1216" y="407" class="s">- Direct-chain: set</text>
+  <text x="1216" y="422" class="s">  trs_link_fence=nb_desc</text>
+  <text x="1216" y="438" class="ok">- Keep dropping until</text>
+  <text x="1216" y="453" class="ok">  pkt 0 &amp;&amp; tsc &gt;= resume!</text>
+
+  <rect x="770" y="478" width="640" height="66" rx="5" fill="#2f7d32"/>
+  <text x="784" y="497" class="ph" font-size="12.5">Resume Gate Cleared -&gt; video_trs_burst_succ() -&gt; video_trs_link_unpin()</text>
+  <text x="784" y="515" fill="#e6ffea" font-size="11.2">Each real NIC burst decrements trs_link_fence[s_port] by tx. After nb_tx_desc pkts leave post-UP,</text>
+  <text x="784" y="532" fill="#e6ffea" font-size="11.2">all pre-down descriptors are freed -&gt; unpin drops sh_pins across sh_info[0..3] &amp; fires free_cb!</text>
+
+  <!-- R3: Burst & TSN improvements AFTER -->
+  <rect x="756" y="570" width="668" height="334" rx="6" fill="#eef2f7" stroke="#3a8a3a"/>
+  <text x="770" y="590" class="ok">3. Hardened TSC, RL &amp; TSN Burst Paths</text>
+
+  <rect x="770" y="602" width="640" height="92" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="782" y="620" class="ok">video_trs_burst() — Pre-Burst Snapshot &amp; Frame Start Tracking</text>
+  <text x="782" y="637" class="s">- Guards `if (!nb_pkts) return 0;` and `if (video_trs_link_down(..., tx_pkts[0])) return drop(...)`.</text>
+  <text x="782" y="654" class="s">- Snapshots pkt_idx, frame (if pkt 0), and total bytes BEFORE mt_txq_burst() (safe if PMD frees).</text>
+  <text x="782" y="671" class="s">- On tx &gt; 0 &amp;&amp; pkt 0: saves `trs_frame_started[s_port] = frame` (also in video_trs_pkts_sent()).</text>
+  <text x="782" y="686" class="s">- Subtracts unsent pkts[tx..nb_pkts-1]-&gt;pkt_len from bytes; updates stats accurately.</text>
+
+  <rect x="770" y="706" width="640" height="88" rx="5" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="782" y="724" class="info">video_trs_tsn_burst() — Hardware Launch-Time Wire Tracking</text>
+  <text x="782" y="741" class="s">- Wraps video_trs_burst() for both inflight and fresh bursts in video_trs_launch_time_tasklet().</text>
+  <text x="782" y="758" class="s">- Captures last_tsc = st_tx_mbuf_get_tsc(tx_pkts[nb_pkts - 1]) BEFORE NIC owns the mbuf.</text>
+  <text x="782" y="775" class="s">- Updates `trs_wire_tsc[s_port] = max(last_tsc)` when UP -&gt; tv_link_up_drain_tsc() waits past it!</text>
+
+  <rect x="770" y="806" width="640" height="84" rx="5" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="782" y="824" class="ok">RL Pacing Specifics (_video_trs_rl_tasklet &amp; video_trs_rl_tail_burst)</text>
+  <text x="782" y="841" class="s">- _video_trs_rl_tasklet() invokes video_trs_link_down(..., pkts[valid_bulk]) BEFORE packet 0's warm-up</text>
+  <text x="782" y="858" class="s">  pads so the first frame past trs_link_resume_tsc cleanly emits its warm-up / pre-arm sequence.</text>
+  <text x="782" y="875" class="s">- video_trs_rl_tail_burst() checks link down first and drops without pads, keeping tail timing exact.</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,940)">
+    <rect width="16" height="12" rx="2" fill="#fde2e2" stroke="#c04040"/><text x="22" y="10" class="s">Before: hang false-positive / UAF</text>
+    <rect x="230" width="16" height="12" rx="2" fill="#fde9c8" stroke="#d08a2a"/><text x="252" y="10" class="s">Transition / edge guard</text>
+    <rect x="420" width="16" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/><text x="442" y="10" class="s">After: link-aware burst &amp; unpin</text>
+    <rect x="650" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="672" y="10" class="s">After: state machine &amp; TSN tracking</text>
+  </g>
+</svg>

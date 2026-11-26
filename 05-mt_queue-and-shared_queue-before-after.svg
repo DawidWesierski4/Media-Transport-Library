@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="940" viewBox="0 0 1460 940" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 12.5px; fill: #4a5568; }
+      .ph { font-size: 14.5px; font-weight: bold; fill: #ffffff; }
+      .sh { font-size: 13px; font-weight: bold; fill: #1a202c; }
+      .mono { font-family: DejaVu Sans Mono, monospace; font-size: 10.8px; fill: #1a202c; }
+      .s { font-size: 11.4px; fill: #4a5568; }
+      .b { font-weight: bold; fill: #1a202c; }
+      .err { font-weight: bold; fill: #9b1c1c; }
+      .ok { font-weight: bold; fill: #1e6024; }
+      .info { font-weight: bold; fill: #1e4e8c; }
+    </style>
+  </defs>
+
+  <rect width="1460" height="940" fill="#ffffff"/>
+  <text x="24" y="34" class="title">05. mt_queue.c, mt_shared_queue.c &amp; mt_util.c: Done Cleanup, Lazy Flush &amp; Frame Teardown</text>
+  <text x="24" y="54" class="sub">Files: lib/src/datapath/mt_queue.c, mt_queue.h, mt_shared_queue.c, lib/src/mt_util.c (+17/-4)</text>
+
+  <!-- ==================== LEFT PANEL: BEFORE ==================== -->
+  <rect x="20" y="70" width="700" height="808" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="70" width="700" height="34" rx="8" fill="#c04040"/>
+  <rect x="20" y="92" width="700" height="12" fill="#c04040"/>
+  <text x="36" y="93" class="ph">BEFORE (base 15e2f411) — Blind Cleanup, Unbounded Flush &amp; UAF Teardown</text>
+
+  <!-- Band 1 BEFORE -->
+  <rect x="36" y="118" width="668" height="196" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="138" class="sh">1. mt_queue.c &amp; mt_shared_queue.c — TX Done Cleanup Return Discarded</text>
+
+  <rect x="50" y="150" width="310" height="148" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="62" y="168" class="b">mt_txq_done_cleanup()</text>
+  <text x="62" y="186" class="mono">if (entry-&gt;txq)</text>
+  <text x="62" y="201" class="mono">  mt_dev_tx_done_cleanup(...);</text>
+  <text x="62" y="216" class="mono">if (entry-&gt;tsq)</text>
+  <text x="62" y="231" class="mono">  mt_tsq_done_cleanup(...);</text>
+  <text x="62" y="246" class="err">return 0;  // discards count!</text>
+  <text x="62" y="268" class="s">Caller cannot know if PMD freed</text>
+  <text x="62" y="283" class="s">&gt; 0 descriptors or 0 (dead ring!).</text>
+
+  <rect x="378" y="150" width="312" height="148" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="390" y="168" class="b">mt_tsq_done_cleanup()</text>
+  <text x="390" y="186" class="mono">tsq_lock(tsq_queue);</text>
+  <text x="390" y="201" class="mono">rte_eth_tx_done_cleanup(</text>
+  <text x="390" y="216" class="mono">  port_id, queue_id, 0);</text>
+  <text x="390" y="231" class="mono">tsq_unlock(tsq_queue);</text>
+  <text x="390" y="246" class="err">return 0;  // discards ret!</text>
+  <text x="390" y="268" class="s">Shared TX queues hide both PMD</text>
+  <text x="390" y="283" class="s">freed count and -ENOTSUP errors.</text>
+
+  <!-- Band 2 BEFORE -->
+  <rect x="36" y="328" width="668" height="252" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="348" class="sh">2. mt_shared_queue.c (mt_tsq_flush) &amp; mt_dev.c (mt_dpdk_flush_tx_queue)</text>
+
+  <rect x="50" y="360" width="640" height="206" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="62" y="379" class="err">Unbounded Per-Pad Flush With Refcnt Leak &amp; False Success</text>
+  <text x="62" y="399" class="mono">int burst_pkts = mt_if_nb_tx_burst(impl, port) * 2;</text>
+  <text x="62" y="415" class="mono">for (int i = 0; i &lt; burst_pkts; i++) {</text>
+  <text x="62" y="431" class="mono">  rte_mbuf_refcnt_update(pad, 1);</text>
+  <text x="62" y="447" class="mono">  mt_tsq_burst_busy(impl, entry, &amp;pads[0], 1, 10); // return value IGNORED!</text>
+  <text x="62" y="463" class="mono">}  return 0;  // always claims queue is clean!</text>
+  <text x="62" y="486" class="err">- Fault 1: No link-down pre-check -&gt; spins uselessly on a port with no carrier.</text>
+  <text x="62" y="503" class="err">- Fault 2: When burst fails (returns 0), pad refcnt was incremented (+1) and NEVER decremented!</text>
+  <text x="62" y="520" class="err">- Fault 3: No consecutive stall timer -&gt; blocks teardown for full burst_pkts * retry_ms.</text>
+  <text x="62" y="537" class="err">- Fault 4: Returns 0 even when 0 pads left -&gt; tv_uinit_hw() never knows the queue is still dirty!</text>
+  <text x="62" y="554" class="s">  (Identical flaw existed in the lazy loop of mt_dpdk_flush_tx_queue() in mt_dev.c.)</text>
+
+  <!-- Band 3 BEFORE -->
+  <rect x="36" y="594" width="668" height="270" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="614" class="sh">3. mt_util.c — st_frame_trans_uinit() Frees Active DMA Buffer</text>
+
+  <rect x="50" y="626" width="640" height="122" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="62" y="645" class="mono">uint16_t sh_info_refcnt = rte_mbuf_ext_refcnt_read(&amp;frame-&gt;sh_info);</text>
+  <text x="62" y="661" class="mono">if (sh_info_refcnt) warn("sh_info still active, refcnt %d", sh_info_refcnt);</text>
+  <text x="62" y="679" class="err">if (frame-&gt;addr) {  // FREES DMA MEMORY ANYWAY!</text>
+  <text x="62" y="695" class="mono">  mt_rte_free(frame-&gt;addr);  /* or mtl_hp_free / gpu_free */</text>
+  <text x="62" y="711" class="mono">  frame-&gt;addr = NULL;  }</text>
+  <text x="62" y="727" class="mono">frame-&gt;iova = 0;</text>
+
+  <rect x="50" y="760" width="640" height="90" rx="5" fill="#c04040"/>
+  <text x="64" y="781" class="ph" font-size="13">Result on Link-Down Session Free / Dead Queue</text>
+  <text x="64" y="800" fill="#ffe5e5" font-size="11.5">- Only inspected a single sh_info struct and treated active refcnt as a log warning only.</text>
+  <text x="64" y="817" fill="#ffe5e5" font-size="11.5">- Freed frame-&gt;addr while a dead or unflushed TX queue still held chain mbufs pointing to it!</text>
+  <text x="64" y="834" fill="#ffe5e5" font-size="11.5">- Subsequent NIC DMA or port-stop mbuf free touches freed / reallocated memory (UAF / IOMMU fault)!</text>
+
+  <!-- ==================== RIGHT PANEL: AFTER ==================== -->
+  <rect x="740" y="70" width="700" height="808" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="740" y="70" width="700" height="34" rx="8" fill="#2f7d32"/>
+  <rect x="740" y="92" width="700" height="12" fill="#2f7d32"/>
+  <text x="756" y="93" class="ph">AFTER (c5f235c3) — Propagated Count, Bounded Flush &amp; Safe DMA Retention</text>
+
+  <!-- Band 1 AFTER -->
+  <rect x="756" y="118" width="668" height="196" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="770" y="138" class="ok">1. mt_queue.c &amp; mt_shared_queue.c — Return Freed Packet Count</text>
+
+  <rect x="770" y="150" width="314" height="148" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="782" y="168" class="ok">mt_txq_done_cleanup()</text>
+  <text x="782" y="186" class="mono">if (entry-&gt;txq)</text>
+  <text x="782" y="201" class="ok">  return mt_dev_tx_done_cleanup(...);</text>
+  <text x="782" y="216" class="mono">if (entry-&gt;tsq)</text>
+  <text x="782" y="231" class="ok">  return mt_tsq_done_cleanup(...);</text>
+  <text x="782" y="246" class="mono">return 0;</text>
+  <text x="782" y="268" class="s">&gt; 0 proves NIC is draining pkts;</text>
+  <text x="782" y="283" class="s">0 after hang thresh detects dead ring.</text>
+
+  <rect x="1098" y="150" width="312" height="148" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="1110" y="168" class="ok">mt_tsq_done_cleanup()</text>
+  <text x="1110" y="186" class="mono">tsq_lock(tsq_queue);</text>
+  <text x="1110" y="201" class="ok">int ret = rte_eth_tx_done_cleanup(</text>
+  <text x="1110" y="216" class="ok">  port_id, queue_id, 0);</text>
+  <text x="1110" y="231" class="mono">tsq_unlock(tsq_queue);</text>
+  <text x="1110" y="246" class="ok">return ret;</text>
+  <text x="1110" y="268" class="s">Feeds tv_link_free_done() for both</text>
+  <text x="1110" y="283" class="s">dedicated and shared TX queues.</text>
+
+  <!-- Band 2 AFTER -->
+  <rect x="756" y="328" width="668" height="252" rx="6" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="770" y="348" class="info">2. mt_tsq_flush() &amp; mt_dpdk_flush_tx_queue() — Unified Bounded Lazy Flush</text>
+
+  <rect x="770" y="360" width="640" height="206" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="782" y="379" class="info">Link-Down Fast Exit + Stall Guard + Honest -EBUSY Reporting</text>
+  <text x="782" y="399" class="ok">1. if (mt_dev_link_down(impl, port)) { warn(...); return -EBUSY; }</text>
+  <text x="782" y="416" class="mono">2. for (i = 0; i &lt; burst_pkts; i++) {</text>
+  <text x="782" y="432" class="mono">     rte_mbuf_refcnt_update(pad, 1);</text>
+  <text x="782" y="448" class="mono">     if (burst_busy(..., &amp;pads[0], 1, retry)) { sent_total++; stall_start = 0; continue; }</text>
+  <text x="782" y="464" class="ok">     rte_mbuf_refcnt_update(pad, -1);  // no refcnt leak!</text>
+  <text x="782" y="480" class="ok">     if (mt_dev_link_down(impl, port) || mt_dev_tx_flush_stalled(now, &amp;stall_start))</text>
+  <text x="782" y="496" class="ok">       return -EBUSY;  // MT_DEV_TX_FLUSH_LAZY_STALL_NS = 64 ms</text>
+  <text x="782" y="512" class="mono">   }</text>
+  <text x="782" y="530" class="ok">3. return sent_total &lt; burst_pkts / 2 ? -EBUSY : 0;</text>
+  <text x="782" y="551" class="s">4. tv_uinit_hw() sees -EBUSY -&gt; calls mt_txq_fatal_error(s-&gt;queue[i]) so no future session reuses it!</text>
+
+  <!-- Band 3 AFTER -->
+  <rect x="756" y="594" width="668" height="270" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="770" y="614" class="ok">3. mt_util.c — st_frame_trans_uinit() Retains Active DMA Buffers</text>
+
+  <rect x="770" y="626" width="640" height="132" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="782" y="645" class="mono">bool sh_active = false;</text>
+  <text x="782" y="661" class="ok">for (int i = 0; i &lt; RTE_DIM(frame-&gt;sh_info); i++) { // checks all 4 slots</text>
+  <text x="782" y="677" class="mono">  if (rte_mbuf_ext_refcnt_read(&amp;frame-&gt;sh_info[i])) { warn(...); sh_active = true; }</text>
+  <text x="782" y="693" class="mono">}</text>
+  <text x="782" y="711" class="ok">if (frame-&gt;addr &amp;&amp; !sh_active) {  // ONLY free when zero mbufs reference frame!</text>
+  <text x="782" y="727" class="mono">  mt_rte_free(frame-&gt;addr);  /* or mtl_hp_free / gpu_free */</text>
+  <text x="782" y="743" class="mono">  frame-&gt;addr = NULL;  frame-&gt;iova = 0;  }</text>
+
+  <rect x="770" y="768" width="640" height="82" rx="5" fill="#2f7d32"/>
+  <text x="784" y="789" class="ph" font-size="13">Result: Zero UAF on Link-Down Session Free or Dead Queue Exit</text>
+  <text x="784" y="808" fill="#e6ffea" font-size="11.5">- Active DMA buffers stay mapped while dead/unflushed TX rings hold chain mbufs pointing to them.</text>
+  <text x="784" y="825" fill="#e6ffea" font-size="11.5">- Paired with tv_free_frames(): busy sh_info[j].free_cb = tv_frame_stale_free_cb and s-&gt;st20_frames</text>
+  <text x="784" y="842" fill="#e6ffea" font-size="11.5">  stays allocated until DPDK port stop safely releases every remaining descriptor.</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,900)">
+    <rect width="16" height="12" rx="2" fill="#fde2e2" stroke="#c04040"/><text x="22" y="10" class="s">Before: leak / stall / UAF hazard</text>
+    <rect x="225" width="16" height="12" rx="2" fill="#fde9c8" stroke="#d08a2a"/><text x="247" y="10" class="s">Before: discarded return / warning-only check</text>
+    <rect x="520" width="16" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/><text x="542" y="10" class="s">After: cleanup &amp; DMA retention fix</text>
+    <rect x="765" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="787" y="10" class="s">After: bounded lazy flush helper</text>
+  </g>
+</svg>

@@ -1,0 +1,213 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="1080" viewBox="0 0 1460 1080" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/>
+    </marker>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a202c; }
+      .sub { font-size: 12.5px; fill: #4a5568; }
+      .ph { font-size: 14.5px; font-weight: bold; fill: #ffffff; }
+      .sh { font-size: 13px; font-weight: bold; fill: #1a202c; }
+      .mono { font-family: DejaVu Sans Mono, monospace; font-size: 10.8px; fill: #1a202c; }
+      .s { font-size: 11.4px; fill: #4a5568; }
+      .b { font-weight: bold; fill: #1a202c; }
+      .err { font-weight: bold; fill: #9b1c1c; }
+      .ok { font-weight: bold; fill: #1e6024; }
+      .info { font-weight: bold; fill: #1e4e8c; }
+    </style>
+  </defs>
+
+  <rect width="1460" height="1080" fill="#ffffff"/>
+  <text x="24" y="34" class="title">02. st_tx_video_session.c: Builder Tasklet, Link Resync/Drain, sh_info[4] &amp; Queue Recovery</text>
+  <text x="24" y="54" class="sub">Files: lib/src/st2110/st_tx_video_session.c (+930/-130), st_tx_video_session.h, st_header.h</text>
+
+  <!-- ==================== LEFT PANEL: BEFORE ==================== -->
+  <rect x="20" y="70" width="700" height="948" rx="8" fill="#fffafa" stroke="#e09a9a" stroke-width="1.5"/>
+  <rect x="20" y="70" width="700" height="34" rx="8" fill="#c04040"/>
+  <rect x="20" y="92" width="700" height="12" fill="#c04040"/>
+  <text x="36" y="93" class="ph">BEFORE (base 15e2f411) — Fragile Builder, Fatal Recovery &amp; UAF Risks</text>
+
+  <!-- B1: tvs_tasklet_handler BEFORE -->
+  <rect x="36" y="118" width="668" height="226" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="138" class="sh">1. tvs_tasklet_handler() — Frame / ST22 / RTP Build Loop</text>
+
+  <rect x="50" y="150" width="310" height="114" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="62" y="168" class="err">No Link Resync or Drain Phase</text>
+  <text x="62" y="185" class="s">- Directly enters tv_tasklet_frame / st22 / rtp</text>
+  <text x="62" y="201" class="s">- Frame build holds NO ref on sh_info -&gt; if TX</text>
+  <text x="62" y="216" class="s">  drops pkts at once, frame frees mid-build!</text>
+  <text x="62" y="232" class="s">- cur_epochs advances blindly (no epoch_resync)</text>
+  <text x="62" y="248" class="s">- RTP dequeue has no tail-drop after cut frame</text>
+
+  <rect x="378" y="150" width="312" height="114" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="390" y="168" class="err">tv_frames_out_hang() Fires on Link Down</text>
+  <text x="390" y="185" class="s">- Reclaim ports wait for prior frames to free</text>
+  <text x="390" y="201" class="s">- Never checks mt_dev_link_down() or drain state</text>
+  <text x="390" y="217" class="s">- After hang threshold: sets</text>
+  <text x="390" y="233" class="mono">  tx_queue_recovery_pending[p] = true</text>
+  <text x="390" y="249" class="s">  even while port link is physically DOWN!</text>
+
+  <rect x="50" y="274" width="640" height="58" rx="5" fill="#ffffff" stroke="#d08a2a"/>
+  <text x="62" y="293" class="b">Stats &amp; Lead Attribution (tv_behind_err / tv_sessions_stat)</text>
+  <text x="62" y="310" class="s">- No stat_pkts_link_down_drop; no parked pool reaping in tv_sessions_stat()</text>
+  <text x="62" y="324" class="s">- Any lead_ns &lt; 0 blames scheduler overload even when app delivered frames late (epoch_drop &gt; 0)</text>
+
+  <!-- B2: Frame sh_info model BEFORE -->
+  <rect x="36" y="358" width="668" height="128" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="378" class="sh">2. Zero-Copy Frame Ownership (st_frame_trans)</text>
+  <rect x="50" y="390" width="640" height="84" rx="5" fill="#fde2e2" stroke="#c04040"/>
+  <text x="62" y="409" class="err">Single struct rte_mbuf_ext_shared_info sh_info</text>
+  <text x="62" y="427" class="s">- Every chain mbuf points to the one sh_info; no sh_pins, no link_held, no link_stale_sh.</text>
+  <text x="62" y="444" class="s">- Zeroing sh_info while a dead TX queue holds chain mbufs frees frame to app -&gt; UAF / DMA corrupt!</text>
+  <text x="62" y="461" class="s">- tv_free_frames() calls mt_rte_free(s-&gt;st20_frames) while dead queues still reference sh_info!</text>
+
+  <!-- B3: st20_tx_queue_fatal_error BEFORE -->
+  <rect x="36" y="500" width="668" height="360" rx="6" fill="#fde2e2" stroke="#c04040"/>
+  <text x="50" y="520" class="err">3. st20_tx_queue_fatal_error() — Fatal Cascade Since PR #1649</text>
+
+  <rect x="56" y="534" width="628" height="44" rx="5" fill="#ffffff" stroke="#8a9bb0"/>
+  <text x="68" y="553" class="b">Step 1: SW Cleanup</text>
+  <text x="68" y="569" class="s">tv_frames_hold() -&gt; clean packet_ring/ring[i] -&gt; transmitter_state_cleanup() -&gt; done_cleanup()</text>
+
+  <line x1="370" y1="578" x2="370" y2="592" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <rect x="56" y="594" width="628" height="54" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="68" y="613" class="err">Step 2: Swap Queue &amp; Flush ALL Sibling Legs Blindly</text>
+  <text x="68" y="630" class="s">mt_txq_fatal_error/get() -&gt; calls mt_txq_recovery_flush() on sibling leg even if its link is DOWN</text>
+  <text x="68" y="643" class="s">or recovery is pending -&gt; flush fails -&gt; s-&gt;active = false, ST_EVENT_FATAL_ERROR!</text>
+
+  <line x1="370" y1="648" x2="370" y2="662" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <rect x="56" y="664" width="628" height="54" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="68" y="683" class="err">Step 3: Force-Stop Frames &amp; Reset Single sh_info</text>
+  <text x="68" y="700" class="s">For each refcnt &gt; 0: tv_notify_frame_done(), refcnt--, rte_mbuf_ext_refcnt_set(&amp;frame-&gt;sh_info, 0).</text>
+  <text x="68" y="713" class="s">Unsafe if dead queue or down sibling holds DMA pointers into the frame (especially EXT frames)!</text>
+
+  <line x1="370" y1="718" x2="370" y2="732" stroke="#c04040" stroke-width="1.8" marker-end="url(#arr-red)"/>
+
+  <rect x="56" y="734" width="628" height="112" rx="5" fill="#c04040"/>
+  <text x="68" y="754" class="ph" font-size="13">Step 4: tv_mempool_free() Fails With -EBUSY -&gt; Session Dies!</text>
+  <text x="68" y="773" fill="#ffe5e5" font-size="11.5">- Dead NIC queue still holds mbufs from mbuf_mempool_hdr / mbuf_mempool_chain.</text>
+  <text x="68" y="790" fill="#ffe5e5" font-size="11.5">- tv_mempool_free() sees in_use &gt; 0 -&gt; logs "old mempool still in use" -&gt; s-&gt;active = false!</text>
+  <text x="68" y="807" fill="#ffe5e5" font-size="11.5">- Even if free succeeded, pointers became NULL before tv_mempool_init() -&gt; app thread race in</text>
+  <text x="68" y="824" fill="#ffe5e5" font-size="11.5">  st20_tx_get_mbuf() / st22_tx_get_mbuf()! Also RTCP FIFO was never reset (seq-gap flood).</text>
+  <text x="68" y="841" fill="#ffe5e5" font-size="11.5">- tv_uinit() ignores mt_txq_flush() &lt; 0 and frees s-&gt;st20_frames even while dead queues hold mbufs.</text>
+
+  <!-- B4: Teardown BEFORE -->
+  <rect x="36" y="874" width="668" height="130" rx="6" fill="#eef2f7" stroke="#6b7c93"/>
+  <text x="50" y="894" class="sh">4. Session Teardown: tv_uinit() / tv_uinit_hw() / tv_free_frames()</text>
+  <rect x="50" y="906" width="640" height="86" rx="5" fill="#fde9c8" stroke="#d08a2a"/>
+  <text x="62" y="925" class="s">- tv_uinit_hw(): calls mt_txq_flush() and ignores negative error -&gt; unflushed queue returned to pool</text>
+  <text x="62" y="942" class="s">  as healthy (next session inherits stuck/dirty descriptors!).</text>
+  <text x="62" y="959" class="s">- tv_free_frames(): frees s-&gt;st20_frames &amp; frame-&gt;addr unconditionally -&gt; port stop later invokes</text>
+  <text x="62" y="976" class="s">  sh_info.free_cb on freed memory (crash at exit!).</text>
+
+  <!-- ==================== RIGHT PANEL: AFTER ==================== -->
+  <rect x="740" y="70" width="700" height="948" rx="8" fill="#f6fbf7" stroke="#88c288" stroke-width="1.5"/>
+  <rect x="740" y="70" width="700" height="34" rx="8" fill="#2f7d32"/>
+  <rect x="740" y="92" width="700" height="12" fill="#2f7d32"/>
+  <text x="756" y="93" class="ph">AFTER (PR #1951 HEAD c5f235c3) — Resync/Drain State Machine &amp; Safe Recovery</text>
+
+  <!-- A1: tvs_tasklet_handler AFTER -->
+  <rect x="756" y="118" width="668" height="310" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="770" y="138" class="ok">1. tvs_tasklet_handler() — Two New Link Control Gates Before Build</text>
+
+  <!-- Gate 1: tv_link_resync -->
+  <rect x="770" y="150" width="314" height="170" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="782" y="168" class="info">A) if (s-&gt;tx_link_resync) tv_link_resync()</text>
+  <text x="782" y="185" class="s">1. Compute release_tsc for UP sibling legs</text>
+  <text x="782" y="200" class="s">   (nb_tx_desc*trs + RL refill / TSN wire_tsc)</text>
+  <text x="782" y="216" class="s">2. Direct-chain: tv_link_pin_frames() pins</text>
+  <text x="782" y="231" class="s">   started frames + sets UP leg fence</text>
+  <text x="782" y="247" class="s">3. tv_drop_sw_pkts(): build_drop, drains</text>
+  <text x="782" y="262" class="s">   packet_ring (+notify_rtp_done, drop_frame),</text>
+  <text x="782" y="277" class="s">   SW rings, trs state, RTCP reset, resync</text>
+  <text x="782" y="293" class="s">4. Releases unheld frames; marks rest link_held</text>
+  <text x="782" y="309" class="s">5. tv_link_start_drain() (stale/short bitmasks)</text>
+
+  <line x1="1084" y1="235" x2="1102" y2="235" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <!-- Gate 2: tv_link_drain -->
+  <rect x="1104" y="150" width="306" height="170" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="1116" y="168" class="ok">B) if (s-&gt;tx_link_drain) tv_link_drain()</text>
+  <text x="1116" y="185" class="s">- Throttled every 20 us (RECLAIM_NS)</text>
+  <text x="1116" y="201" class="s">- Redundant &amp; 1 leg UP: past release_tsc,</text>
+  <text x="1116" y="216" class="s">  retires sh_info for lib frames (keeps EXT)</text>
+  <text x="1116" y="232" class="s">- Polls UP queues: tv_link_free_done() (skips</text>
+  <text x="1116" y="247" class="s">  tx_done_cleanup on DPDK 26.07 iavf/ice/i40e!)</text>
+  <text x="1116" y="263" class="s">- Once all links UP &amp; !held: resets stale, sets</text>
+  <text x="1116" y="278" class="s">  tx_link_drain=false, pacing.epoch_resync=true</text>
+  <text x="1116" y="294" class="ok">- Stale non-short leg frees 0 for hang:</text>
+  <text x="1116" y="309" class="ok">  flags tx_queue_recovery_pending[p] = true!</text>
+
+  <!-- Build enhancements -->
+  <rect x="770" y="330" width="640" height="86" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="782" y="348" class="ok">C) Build Path Guards (Frame / ST22 / RTP / Hang / Stats)</text>
+  <text x="782" y="365" class="s">- tv_frame_build_hold() / tv_frame_build_put(): +1/-1 on sh_cur protects frame during build</text>
+  <text x="782" y="381" class="s">- tv_prev_epoch(): jumps to max(cur, now_epoch) on resync/drain; tv_rtp_dequeue() drops cut tail</text>
+  <text x="782" y="397" class="s">- tv_frames_out_hang() pauses on link_down / drain; tv_behind_err() attributes per-session epoch_drop</text>
+  <text x="782" y="411" class="s">- tv_sessions_stat() logs pkts_link_down_drop &amp; reaps parked pools older than 1 s (PARK_NS)</text>
+
+  <!-- A2: Multi-slot sh_info[4] AFTER -->
+  <rect x="756" y="442" width="668" height="106" rx="6" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="770" y="462" class="info">2. Multi-Slot sh_info[ST_FT_SH_INFO_MAX = 4] &amp; Direct-Chain Pins</text>
+  <rect x="770" y="474" width="640" height="62" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="782" y="492" class="b">sh_info[0..3], *sh_cur, sh_pins[0..3], link_stale_sh, link_held</text>
+  <text x="782" y="509" class="s">- tv_frame_sh_retire() sets old free_cb = tv_frame_stale_free_cb and moves sh_cur to a free slot.</text>
+  <text x="782" y="525" class="s">- Dead queues count on retired slots until port stop; session survives 3 dead queues without UAF!</text>
+
+  <!-- A3: st20_tx_queue_fatal_error AFTER -->
+  <rect x="756" y="562" width="668" height="298" rx="6" fill="#e3f4e3" stroke="#3a8a3a"/>
+  <text x="770" y="582" class="ok">3. st20_tx_queue_fatal_error() — Atomic Recovery With Pool Parking</text>
+
+  <rect x="772" y="594" width="636" height="46" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="784" y="612" class="ok">Step 1: Compute down_mask / keep_pins &amp; Clean SW + RTCP</text>
+  <text x="784" y="629" class="s">Pins unresynced down siblings; tv_frames_hold() + tv_drop_sw_pkts() (RTCP reset!) + done_cleanup</text>
+
+  <line x1="1090" y1="640" x2="1090" y2="652" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <rect x="772" y="654" width="636" height="50" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="784" y="672" class="ok">Step 2: Selective Sibling Flush &amp; Pre-Flight sh_info Check</text>
+  <text x="784" y="689" class="s">Flushes ONLY UP non-pending siblings (skips keep_pins). Checks tv_frames_no_sh_info() BEFORE taking</text>
+  <text x="784" y="701" class="s">a new queue -&gt; if all 4 slots busy, clean tv_recovery_fail(s, true, -EBUSY) with unhold!</text>
+
+  <line x1="1090" y1="704" x2="1090" y2="716" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <rect x="772" y="718" width="636" height="52" rx="5" fill="#ffffff" stroke="#3a8a3a"/>
+  <text x="784" y="736" class="ok">Step 3: New Queue + tv_release_frames() + Drain Setup for Down Siblings</text>
+  <text x="784" y="752" class="s">mt_txq_fatal_error/get(); clears stale/live/short; retires busy sh_info slots (EXT on down</text>
+  <text x="784" y="765" class="s">siblings stay link_held); if down_mask != 0, starts tv_link_start_drain() for the down sibling leg.</text>
+
+  <line x1="1090" y1="770" x2="1090" y2="782" stroke="#2f7d32" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <rect x="772" y="784" width="636" height="64" rx="5" fill="#2f7d32"/>
+  <text x="784" y="803" class="ph" font-size="13">Step 4: tv_mempool_renew() — Allocate First, Publish Atomically, Park Old</text>
+  <text x="784" y="821" fill="#e6ffea" font-size="11.5">- Allocates replacement pools into local struct tv_mempools; publishes with __ATOMIC_RELEASE (paired</text>
+  <text x="784" y="838" fill="#e6ffea" font-size="11.5">  with __ATOMIC_ACQUIRE in st20/st22_tx_get_mbuf). Parks old pools in parked[16] (never NULL!).</text>
+
+  <!-- A4: Teardown AFTER -->
+  <rect x="756" y="874" width="668" height="130" rx="6" fill="#e6f2fa" stroke="#2b6cb0"/>
+  <text x="770" y="894" class="info">4. Safe Teardown: tv_uinit() / tv_uinit_hw() / tv_free_frames()</text>
+  <rect x="770" y="906" width="640" height="86" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
+  <text x="782" y="925" class="s">- tv_uinit(): calls tv_frame_build_drop() before tv_frames_hold().</text>
+  <text x="782" y="942" class="s">- tv_uinit_hw(): if (pad &amp;&amp; mt_txq_flush(...) &lt; 0) mt_txq_fatal_error(queue[i]) (masks dirty q).</text>
+  <text x="782" y="959" class="s">- tv_free_frames(): sets busy sh_info[j].free_cb = tv_frame_stale_free_cb; if any sh_info held, keeps</text>
+  <text x="782" y="976" class="s">  s-&gt;st20_frames (and st_frame_trans_uinit keeps DMA addr) so port stop frees mbufs cleanly.</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <g transform="translate(24,1040)">
+    <rect width="16" height="12" rx="2" fill="#fde2e2" stroke="#c04040"/><text x="22" y="10" class="s">Before: fatal / UAF path</text>
+    <rect x="190" width="16" height="12" rx="2" fill="#fde9c8" stroke="#d08a2a"/><text x="212" y="10" class="s">Before: missing link/state guard</text>
+    <rect x="425" width="16" height="12" rx="2" fill="#e3f4e3" stroke="#3a8a3a"/><text x="447" y="10" class="s">After: resilient link/recovery path</text>
+    <rect x="675" width="16" height="12" rx="2" fill="#e6f2fa" stroke="#2b6cb0"/><text x="697" y="10" class="s">After: ownership / teardown safety</text>
+  </g>
+</svg>
