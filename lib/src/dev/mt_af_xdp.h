@@ -37,6 +37,8 @@ struct mt_rx_xdp_entry* mt_rx_xdp_get(struct mtl_main_impl* impl, enum mtl_port 
 int mt_rx_xdp_put(struct mt_rx_xdp_entry* entry);
 uint16_t mt_rx_xdp_burst(struct mt_rx_xdp_entry* entry, struct rte_mbuf** rx_pkts,
                          const uint16_t nb_pkts);
+const char* mt_xdp_get_queue_lease_id(struct mtl_main_impl* impl, enum mtl_port port,
+                                      uint16_t queue_id);
 #else
 
 #include "../mt_log.h"
@@ -98,6 +100,15 @@ static inline uint16_t mt_rx_xdp_burst(struct mt_rx_xdp_entry* entry,
   MTL_MAY_UNUSED(rx_pkts);
   MTL_MAY_UNUSED(nb_pkts);
   return 0;
+}
+
+static inline const char* mt_xdp_get_queue_lease_id(struct mtl_main_impl* impl,
+                                                    enum mtl_port port,
+                                                    uint16_t queue_id) {
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(port);
+  MTL_MAY_UNUSED(queue_id);
+  return NULL;
 }
 #endif
 

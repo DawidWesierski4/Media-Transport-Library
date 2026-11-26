@@ -72,6 +72,9 @@ void print_usage(const char* prog) {
             << "  --shm-ftok-path <path>    Override legacy shm ftok path (for tests)\n"
             << "  --teardown-on-exit        Release all leases and shm slots on normal "
                "stop (for tests)\n"
+            << "  --xdp-prog <path>         Override mtl.xdp.o object path\n"
+            << "  --test-mock-netdev        Use in-memory mock netdev/XDP backend (for "
+               "tests)\n"
             << "  -h, --help                Show this help\n";
 }
 
@@ -158,6 +161,10 @@ int main(int argc, char** argv) {
       cfg.shm.ftok_path = need_val("--shm-ftok-path");
     } else if (arg == "--teardown-on-exit") {
       cfg.teardown_on_exit = true;
+    } else if (arg == "--xdp-prog") {
+      cfg.xdp_prog_path = need_val("--xdp-prog");
+    } else if (arg == "--test-mock-netdev") {
+      cfg.use_mock_netdev = true;
     } else {
       std::cerr << "MtlManager: unknown option '" << arg << "'\n";
       print_usage(argv[0]);

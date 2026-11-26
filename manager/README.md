@@ -1,99 +1,110 @@
-# MTL Manager Documentation
+# MtlManager 2 Documentation
 
 ## Overview
 
-![MTL Manager Design](manager_design.svg)
+MtlManager 2 is the root daemon that manages shared host resources for Media Transport Library (MTL) processes.
+The daemon replaces the legacy binary protocol (`mtl_mproto.h`) with Varlink JSON IPC over Unix domain sockets.
 
-MTL Manager is a daemon server designed to operate with root privileges. Its primary role is to manage the lifecycle and configurations of MTL instances. It addresses a variety of administrative tasks, including:
+MtlManager 2 controls these host assets:
 
-- Lcore Management: Ensures that MTL instances are aware of the lcores used by others, optimizing resource allocation.
-- eBPF/XDP Loader: Dynamically loads and manages eBPF/XDP programs for advanced packet processing and performance tuning.
-- NIC Configuration: Configures Network Interface Cards (NICs) with capabilities like adding or deleting flow and queue settings.
-- Instances Monitor: Continuously monitors MTL instances, providing status reporting and clearing mechanisms.
+- Physical Linux CPU leases with per-UID quotas and quarantine on live disconnect or revocation.
+- Multi-NIC AF_XDP receive queues with queue 0 permanently protected.
+- Reversed `SCM_RIGHTS` AF_XDP socket registration (`AttachXsk`) so tenants never receive writable BPF map descriptors.
+- MTL-owned IPv4 UDP ethtool flow rules (`udp4` only) and queue-scoped XDP UDP port filters (`{rx_queue_index, dst_port}`).
 
 ## Build
 
-To build with XDP support, install the dependencies:
+Install the build dependencies on Linux:
 
 ```bash
 sudo apt-get update
-sudo apt-get install make m4 clang llvm zlib1g-dev libelf-dev libpcap-dev libcap-ng-dev gcc-multilib
+sudo apt-get install -y clang llvm libjson-c-dev libxdp-dev libbpf-dev
 ```
 
-To compile and install the MTL Manager, use the following commands:
+Build and install `MtlManager`, the `mtlm2d` symlink, and `mtl.xdp.o`:
 
 ```bash
-meson setup build
+meson setup build manager
 meson compile -C build
 sudo meson install -C build
 ```
 
-Besides MTL Manager, it will also install a built-in XDP program for udp port filtering.
+Run the unit and daemon test suites under ASan and UBSan:
 
-## Run
+```bash
+meson setup build_test manager -Denable_tests=true -Db_sanitize=address,undefined
+meson compile -C build_test
+meson test -C build_test --num-processes 1
+```
 
-To run the MTL Manager, execute:
+## Run and Policy Modes
+
+MtlManager 2 listens on two Unix domain sockets:
+
+- Client socket: `/run/imtl/manager2.sock` for tenant Varlink RPCs (`OpenSession`, `ClaimSession`, `CloseSession`, `AcquireCpu`, `AcquireQueue`, `AttachXsk`, `AddFlow`, `AddUdpFilter`, `ReleaseLease`).
+- Admin socket: `/run/imtl/admin.sock` (mode `0600`) for host-only admin RPCs (`GetStatus`, `RevokeLease`, `RevokeSession`, `KillQuarantinedOwner`).
+
+### Zero-Argument Single-Host Mode
+
+Run `sudo MtlManager` with no arguments for single-host development or CI tests:
 
 ```bash
 sudo MtlManager
 ```
 
-This command will start the MTL Manager with root privileges, which are necessary for the advanced eBPF and network configurations and management tasks it performs.
+Zero-argument mode enables a single-host policy:
 
-The XDP program for udp port filtering will be loaded along with the libxdp's built-in xsk program when the AF_XDP socket is created. It utilizes the xdp-dispatcher program provided by libxdp which allows running of multiple XDP programs in chain on the same interface. You can check the loaded programs with xdp-loader:
+- Client socket `/run/imtl/manager2.sock` uses mode `0666`.
+- All online CPUs, all network interfaces, and UDP ports `1..65535` are allowed.
+- Admin RPCs remain restricted to `/run/imtl/admin.sock` (mode `0600`).
 
-```text
-sudo xdp-loader status
-```
-```text
-Interface        Prio  Program name      Mode     ID   Tag               Chain actions
---------------------------------------------------------------------------------------
-lo                     <No XDP program loaded!>
-ens787f0               <No XDP program loaded!>
-ens787f1               <No XDP program loaded!>
-ens785f0               xdp_dispatcher    native   23661 90f686eb86991928 
- =>              19     mtl_dp_filter             23670 02aea45cd16e8656  XDP_DROP
- =>              20     xsk_def_prog              23622 8f9c40757cb0a6a2  XDP_PASS
-ens785f1               xdp_dispatcher    native   23675 90f686eb86991928 
- =>              19     mtl_dp_filter             23678 02aea45cd16e8656  XDP_DROP
- =>              20     xsk_def_prog              23639 8f9c40757cb0a6a2  XDP_PASS
-virbr0                 <No XDP program loaded!>
-docker0                <No XDP program loaded!>
-```
+### Policy File and systemd Service
 
-## Run in a Docker container
+Pass `--policy-file` for multi-tenant hosts.
+The systemd unit `mtlm2.service` always starts `MtlManager` with `--policy-file /etc/mtl/manager2-policy.json` and client socket mode `0660` (group `mtl`).
+Policy files deny access by default and enforce `allowed_cpus`, `allowed_interfaces`, `allowed_udp_ports`, and aggregated per-UID quotas (`max_cpus`, `max_queues`, `max_flows`).
 
-Please note that the Dockerfile provided is intended for development use only. It has been tested for functionality, but not for security. Users are advised to review and modify it as necessary before using it in a production environment.
+## Non-Destructive Stop and Restart
 
-Build the Docker image:
+MtlManager 2 stores active leases and kernel objects in `/run/imtl/state/journal.json` (mode `0600`).
+Normal stop (`SIGTERM`, `SIGINT`, `SIGQUIT`, or `systemctl restart mtlm2`) preserves `journal.json`, active CPU leases, XDP programs, `xsks_map` entries, UDP filters, and ethtool flow rules for live tenants.
 
-```bash
-docker build --build-arg VERSION=$(cat ../VERSION) -t mtl-manager:latest -f Dockerfile ..
-# docker build --build-arg VERSION=$(cat ../VERSION) -t mtl-manager:latest --build-arg HTTP_PROXY=$http_proxy --build-arg HTTPS_PROXY=$https_proxy -f Dockerfile ..
-```
+When MtlManager 2 starts again after a normal stop or crash:
 
-The container runs the manager as uid 1001, which must be able to create its socket in the host's `/var/run/imtl`. Give that uid the directory, for example with the systemd-tmpfiles line `d /run/imtl 0755 1001 - -`, as `/run` is emptied at boot. Do not make the directory writable by every user: any user could then replace the socket, and a manager that runs as root removes that write bit.
+1. The daemon loads `/run/imtl/state/journal.json`.
+2. The daemon puts leases of live processes into `RECOVERING` state and monitors each owner `pidfd` with no timeout.
+3. Live AF_XDP receive streams continue with zero packet loss and reclaim their leases via `ClaimSession` on the next RPC.
+4. The daemon frees leases and deletes recorded MTL-owned flow rules for owners that already exited.
+5. Foreign (non-MTL) ethtool flow rules remain untouched.
 
-Run the Docker container as a daemon:
+Pass `--teardown-on-exit` only in tests that require full teardown on normal exit.
 
-```bash
-docker run -d \
-  --name mtl-manager \
-  --privileged --net=host \
-  -v /var/run/imtl:/var/run/imtl \
-  -v /sys/fs/bpf:/sys/fs/bpf \
-  mtl-manager:latest
-```
+## Legacy SysV Shared Memory Coexistence
 
-Print the MTL Manager logs:
+MtlManager 2 compares the host CPU count (`sysconf(_SC_NPROCESSORS_CONF)`) with the legacy SysV shared memory slot count (`ftok("/dev/null", 21)`, lock `/tmp/kahawai_lcore.lock`):
 
-```bash
-docker logs -f mtl-manager
-```
+- **Case A (`host_cpus <= shm_slot_count`)**: Coexistence is enabled by default.
+  The daemon skips CPUs held by live legacy processes and writes each tenant PID into the legacy table so older clients do not steal live tenant CPUs during a daemon restart.
+  Pass `--fail-on-legacy-shm` to refuse startup when live legacy clients exist.
+- **Case B (`host_cpus > shm_slot_count`)**: Shared memory writes are disabled because MTL remaps EAL lcore IDs.
+  If live legacy shared memory clients exist at startup, MtlManager 2 refuses to start and prints the conflicting PIDs.
+  Stop the legacy clients or rebuild DPDK with `DPDK_MAX_LCORES` set to at least the host CPU count.
 
-Shutdown the Docker container with SIGINT:
+## Compatibility and Upgrade Notes
 
-```bash
-docker kill -s SIGINT mtl-manager
-# docker rm mtl-manager
-```
+- Do not run legacy v1 `MtlManager` and MtlManager 2 on the same host.
+  MtlManager 2 refuses to start if `/var/run/imtl/mtl_manager.sock` accepts connections.
+  New `libmtl` refuses to fall back to SysV shared memory if only a v1 manager listens.
+- `MTL_PMD_DPDK_AF_XDP` returns `-ENOTSUP` when MtlManager 2 is active.
+  Migrate configurations (including `tests/tools/RxTxApp/script/dpdk_af_xdp_json/`) to `MTL_PMD_NATIVE_AF_XDP` or run without MtlManager 2.
+- Legacy DPDK VF applications built against older `libmtl` releases stay safe on Case A hosts through SysV shared memory coexistence.
+- Older AF_XDP applications built against v1 `libmtl` stop working once `/var/run/imtl/mtl_manager.sock` is removed.
+  Rebuild all AF_XDP applications against this MTL release before you upgrade to MtlManager 2.
+- Downgrading from MtlManager 2 to v1 while tenants run is not supported.
+  Stop all MTL applications before you change major manager versions.
+
+## Environment Variables for `libmtl`
+
+- `MTL_MANAGER_SOCK`: Override the default client socket path `/run/imtl/manager2.sock`.
+- `MTL_REQUIRE_MANAGER=1`: Fail `mtl_init()` if MtlManager 2 is absent or rejects the session.
+- `MTL_ABORT_ON_MANAGER_LOSS=1`: Call `mtl_abort()` if `ClaimSession` fails after a daemon restart.

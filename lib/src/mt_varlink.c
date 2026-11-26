@@ -1325,7 +1325,8 @@ static int map_varlink_error_to_errno(const char* err_name) {
       strstr(err_name, "SessionNotFound") != NULL)
     return -ENOENT;
   if (strstr(err_name, "MethodNotFound") != NULL ||
-      strstr(err_name, "MethodNotImplemented") != NULL)
+      strstr(err_name, "MethodNotImplemented") != NULL ||
+      strstr(err_name, "UnsupportedFlowType") != NULL)
     return -ENOTSUP;
   return -EREMOTEIO;
 }

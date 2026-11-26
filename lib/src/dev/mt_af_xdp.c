@@ -28,6 +28,8 @@ struct mt_xdp_queue {
   enum mtl_port port;
   struct rte_mempool* mbuf_pool;
   uint16_t q;
+  char queue_lease_id[40];
+  char xsk_lease_id[40];
   uint32_t umem_ring_size;
 
   struct xsk_umem* umem;
@@ -223,8 +225,6 @@ static int xdp_free(struct mt_xdp_priv* xdp) {
     for (uint16_t i = 0; i < xdp->queues_cnt; i++) {
       struct mt_xdp_queue* xq = &xdp->queues_info[i];
 
-      xdp_queue_uinit(xq);
-
       if (xq->tx_entry) {
         warn("%s(%d,%u), tx_entry still active\n", __func__, port, xq->q);
         mt_tx_xdp_put(xq->tx_entry);
@@ -234,7 +234,17 @@ static int xdp_free(struct mt_xdp_priv* xdp) {
         mt_rx_xdp_put(xq->rx_entry);
       }
 
-      mt_instance_put_queue(xdp->parent, xdp->ifindex, xq->q);
+      if (xq->xsk_lease_id[0] != '\0') {
+        mt_instance_release_lease(xdp->parent, xq->xsk_lease_id);
+        xq->xsk_lease_id[0] = '\0';
+      }
+
+      xdp_queue_uinit(xq);
+
+      if (xq->queue_lease_id[0] != '\0') {
+        mt_instance_release_lease(xdp->parent, xq->queue_lease_id);
+        xq->queue_lease_id[0] = '\0';
+      }
     }
     mt_rte_free(xdp->queues_info);
     xdp->queues_info = NULL;
@@ -381,28 +391,6 @@ static int xdp_rx_prod_init(struct mt_xdp_queue* xq) {
   return 0;
 }
 
-static int xdp_socket_update_xskmap(struct mtl_main_impl* impl, struct mt_xdp_queue* xq,
-                                    const char* ifname) {
-  enum mtl_port port = xq->port;
-  uint16_t q = xq->q;
-  int ret;
-
-  int xsks_map_fd = mt_instance_request_xsks_map_fd(impl, if_nametoindex(ifname));
-
-  if (xsks_map_fd < 0) {
-    err("%s(%d,%u), get xsks_map_fd fail\n", __func__, port, q);
-    return -EIO;
-  }
-
-  ret = xsk_socket__update_xskmap(xq->socket, xsks_map_fd);
-  if (ret) {
-    err("%s(%d,%u), update xsks_map fail, %d\n", __func__, port, q, ret);
-    return ret;
-  }
-
-  return 0;
-}
-
 static int xdp_socket_init(struct mt_xdp_priv* xdp, struct mt_xdp_queue* xq) {
   enum mtl_port port = xq->port;
   uint16_t q = xq->q;
@@ -457,7 +445,14 @@ copy_mode:
 
   xq->socket_fd = xsk_socket__fd(xq->socket);
 
-  if (xdp->has_ctrl) return xdp_socket_update_xskmap(impl, xq, if_name);
+  if (xdp->has_ctrl) {
+    ret =
+        mt_instance_attach_xsk(impl, xq->queue_lease_id, xq->socket_fd, xq->xsk_lease_id);
+    if (ret < 0) {
+      err("%s(%d,%u), attach xsk fail %d\n", __func__, port, q, ret);
+      return ret;
+    }
+  }
 
   return 0;
 }
@@ -753,15 +748,17 @@ int mt_dev_xdp_init(struct mt_interface* inf) {
     xdp_free(xdp);
     return -ENOMEM;
   }
+  const char* if_name = mt_kernel_if_name(impl, port);
   for (uint16_t i = 0; i < xdp->queues_cnt; i++) {
-    int q = mt_instance_get_queue(impl, xdp->ifindex);
-    if (q < 0) {
-      err("%s(%d), no free queue found\n", __func__, port);
+    struct mt_xdp_queue* xq = &xdp->queues_info[i];
+    uint16_t q = 0;
+    ret = mt_instance_get_queue(impl, if_name, &q, xq->queue_lease_id);
+    if (ret < 0) {
+      err("%s(%d), no free queue found (%d)\n", __func__, port, ret);
       xdp_free(xdp);
-      return -EIO;
+      return ret;
     }
 
-    struct mt_xdp_queue* xq = &xdp->queues_info[i];
     xq->port = port;
     xq->q = q;
     xq->umem_ring_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
@@ -910,11 +907,6 @@ uint16_t mt_tx_xdp_burst(struct mt_tx_xdp_entry* entry, struct rte_mbuf** tx_pkt
   return xdp_tx(entry->parent, entry->xq, tx_pkts, nb_pkts);
 }
 
-static inline int xdp_socket_update_dp(struct mtl_main_impl* impl, int ifindex,
-                                       uint16_t dp, bool add) {
-  return mt_instance_update_udp_dp_filter(impl, ifindex, dp, add);
-}
-
 struct mt_rx_xdp_entry* mt_rx_xdp_get(struct mtl_main_impl* impl, enum mtl_port port,
                                       struct mt_rxq_flow* flow,
                                       struct mt_rx_xdp_get_args* args) {
@@ -982,7 +974,9 @@ struct mt_rx_xdp_entry* mt_rx_xdp_get(struct mtl_main_impl* impl, enum mtl_port 
       mt_rx_xdp_put(entry);
       return NULL;
     }
-    if (xdp->has_ctrl && !xdp_socket_update_dp(impl, xdp->ifindex, flow->dst_port, true))
+    if (xdp->has_ctrl &&
+        mt_instance_add_udp_filter(impl, xq->queue_lease_id, flow->dst_port,
+                                   entry->udp_filter_lease_id) == 0)
       entry->skip_all_check = true;
     else
       entry->skip_all_check = false;
@@ -1019,10 +1013,15 @@ int mt_rx_xdp_put(struct mt_rx_xdp_entry* entry) {
     entry->mcast_fd = -1;
   }
 
+  if (entry->udp_filter_lease_id[0] != '\0') {
+    if (xdp && xdp->has_ctrl) {
+      mt_instance_release_lease(impl, entry->udp_filter_lease_id);
+    }
+    entry->udp_filter_lease_id[0] = '\0';
+  }
   if (entry->flow_rsp) {
     mt_rx_flow_free(impl, port, entry->flow_rsp);
     entry->flow_rsp = NULL;
-    if (xdp->has_ctrl) xdp_socket_update_dp(impl, xdp->ifindex, flow->dst_port, false);
   }
   if (xq) {
     xdp_queue_rx_stat(xq);
@@ -1037,4 +1036,19 @@ int mt_rx_xdp_put(struct mt_rx_xdp_entry* entry) {
 uint16_t mt_rx_xdp_burst(struct mt_rx_xdp_entry* entry, struct rte_mbuf** rx_pkts,
                          const uint16_t nb_pkts) {
   return xdp_rx(entry, rx_pkts, nb_pkts);
+}
+
+const char* mt_xdp_get_queue_lease_id(struct mtl_main_impl* impl, enum mtl_port port,
+                                      uint16_t queue_id) {
+  if (!impl || port >= MTL_PORT_MAX) return NULL;
+  struct mt_xdp_priv* xdp = mt_if(impl, port)->xdp;
+  if (!xdp || !xdp->queues_info) return NULL;
+  for (uint16_t i = 0; i < xdp->queues_cnt; ++i) {
+    if (xdp->queues_info[i].q == queue_id) {
+      return xdp->queues_info[i].queue_lease_id[0] != '\0'
+                 ? xdp->queues_info[i].queue_lease_id
+                 : NULL;
+    }
+  }
+  return NULL;
 }

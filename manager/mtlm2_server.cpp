@@ -51,6 +51,7 @@ constexpr uint64_t kTagWakeFd = 4ULL << 56;
 constexpr uint64_t kTagConn = 5ULL << 56;
 constexpr uint64_t kTagLeasePidFd = 6ULL << 56;
 constexpr uint64_t kTagConnPidFd = 7ULL << 56;
+constexpr uint64_t kTagQueuePidFd = 8ULL << 56;
 
 const char* kVarlinkServiceDesc = R"(interface org.varlink.service
 
@@ -77,8 +78,12 @@ method OpenSession(clientName: string) -> (sessionId: string)
 method ClaimSession(clientName: string, leaseIds: []string) -> (sessionId: string, claimed: []string, missing: []string)
 method CloseSession() -> ()
 method AcquireCpu(preferred: ?int, numaNode: ?int, allowFallback: ?bool) -> (leaseId: string, cpuId: int)
+method AcquireQueue(ifName: string, preferredQueue: ?int) -> (leaseId: string, ifName: string, ifindex: int, queueId: int)
+method AttachXsk(queueLease: string) -> (leaseId: string)
+method AddFlow(queueLease: string, protocol: ?string, srcIp: ?string, dstIp: string, srcPort: ?int, dstPort: int) -> (leaseId: string, ruleLocation: int)
+method AddUdpFilter(queueLease: string, destinationPort: int) -> (leaseId: string)
 method ReleaseLease(leaseId: string) -> ()
-method GetStatus() -> (shmMode: string, shmTamperWarnings: int, quarantinedCount: int, sessions: []object, leases: []object)
+method GetStatus() -> (shmMode: string, shmTamperWarnings: int, quarantinedCount: int, sessions: []object, leases: []object, queues: []object, flows: []object, udpFilters: []object, xskAttachments: []object, xdpAttachments: []object, backendInterfaces: []object)
 method RevokeLease(leaseId: string) -> ()
 method RevokeSession(sessionId: string) -> ()
 method KillQuarantinedOwner(leaseId: string) -> ()
@@ -86,6 +91,7 @@ method KillQuarantinedOwner(leaseId: string) -> ()
 error ResourceBusy (message: string)
 error AccessDenied (message: string)
 error InvalidParameter (parameter: string, message: string)
+error UnsupportedFlowType (message: string)
 error LeaseNotFound (message: string)
 error LeaseNotOwned (message: string)
 error SessionNotFound (message: string)
@@ -561,6 +567,20 @@ bool PolicyConfig::is_cpu_allowed(uint32_t cpu_id) const {
   return allowed_cpus.find(cpu_id) != allowed_cpus.end();
 }
 
+bool PolicyConfig::is_interface_allowed(const std::string& if_name) const {
+  if (allow_all_single_host) return true;
+  return allowed_interfaces.find(if_name) != allowed_interfaces.end();
+}
+
+bool PolicyConfig::is_udp_port_allowed(uint16_t port) const {
+  if (port == 0) return false;
+  if (allow_all_single_host) return true;
+  for (const auto& [lo, hi] : allowed_udp_ports) {
+    if (port >= lo && port <= hi) return true;
+  }
+  return false;
+}
+
 uint32_t PolicyConfig::max_cpus_for_uid(uid_t uid) const {
   if (allow_all_single_host) return 65535u;
   auto it = uid_quotas.find(uid);
@@ -568,8 +588,33 @@ uint32_t PolicyConfig::max_cpus_for_uid(uid_t uid) const {
   return default_quota.max_cpus;
 }
 
-MtlManagerServer::MtlManagerServer(ServerConfig cfg)
-    : cfg_(std::move(cfg)), peer_extractor_(cfg_.proc_root), journal_(cfg_.state_dir) {
+uint32_t PolicyConfig::max_queues_for_uid(uid_t uid) const {
+  if (allow_all_single_host) return 65535u;
+  auto it = uid_quotas.find(uid);
+  if (it != uid_quotas.end()) return it->second.max_queues;
+  return default_quota.max_queues;
+}
+
+uint32_t PolicyConfig::max_flows_for_uid(uid_t uid) const {
+  if (allow_all_single_host) return 65535u;
+  auto it = uid_quotas.find(uid);
+  if (it != uid_quotas.end()) return it->second.max_flows;
+  return default_quota.max_flows;
+}
+
+MtlManagerServer::MtlManagerServer(ServerConfig cfg,
+                                   std::unique_ptr<NetdevBackend> netdev)
+    : cfg_(std::move(cfg)),
+      peer_extractor_(cfg_.proc_root),
+      journal_(cfg_.state_dir),
+      netdev_(std::move(netdev)) {
+  if (!netdev_) {
+    if (cfg_.use_mock_netdev) {
+      netdev_ = std::make_unique<MockNetdevBackend>();
+    } else {
+      netdev_ = std::make_unique<LinuxNetdevBackend>(cfg_.xdp_prog_path);
+    }
+  }
 }
 
 MtlManagerServer::~MtlManagerServer() {
@@ -835,10 +880,19 @@ void MtlManagerServer::watch_lease_pidfd(CpuLease& lease) {
   (void)add_epoll(pfd, EPOLLIN, tag);
 }
 
+void MtlManagerServer::watch_queue_pidfd(QueueLease& lease) {
+  if (!lease.pidfd.valid()) return;
+  int pfd = lease.pidfd.get();
+  pidfd_to_queue_lease_[pfd] = lease.lease_id;
+  uint64_t tag = kTagQueuePidFd | static_cast<uint64_t>(static_cast<uint32_t>(pfd));
+  (void)add_epoll(pfd, EPOLLIN, tag);
+}
+
 bool MtlManagerServer::persist_journal(std::string* err_out) {
   JournalState st;
   st.schema_version = JournalState::kSupportedSchemaVersion;
   st.manager_id = "mtlm2d";
+
   st.cpu_leases.reserve(leases_.size());
   for (const auto& [lid, lease] : leases_) {
     JournalCpuLease e;
@@ -851,6 +905,84 @@ bool MtlManagerServer::persist_journal(std::string* err_out) {
     e.quarantined = (lease.state == LeaseState::Quarantined);
     st.cpu_leases.push_back(std::move(e));
   }
+
+  st.queues.reserve(queue_leases_.size());
+  for (const auto& [lid, q] : queue_leases_) {
+    JournalQueueLease e;
+    e.lease_id = q.lease_id;
+    e.if_name = q.if_name;
+    e.ifindex = q.ifindex;
+    e.queue_id = q.queue_id;
+    e.pid = q.pid;
+    e.start_time_ticks = q.start_time_ticks;
+    e.uid = q.uid;
+    e.client_name = q.client_name;
+    e.quarantined = (q.state == LeaseState::Quarantined);
+    st.queues.push_back(std::move(e));
+  }
+
+  st.flows.reserve(flow_leases_.size());
+  for (const auto& [lid, f] : flow_leases_) {
+    JournalFlowLease e;
+    e.lease_id = f.lease_id;
+    e.queue_lease_id = f.queue_lease_id;
+    e.if_name = f.if_name;
+    e.ifindex = f.ifindex;
+    e.queue_id = f.queue_id;
+    e.rule_location = f.rule_location;
+    e.protocol = f.spec.protocol;
+    e.src_ip = (f.spec.src_ip_be != 0) ? format_ipv4(f.spec.src_ip_be) : std::string();
+    e.dst_ip = format_ipv4(f.spec.dst_ip_be);
+    e.src_port = f.spec.src_port;
+    e.dst_port = f.spec.dst_port;
+    e.pid = f.pid;
+    e.start_time_ticks = f.start_time_ticks;
+    e.uid = f.uid;
+    e.client_name = f.client_name;
+    st.flows.push_back(std::move(e));
+  }
+
+  st.udp_filters.reserve(udp_filter_leases_.size());
+  for (const auto& [lid, u] : udp_filter_leases_) {
+    JournalUdpFilterLease e;
+    e.lease_id = u.lease_id;
+    e.queue_lease_id = u.queue_lease_id;
+    e.if_name = u.if_name;
+    e.ifindex = u.ifindex;
+    e.queue_id = u.queue_id;
+    e.dst_port = u.dst_port;
+    e.pid = u.pid;
+    e.start_time_ticks = u.start_time_ticks;
+    e.uid = u.uid;
+    e.client_name = u.client_name;
+    st.udp_filters.push_back(std::move(e));
+  }
+
+  st.xsk_attachments.reserve(xsk_leases_.size());
+  for (const auto& [lid, x] : xsk_leases_) {
+    JournalXskAttachment e;
+    e.lease_id = x.lease_id;
+    e.queue_lease_id = x.queue_lease_id;
+    e.if_name = x.if_name;
+    e.ifindex = x.ifindex;
+    e.queue_id = x.queue_id;
+    e.pid = x.pid;
+    e.start_time_ticks = x.start_time_ticks;
+    e.uid = x.uid;
+    e.client_name = x.client_name;
+    st.xsk_attachments.push_back(std::move(e));
+  }
+
+  st.xdp_attachments.reserve(xdp_attachments_.size());
+  for (const auto& [if_name, xa] : xdp_attachments_) {
+    if (xa.mode == XdpAttachMode::None) continue;
+    JournalXdpAttachment e;
+    e.if_name = xa.if_name;
+    e.ifindex = xa.ifindex;
+    e.mode = xdp_attach_mode_to_string(xa.mode);
+    st.xdp_attachments.push_back(std::move(e));
+  }
+
   if (!journal_.save(st, err_out)) {
     std::cerr << "mtlm2d: journal save failed: " << (err_out ? *err_out : "unknown")
               << "\n";
@@ -876,6 +1008,14 @@ bool MtlManagerServer::reconcile_journal_startup(std::string* err_out) {
     return false;
   }
 
+  /* Restore XDP attachment handles first so dead-owner BPF map entries can be cleaned. */
+  for (const auto& xa : loaded.xdp_attachments) {
+    XdpAttachMode mode = XdpAttachMode::None;
+    if (!parse_xdp_attach_mode(xa.mode, &mode) || mode == XdpAttachMode::None) continue;
+    xdp_attachments_[xa.if_name] = XdpAttachment{xa.if_name, xa.ifindex, mode};
+    netdev_->restore_xdp_state(xa.if_name, xa.ifindex, mode);
+  }
+
   for (const auto& e : loaded.cpu_leases) {
     UniqueFd pfd;
     if (PeerCredExtractor::open_verified_pidfd(cfg_.proc_root, e.pid, e.start_time_ticks,
@@ -892,11 +1032,124 @@ bool MtlManagerServer::reconcile_journal_startup(std::string* err_out) {
       auto [it, inserted] = leases_.emplace(lease.lease_id, std::move(lease));
       if (inserted) watch_lease_pidfd(it->second);
     } else {
-      /* Owner dead or PID reused -> FREE and clean legacy shm slot if owned by dead PID.
-       */
       shm_.release_cpu(e.cpu_id, e.pid);
     }
   }
+
+  for (const auto& e : loaded.queues) {
+    UniqueFd pfd;
+    if (PeerCredExtractor::open_verified_pidfd(cfg_.proc_root, e.pid, e.start_time_ticks,
+                                               &pfd)) {
+      QueueLease ql;
+      ql.lease_id = e.lease_id;
+      ql.if_name = e.if_name;
+      ql.ifindex = e.ifindex;
+      ql.queue_id = e.queue_id;
+      ql.state = e.quarantined ? LeaseState::Quarantined : LeaseState::Recovering;
+      ql.pid = e.pid;
+      ql.start_time_ticks = e.start_time_ticks;
+      ql.uid = e.uid;
+      ql.client_name = e.client_name;
+      ql.pidfd = std::move(pfd);
+      auto [it, inserted] = queue_leases_.emplace(ql.lease_id, std::move(ql));
+      if (inserted) watch_queue_pidfd(it->second);
+    }
+  }
+
+  auto parent_queue_live_and_unquarantined = [&](const std::string& qlid, pid_t pid,
+                                                 uint64_t ticks) {
+    auto it = queue_leases_.find(qlid);
+    if (it == queue_leases_.end()) return false;
+    return it->second.state != LeaseState::Quarantined && it->second.pid == pid &&
+           it->second.start_time_ticks == ticks;
+  };
+
+  for (const auto& e : loaded.xsk_attachments) {
+    if (parent_queue_live_and_unquarantined(e.queue_lease_id, e.pid,
+                                            e.start_time_ticks)) {
+      XskLease xl;
+      xl.lease_id = e.lease_id;
+      xl.queue_lease_id = e.queue_lease_id;
+      xl.if_name = e.if_name;
+      xl.ifindex = e.ifindex;
+      xl.queue_id = e.queue_id;
+      xl.state = LeaseState::Recovering;
+      xl.pid = e.pid;
+      xl.start_time_ticks = e.start_time_ticks;
+      xl.uid = e.uid;
+      xl.client_name = e.client_name;
+      xsk_leases_.emplace(xl.lease_id, std::move(xl));
+      netdev_->restore_xsk_state(e.if_name, e.queue_id);
+    } else {
+      std::string berr;
+      (void)netdev_->delete_xsk_map(e.if_name, e.ifindex, e.queue_id, &berr);
+    }
+  }
+
+  for (const auto& e : loaded.flows) {
+    FlowSpec spec;
+    spec.protocol = e.protocol;
+    if (!e.src_ip.empty()) (void)parse_strict_ipv4(e.src_ip, &spec.src_ip_be);
+    if (!e.dst_ip.empty()) (void)parse_strict_ipv4(e.dst_ip, &spec.dst_ip_be);
+    spec.src_port = e.src_port;
+    spec.dst_port = e.dst_port;
+
+    if (parent_queue_live_and_unquarantined(e.queue_lease_id, e.pid,
+                                            e.start_time_ticks)) {
+      FlowLease fl;
+      fl.lease_id = e.lease_id;
+      fl.queue_lease_id = e.queue_lease_id;
+      fl.if_name = e.if_name;
+      fl.ifindex = e.ifindex;
+      fl.queue_id = e.queue_id;
+      fl.rule_location = e.rule_location;
+      fl.spec = spec;
+      fl.state = LeaseState::Recovering;
+      fl.pid = e.pid;
+      fl.start_time_ticks = e.start_time_ticks;
+      fl.uid = e.uid;
+      fl.client_name = e.client_name;
+      flow_leases_.emplace(fl.lease_id, std::move(fl));
+      netdev_->restore_flow_state(e.if_name, e.queue_id, e.rule_location, spec);
+    } else {
+      /* Delete only MTL-owned rule locations recorded in the journal (RES-Q-02). */
+      std::string berr;
+      (void)netdev_->delete_flow(e.if_name, e.ifindex, e.rule_location, &berr);
+    }
+  }
+
+  for (const auto& e : loaded.udp_filters) {
+    if (parent_queue_live_and_unquarantined(e.queue_lease_id, e.pid,
+                                            e.start_time_ticks)) {
+      UdpFilterLease ul;
+      ul.lease_id = e.lease_id;
+      ul.queue_lease_id = e.queue_lease_id;
+      ul.if_name = e.if_name;
+      ul.ifindex = e.ifindex;
+      ul.queue_id = e.queue_id;
+      ul.dst_port = e.dst_port;
+      ul.state = LeaseState::Recovering;
+      ul.pid = e.pid;
+      ul.start_time_ticks = e.start_time_ticks;
+      ul.uid = e.uid;
+      ul.client_name = e.client_name;
+      udp_filter_leases_.emplace(ul.lease_id, std::move(ul));
+      netdev_->restore_udp_filter_state(e.if_name, e.queue_id, e.dst_port);
+    } else {
+      std::string berr;
+      (void)netdev_->delete_udp_filter(e.if_name, e.ifindex, e.queue_id, e.dst_port,
+                                       &berr);
+    }
+  }
+
+  /* Detach XDP on any interface that no longer has live queue owners. */
+  std::vector<std::string> stale_xdp;
+  for (const auto& [if_name, xa] : xdp_attachments_) {
+    (void)xa;
+    if (!has_active_queue_on_iface(if_name)) stale_xdp.push_back(if_name);
+  }
+  for (const std::string& if_name : stale_xdp) maybe_detach_xdp_if_unused(if_name);
+
   return persist_journal(err_out);
 }
 
@@ -1118,6 +1371,8 @@ int MtlManagerServer::run() {
         handle_accept(admin_listener_);
       } else if (kind == kTagLeasePidFd) {
         handle_pidfd_event(static_cast<int>(payload));
+      } else if (kind == kTagQueuePidFd) {
+        handle_queue_pidfd_event(static_cast<int>(payload));
       } else if (kind == kTagConnPidFd) {
         handle_conn_pidfd_event(static_cast<int>(payload));
       } else if (kind == kTagConn) {
@@ -1164,7 +1419,84 @@ void MtlManagerServer::audit_shm_integrity() {
   }
 }
 
+void MtlManagerServer::strip_queue_children(const std::string& queue_lease_id) {
+  /* Strict reverse order for data-steering children: XSK -> Flow -> UdpFilter. */
+  std::vector<std::string> xsk_ids;
+  for (const auto& [lid, x] : xsk_leases_) {
+    if (x.queue_lease_id == queue_lease_id) xsk_ids.push_back(lid);
+  }
+  for (const std::string& lid : xsk_ids) {
+    auto it = xsk_leases_.find(lid);
+    if (it == xsk_leases_.end()) continue;
+    std::string berr;
+    (void)netdev_->delete_xsk_map(it->second.if_name, it->second.ifindex,
+                                  it->second.queue_id, &berr);
+    xsk_leases_.erase(it);
+  }
+
+  std::vector<std::string> flow_ids;
+  for (const auto& [lid, f] : flow_leases_) {
+    if (f.queue_lease_id == queue_lease_id) flow_ids.push_back(lid);
+  }
+  for (const std::string& lid : flow_ids) {
+    auto it = flow_leases_.find(lid);
+    if (it == flow_leases_.end()) continue;
+    std::string berr;
+    (void)netdev_->delete_flow(it->second.if_name, it->second.ifindex,
+                               it->second.rule_location, &berr);
+    flow_leases_.erase(it);
+  }
+
+  std::vector<std::string> udp_ids;
+  for (const auto& [lid, u] : udp_filter_leases_) {
+    if (u.queue_lease_id == queue_lease_id) udp_ids.push_back(lid);
+  }
+  for (const std::string& lid : udp_ids) {
+    auto it = udp_filter_leases_.find(lid);
+    if (it == udp_filter_leases_.end()) continue;
+    std::string berr;
+    (void)netdev_->delete_udp_filter(it->second.if_name, it->second.ifindex,
+                                     it->second.queue_id, it->second.dst_port, &berr);
+    udp_filter_leases_.erase(it);
+  }
+}
+
+void MtlManagerServer::maybe_detach_xdp_if_unused(const std::string& if_name) {
+  if (has_active_queue_on_iface(if_name)) return;
+  auto xit = xdp_attachments_.find(if_name);
+  if (xit == xdp_attachments_.end()) return;
+  std::string berr;
+  (void)netdev_->detach_xdp(xit->second.if_name, xit->second.ifindex, xit->second.mode,
+                            &berr);
+  xdp_attachments_.erase(xit);
+}
+
+void MtlManagerServer::release_queue_cascade(const std::string& queue_lease_id) {
+  auto qit = queue_leases_.find(queue_lease_id);
+  if (qit == queue_leases_.end()) return;
+  std::string if_name = qit->second.if_name;
+
+  strip_queue_children(queue_lease_id);
+
+  if (qit->second.pidfd.valid()) {
+    del_epoll(qit->second.pidfd.get());
+    pidfd_to_queue_lease_.erase(qit->second.pidfd.get());
+  }
+  queue_leases_.erase(qit);
+  maybe_detach_xdp_if_unused(if_name);
+}
+
 void MtlManagerServer::reap_dead_pidfds() {
+  std::vector<std::string> dead_qids;
+  for (const auto& [lid, ql] : queue_leases_) {
+    if (!ql.pidfd.valid() || !PeerCredExtractor::is_pidfd_alive(ql.pidfd.get())) {
+      dead_qids.push_back(lid);
+    }
+  }
+  for (const std::string& lid : dead_qids) {
+    release_queue_cascade(lid);
+  }
+
   std::vector<std::string> dead_ids;
   for (const auto& [lid, lease] : leases_) {
     if (!lease.pidfd.valid() || !PeerCredExtractor::is_pidfd_alive(lease.pidfd.get())) {
@@ -1203,6 +1535,19 @@ void MtlManagerServer::shutdown() {
 
   if (started_) {
     if (cfg_.teardown_on_exit) {
+      std::vector<std::string> all_qids;
+      all_qids.reserve(queue_leases_.size());
+      for (const auto& [lid, ql] : queue_leases_) all_qids.push_back(lid);
+      for (const std::string& lid : all_qids) release_queue_cascade(lid);
+      pidfd_to_queue_lease_.clear();
+      queue_leases_.clear();
+      xsk_leases_.clear();
+      flow_leases_.clear();
+      udp_filter_leases_.clear();
+      std::vector<std::string> rem_xdp;
+      for (const auto& [ifn, xa] : xdp_attachments_) rem_xdp.push_back(ifn);
+      for (const std::string& ifn : rem_xdp) maybe_detach_xdp_if_unused(ifn);
+
       for (auto& [lid, lease] : leases_) {
         if (lease.pidfd.valid()) del_epoll(lease.pidfd.get());
         shm_.release_cpu(lease.cpu_id, lease.pid);
@@ -1213,10 +1558,20 @@ void MtlManagerServer::shutdown() {
       (void)persist_journal(&jerr);
       shm_.shutdown(/*preserve_live_entries=*/false);
     } else {
-      /* Normal stop preserves live leases, journal, and tenant-PID shm slots (R4-1). */
+      /* Normal stop preserves live leases, AF_XDP kernel objects, journal, and
+       * tenant-PID shm slots (R4-1, LIFE-07). */
       reap_dead_pidfds();
       std::string jerr;
       (void)persist_journal(&jerr);
+      for (auto& [lid, ql] : queue_leases_) {
+        if (ql.pidfd.valid()) del_epoll(ql.pidfd.get());
+      }
+      pidfd_to_queue_lease_.clear();
+      queue_leases_.clear();
+      xsk_leases_.clear();
+      flow_leases_.clear();
+      udp_filter_leases_.clear();
+      xdp_attachments_.clear();
       for (auto& [lid, lease] : leases_) {
         if (lease.pidfd.valid()) del_epoll(lease.pidfd.get());
       }
@@ -1335,6 +1690,33 @@ void MtlManagerServer::destroy_conn(uint64_t conn_id) {
 
   if (!conn->session_id.empty()) {
     bool changed = false;
+
+    /* Handle queue leases first: reverse-cascade dead owners, strip steering & quarantine
+     * live owners. */
+    std::vector<std::string> dead_qids;
+    std::vector<std::string> live_qids;
+    for (const auto& [lid, ql] : queue_leases_) {
+      if (ql.session_id != conn->session_id || ql.state != LeaseState::Allocated)
+        continue;
+      if (ql.pidfd.valid() && PeerCredExtractor::is_pidfd_alive(ql.pidfd.get()))
+        live_qids.push_back(lid);
+      else
+        dead_qids.push_back(lid);
+    }
+    for (const std::string& lid : live_qids) {
+      strip_queue_children(lid);
+      auto qit = queue_leases_.find(lid);
+      if (qit != queue_leases_.end()) {
+        qit->second.state = LeaseState::Quarantined;
+        qit->second.session_id.clear();
+        changed = true;
+      }
+    }
+    for (const std::string& lid : dead_qids) {
+      release_queue_cascade(lid);
+      changed = true;
+    }
+
     std::vector<std::string> to_free;
     for (auto& [lid, lease] : leases_) {
       if (lease.session_id != conn->session_id) continue;
@@ -1382,6 +1764,21 @@ void MtlManagerServer::handle_pidfd_event(int pidfd) {
   if (lit == leases_.end()) return;
   shm_.release_cpu(lit->second.cpu_id, lit->second.pid);
   leases_.erase(lit);
+  std::string jerr;
+  (void)persist_journal(&jerr);
+}
+
+void MtlManagerServer::handle_queue_pidfd_event(int pidfd) {
+  auto it = pidfd_to_queue_lease_.find(pidfd);
+  if (it == pidfd_to_queue_lease_.end()) {
+    del_epoll(pidfd);
+    return;
+  }
+  const std::string qlid = it->second;
+  pidfd_to_queue_lease_.erase(it);
+  del_epoll(pidfd);
+
+  release_queue_cascade(qlid);
   std::string jerr;
   (void)persist_journal(&jerr);
 }
@@ -1516,12 +1913,6 @@ void MtlManagerServer::enqueue_error(Connection& conn, const std::string& error_
 }
 
 void MtlManagerServer::dispatch_frame(Connection& conn, const mt_varlink_frame_t& frame) {
-  if (frame.fd_count > 0u) {
-    enqueue_error(conn, "org.varlink.service.InvalidParameter",
-                  "unexpected file descriptors", "fds");
-    return;
-  }
-
   json_object* raw_obj = nullptr;
   int prc = mt_varlink_parse_json_object(frame.json_text, frame.json_len, &raw_obj);
   if (prc != 0 || !raw_obj) {
@@ -1549,6 +1940,14 @@ void MtlManagerServer::dispatch_frame(Connection& conn, const mt_varlink_frame_t
   }
 
   std::string m(method);
+  const bool allows_fd =
+      (!conn.is_admin && m == MT_VARLINK_MANAGER_INTERFACE ".AttachXsk");
+  if (!allows_fd && frame.fd_count > 0u) {
+    enqueue_error(conn, "org.varlink.service.InvalidParameter",
+                  "unexpected file descriptors", "fds");
+    return;
+  }
+
   if (m == "org.varlink.service.GetInfo") {
     rpc_get_info(conn, params);
   } else if (m == "org.varlink.service.GetInterfaceDescription") {
@@ -1592,6 +1991,14 @@ void MtlManagerServer::dispatch_frame(Connection& conn, const mt_varlink_frame_t
     rpc_close_session(conn, params);
   } else if (m == MT_VARLINK_MANAGER_INTERFACE ".AcquireCpu") {
     rpc_acquire_cpu(conn, params);
+  } else if (m == MT_VARLINK_MANAGER_INTERFACE ".AcquireQueue") {
+    rpc_acquire_queue(conn, params);
+  } else if (m == MT_VARLINK_MANAGER_INTERFACE ".AttachXsk") {
+    rpc_attach_xsk(conn, params, frame.fds, frame.fd_count);
+  } else if (m == MT_VARLINK_MANAGER_INTERFACE ".AddFlow") {
+    rpc_add_flow(conn, params);
+  } else if (m == MT_VARLINK_MANAGER_INTERFACE ".AddUdpFilter") {
+    rpc_add_udp_filter(conn, params);
   } else if (m == MT_VARLINK_MANAGER_INTERFACE ".ReleaseLease") {
     rpc_release_lease(conn, params);
   } else {
@@ -1731,6 +2138,13 @@ void MtlManagerServer::rpc_claim_session(Connection& conn, struct json_object* p
   claimed_ids.reserve(n);
   missing_ids.reserve(n);
   std::set<std::string> seen;
+
+  auto matches_caller = [&](LeaseState st, pid_t pid, uint64_t ticks, uid_t uid) {
+    return st == LeaseState::Recovering && pid == conn.peer.principal.pid &&
+           ticks == conn.peer.principal.start_time_ticks &&
+           uid == conn.peer.principal.uid;
+  };
+
   for (size_t i = 0; i < n; ++i) {
     std::string lid;
     if (!parse_strict_str(json_object_array_get_idx(jids, i), &lid) || lid.empty()) {
@@ -1739,11 +2153,26 @@ void MtlManagerServer::rpc_claim_session(Connection& conn, struct json_object* p
       return;
     }
     if (!seen.insert(lid).second) continue;
-    auto it = leases_.find(lid);
-    if (it != leases_.end() && it->second.state == LeaseState::Recovering &&
-        it->second.pid == conn.peer.principal.pid &&
-        it->second.start_time_ticks == conn.peer.principal.start_time_ticks &&
-        it->second.uid == conn.peer.principal.uid) {
+
+    bool ok = false;
+    if (auto it = leases_.find(lid); it != leases_.end()) {
+      ok = matches_caller(it->second.state, it->second.pid, it->second.start_time_ticks,
+                          it->second.uid);
+    } else if (auto qit = queue_leases_.find(lid); qit != queue_leases_.end()) {
+      ok = matches_caller(qit->second.state, qit->second.pid,
+                          qit->second.start_time_ticks, qit->second.uid);
+    } else if (auto xit = xsk_leases_.find(lid); xit != xsk_leases_.end()) {
+      ok = matches_caller(xit->second.state, xit->second.pid,
+                          xit->second.start_time_ticks, xit->second.uid);
+    } else if (auto fit = flow_leases_.find(lid); fit != flow_leases_.end()) {
+      ok = matches_caller(fit->second.state, fit->second.pid,
+                          fit->second.start_time_ticks, fit->second.uid);
+    } else if (auto uit = udp_filter_leases_.find(lid); uit != udp_filter_leases_.end()) {
+      ok = matches_caller(uit->second.state, uit->second.pid,
+                          uit->second.start_time_ticks, uit->second.uid);
+    }
+
+    if (ok) {
       claimed_ids.push_back(std::move(lid));
     } else {
       /* SEC-AC-08: non-existent, non-recovering, or another process's lease IDs are
@@ -1757,10 +2186,27 @@ void MtlManagerServer::rpc_claim_session(Connection& conn, struct json_object* p
 
   json_object* claimed = json_object_new_array();
   for (const std::string& lid : claimed_ids) {
-    CpuLease& l = leases_.at(lid);
-    l.state = LeaseState::Allocated;
-    l.session_id = conn.session_id;
-    l.client_name = conn.client_name;
+    if (auto it = leases_.find(lid); it != leases_.end()) {
+      it->second.state = LeaseState::Allocated;
+      it->second.session_id = conn.session_id;
+      it->second.client_name = conn.client_name;
+    } else if (auto qit = queue_leases_.find(lid); qit != queue_leases_.end()) {
+      qit->second.state = LeaseState::Allocated;
+      qit->second.session_id = conn.session_id;
+      qit->second.client_name = conn.client_name;
+    } else if (auto xit = xsk_leases_.find(lid); xit != xsk_leases_.end()) {
+      xit->second.state = LeaseState::Allocated;
+      xit->second.session_id = conn.session_id;
+      xit->second.client_name = conn.client_name;
+    } else if (auto fit = flow_leases_.find(lid); fit != flow_leases_.end()) {
+      fit->second.state = LeaseState::Allocated;
+      fit->second.session_id = conn.session_id;
+      fit->second.client_name = conn.client_name;
+    } else if (auto uit = udp_filter_leases_.find(lid); uit != udp_filter_leases_.end()) {
+      uit->second.state = LeaseState::Allocated;
+      uit->second.session_id = conn.session_id;
+      uit->second.client_name = conn.client_name;
+    }
     json_object_array_add(claimed, json_object_new_string(lid.c_str()));
   }
   json_object* missing = json_object_new_array();
@@ -1794,6 +2240,16 @@ void MtlManagerServer::rpc_close_session(Connection& conn, struct json_object* p
     return;
   }
 
+  /* Strict reverse cascade: XSK -> Flow -> UdpFilter -> Queue -> XDP -> Cpu. */
+  std::vector<std::string> q_release;
+  for (const auto& [lid, q] : queue_leases_) {
+    if (q.session_id == conn.session_id && q.state == LeaseState::Allocated)
+      q_release.push_back(lid);
+  }
+  for (const std::string& qlid : q_release) {
+    release_queue_cascade(qlid);
+  }
+
   std::vector<std::string> to_release;
   for (const auto& [lid, lease] : leases_) {
     if (lease.session_id == conn.session_id && lease.state == LeaseState::Allocated)
@@ -1824,9 +2280,64 @@ uint32_t MtlManagerServer::count_uid_cpu_leases(uid_t uid) const {
   return cnt;
 }
 
+uint32_t MtlManagerServer::count_uid_queue_leases(uid_t uid) const {
+  uint32_t cnt = 0;
+  for (const auto& [lid, ql] : queue_leases_) {
+    if (ql.uid == uid) ++cnt;
+  }
+  return cnt;
+}
+
+uint32_t MtlManagerServer::count_uid_flow_leases(uid_t uid) const {
+  uint32_t cnt = 0;
+  for (const auto& [lid, fl] : flow_leases_) {
+    if (fl.uid == uid) ++cnt;
+  }
+  return cnt;
+}
+
 bool MtlManagerServer::is_cpu_allocated(uint32_t cpu_id) const {
   for (const auto& [lid, lease] : leases_) {
     if (lease.cpu_id == cpu_id) return true;
+  }
+  return false;
+}
+
+bool MtlManagerServer::is_queue_allocated(const std::string& if_name,
+                                          uint32_t queue_id) const {
+  for (const auto& [lid, ql] : queue_leases_) {
+    if (ql.if_name == if_name && ql.queue_id == queue_id) return true;
+  }
+  return false;
+}
+
+bool MtlManagerServer::has_active_queue_on_iface(const std::string& if_name) const {
+  for (const auto& [lid, ql] : queue_leases_) {
+    if (ql.if_name == if_name) return true;
+  }
+  return false;
+}
+
+bool MtlManagerServer::has_duplicate_flow(const std::string& if_name,
+                                          const FlowSpec& spec) const {
+  for (const auto& [lid, fl] : flow_leases_) {
+    if (fl.if_name == if_name && fl.spec == spec) return true;
+  }
+  return false;
+}
+
+bool MtlManagerServer::has_xsk_on_queue_lease(const std::string& queue_lease_id) const {
+  for (const auto& [lid, xl] : xsk_leases_) {
+    if (xl.queue_lease_id == queue_lease_id) return true;
+  }
+  return false;
+}
+
+bool MtlManagerServer::has_udp_filter(const std::string& if_name, uint32_t queue_id,
+                                      uint16_t dst_port) const {
+  for (const auto& [lid, ul] : udp_filter_leases_) {
+    if (ul.if_name == if_name && ul.queue_id == queue_id && ul.dst_port == dst_port)
+      return true;
   }
   return false;
 }
@@ -2005,6 +2516,523 @@ void MtlManagerServer::rpc_acquire_cpu(Connection& conn, struct json_object* par
   enqueue_reply(conn, rep);
 }
 
+void MtlManagerServer::rpc_acquire_queue(Connection& conn, struct json_object* params) {
+  static const std::set<std::string> kKeys = {"ifName", "preferredQueue"};
+  std::string bad;
+  if (!check_allowed_keys(params, kKeys, &bad)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "unexpected parameter", bad);
+    return;
+  }
+  if (conn.session_id.empty()) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".SessionNotFound",
+                  "open a session before AcquireQueue");
+    return;
+  }
+
+  json_object* jif = nullptr;
+  std::string if_name;
+  if (!params || !json_object_object_get_ex(params, "ifName", &jif) ||
+      !parse_strict_str(jif, &if_name) || if_name.empty() || if_name.size() >= 16u) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "ifName must be a valid interface name", "ifName");
+    return;
+  }
+  for (char c : if_name) {
+    if (c == '/' || std::isspace(static_cast<unsigned char>(c)) ||
+        static_cast<unsigned char>(c) < 0x20u || static_cast<unsigned char>(c) > 0x7Eu) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "ifName contains illegal characters", "ifName");
+      return;
+    }
+  }
+
+  std::optional<uint32_t> preferred_q;
+  json_object* jpq = nullptr;
+  if (json_object_object_get_ex(params, "preferredQueue", &jpq) && jpq &&
+      !json_object_is_type(jpq, json_type_null)) {
+    int64_t v = 0;
+    if (!parse_strict_i64(jpq, &v) || v < 0 || v > 65535) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "preferredQueue must be an integer in 0..65535", "preferredQueue");
+      return;
+    }
+    if (v == 0) {
+      /* RES-Q-01: queue 0 is permanently protected. */
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "queue 0 is permanently protected", "preferredQueue");
+      return;
+    }
+    preferred_q = static_cast<uint32_t>(v);
+  }
+
+  if (!cfg_.policy.is_interface_allowed(if_name)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".AccessDenied",
+                  "interface '" + if_name + "' is not permitted by policy");
+    return;
+  }
+
+  /* Cross-session per-UID max_queues quota aggregation (ISSUE-18). */
+  const uint32_t q_limit = cfg_.policy.max_queues_for_uid(conn.peer.principal.uid);
+  if (count_uid_queue_leases(conn.peer.principal.uid) >= q_limit) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".AccessDenied",
+                  "per-UID max_queues quota exceeded");
+    return;
+  }
+
+  InterfaceInfo info;
+  std::string qerr;
+  if (!netdev_->query_interface(if_name, &info, &qerr)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter", qerr, "ifName");
+    return;
+  }
+  if (info.max_queues <= 1u) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".ResourceBusy",
+                  "interface '" + if_name + "' has no allocatable queues above queue 0");
+    return;
+  }
+
+  std::optional<uint32_t> chosen_q;
+  if (preferred_q.has_value()) {
+    if (*preferred_q >= info.max_queues) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "preferredQueue exceeds interface queue count", "preferredQueue");
+      return;
+    }
+    if (is_queue_allocated(if_name, *preferred_q)) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".ResourceBusy",
+                    "requested queue " + std::to_string(*preferred_q) + " is busy");
+      return;
+    }
+    chosen_q = *preferred_q;
+  } else {
+    /* RES-Q-01: never allocate queue 0. */
+    for (uint32_t q = 1; q < info.max_queues; ++q) {
+      if (!is_queue_allocated(if_name, q)) {
+        chosen_q = q;
+        break;
+      }
+    }
+    if (!chosen_q.has_value()) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".ResourceBusy",
+                    "no free RX queues available on '" + if_name + "'");
+      return;
+    }
+  }
+
+  UniqueFd lease_pidfd;
+  if (conn.peer.pidfd_owner.valid()) {
+    int dup_fd = ::fcntl(conn.peer.pidfd_owner.get(), F_DUPFD_CLOEXEC, 0);
+    if (dup_fd < 0) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError",
+                    "failed to duplicate peer pidfd");
+      return;
+    }
+    lease_pidfd.reset(dup_fd);
+  }
+
+  bool newly_attached_xdp = false;
+  XdpAttachMode xdp_mode = XdpAttachMode::None;
+  if (xdp_attachments_.find(if_name) == xdp_attachments_.end()) {
+    std::string xerr;
+    if (!netdev_->attach_xdp(if_name, info.ifindex, &xdp_mode, &xerr)) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError", xerr);
+      return;
+    }
+    xdp_attachments_[if_name] = XdpAttachment{if_name, info.ifindex, xdp_mode};
+    newly_attached_xdp = true;
+  }
+
+  QueueLease ql;
+  ql.lease_id = next_id("que");
+  ql.if_name = if_name;
+  ql.ifindex = info.ifindex;
+  ql.queue_id = *chosen_q;
+  ql.state = LeaseState::Allocated;
+  ql.session_id = conn.session_id;
+  ql.pid = conn.peer.principal.pid;
+  ql.start_time_ticks = conn.peer.principal.start_time_ticks;
+  ql.uid = conn.peer.principal.uid;
+  ql.client_name = conn.client_name;
+  ql.pidfd = std::move(lease_pidfd);
+
+  const std::string lid = ql.lease_id;
+  auto [it, inserted] = queue_leases_.emplace(lid, std::move(ql));
+  std::string jerr;
+  if (!inserted || !persist_journal(&jerr)) {
+    /* ISSUE-32 / RES-Q-07: roll back queue and lazy XDP attach on journal failure. */
+    if (inserted) queue_leases_.erase(it);
+    if (newly_attached_xdp) {
+      std::string derr;
+      (void)netdev_->detach_xdp(if_name, info.ifindex, xdp_mode, &derr);
+      xdp_attachments_.erase(if_name);
+    }
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError",
+                  "failed to persist queue lease to journal: " + jerr);
+    return;
+  }
+
+  watch_queue_pidfd(it->second);
+
+  json_object* rep = json_object_new_object();
+  json_add_str(rep, "leaseId", lid);
+  json_add_str(rep, "ifName", if_name);
+  json_object_object_add(rep, "ifindex",
+                         json_object_new_int64(static_cast<int64_t>(info.ifindex)));
+  json_object_object_add(rep, "queueId",
+                         json_object_new_int64(static_cast<int64_t>(*chosen_q)));
+  enqueue_reply(conn, rep);
+}
+
+void MtlManagerServer::rpc_attach_xsk(Connection& conn, struct json_object* params,
+                                      const int* fds, size_t fd_count) {
+  static const std::set<std::string> kKeys = {"queueLease"};
+  std::string bad;
+  if (!check_allowed_keys(params, kKeys, &bad)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "unexpected parameter", bad);
+    return;
+  }
+  if (conn.session_id.empty()) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".SessionNotFound",
+                  "open a session before AttachXsk");
+    return;
+  }
+  if (!fds || fd_count != 1u || fds[0] < 0) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "AttachXsk requires exactly 1 file descriptor via SCM_RIGHTS", "fds");
+    return;
+  }
+
+  json_object* jql = nullptr;
+  std::string qlid;
+  if (!params || !json_object_object_get_ex(params, "queueLease", &jql) ||
+      !parse_strict_str(jql, &qlid) || qlid.empty()) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "queueLease must be a non-empty string", "queueLease");
+    return;
+  }
+
+  auto qit = queue_leases_.find(qlid);
+  if (qit == queue_leases_.end() || qit->second.state != LeaseState::Allocated ||
+      qit->second.session_id != conn.session_id) {
+    /* RES-Q-04: identical LeaseNotOwned for nonexistent or unowned queue lease. */
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotOwned",
+                  "queue lease is not owned by active session");
+    return;
+  }
+
+  if (has_xsk_on_queue_lease(qlid)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".ResourceBusy",
+                  "queue lease already has an attached XSK socket");
+    return;
+  }
+
+  const QueueLease& ql = qit->second;
+  const int xsk_fd = fds[0];
+  std::string verr;
+  if (!netdev_->validate_xsk_fd(xsk_fd, ql.ifindex, ql.queue_id, &verr)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter", verr, "fds");
+    return;
+  }
+
+  std::string berr;
+  if (!netdev_->update_xsk_map(ql.if_name, ql.ifindex, ql.queue_id, xsk_fd, &berr)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError", berr);
+    return;
+  }
+
+  XskLease xl;
+  xl.lease_id = next_id("xsk");
+  xl.queue_lease_id = ql.lease_id;
+  xl.if_name = ql.if_name;
+  xl.ifindex = ql.ifindex;
+  xl.queue_id = ql.queue_id;
+  xl.state = LeaseState::Allocated;
+  xl.session_id = conn.session_id;
+  xl.pid = conn.peer.principal.pid;
+  xl.start_time_ticks = conn.peer.principal.start_time_ticks;
+  xl.uid = conn.peer.principal.uid;
+  xl.client_name = conn.client_name;
+
+  const std::string lid = xl.lease_id;
+  auto [it, inserted] = xsk_leases_.emplace(lid, std::move(xl));
+  std::string jerr;
+  if (!inserted || !persist_journal(&jerr)) {
+    /* ISSUE-32 / RES-Q-07: roll back xsks_map on journal save failure. */
+    if (inserted) xsk_leases_.erase(it);
+    std::string derr;
+    (void)netdev_->delete_xsk_map(ql.if_name, ql.ifindex, ql.queue_id, &derr);
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError",
+                  "failed to persist XSK attachment to journal: " + jerr);
+    return;
+  }
+
+  json_object* rep = json_object_new_object();
+  json_add_str(rep, "leaseId", lid);
+  enqueue_reply(conn, rep);
+}
+
+void MtlManagerServer::rpc_add_flow(Connection& conn, struct json_object* params) {
+  static const std::set<std::string> kKeys = {"queueLease", "protocol", "srcIp",
+                                              "dstIp",      "srcPort",  "dstPort"};
+  std::string bad;
+  if (!check_allowed_keys(params, kKeys, &bad)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "unexpected parameter", bad);
+    return;
+  }
+  if (conn.session_id.empty()) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".SessionNotFound",
+                  "open a session before AddFlow");
+    return;
+  }
+
+  json_object* jql = nullptr;
+  std::string qlid;
+  if (!params || !json_object_object_get_ex(params, "queueLease", &jql) ||
+      !parse_strict_str(jql, &qlid) || qlid.empty()) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "queueLease must be a non-empty string", "queueLease");
+    return;
+  }
+
+  auto qit = queue_leases_.find(qlid);
+  if (qit == queue_leases_.end() || qit->second.state != LeaseState::Allocated ||
+      qit->second.session_id != conn.session_id) {
+    /* RES-Q-04: zero existence oracle. */
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotOwned",
+                  "queue lease is not owned by active session");
+    return;
+  }
+
+  std::string protocol = "udp4";
+  json_object* jproto = nullptr;
+  if (json_object_object_get_ex(params, "protocol", &jproto) && jproto &&
+      !json_object_is_type(jproto, json_type_null)) {
+    if (!parse_strict_str(jproto, &protocol) || protocol.empty()) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "protocol must be a non-empty string", "protocol");
+      return;
+    }
+    if (protocol != "udp4") {
+      /* RES-Q-06: only udp4 flows are supported; reject udp6 with UnsupportedFlowType. */
+      enqueue_error(
+          conn, MT_VARLINK_MANAGER_INTERFACE ".UnsupportedFlowType",
+          "unsupported flow protocol '" + protocol + "'; only udp4 is supported");
+      return;
+    }
+  }
+
+  FlowSpec spec;
+  spec.protocol = "udp4";
+
+  json_object* jsrc = nullptr;
+  if (json_object_object_get_ex(params, "srcIp", &jsrc) && jsrc &&
+      !json_object_is_type(jsrc, json_type_null)) {
+    std::string src_str;
+    if (!parse_strict_str(jsrc, &src_str) || src_str.empty() ||
+        !parse_strict_ipv4(src_str, &spec.src_ip_be)) {
+      /* ISSUE-16 / ISSUE-88: reject embedded NUL, empty srcIp "", and malformed IPv4. */
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "srcIp must be a valid non-empty IPv4 address", "srcIp");
+      return;
+    }
+  }
+
+  json_object* jdst = nullptr;
+  if (json_object_object_get_ex(params, "dstIp", &jdst) && jdst &&
+      !json_object_is_type(jdst, json_type_null)) {
+    std::string dst_str;
+    if (!parse_strict_str(jdst, &dst_str) || dst_str.empty() ||
+        !parse_strict_ipv4(dst_str, &spec.dst_ip_be)) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "dstIp must be a valid non-empty IPv4 address", "dstIp");
+      return;
+    }
+  }
+
+  json_object* jsp = nullptr;
+  if (json_object_object_get_ex(params, "srcPort", &jsp) && jsp &&
+      !json_object_is_type(jsp, json_type_null)) {
+    int64_t v = 0;
+    if (!parse_strict_i64(jsp, &v) || v < 0 || v > 65535) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "srcPort must be an integer in 0..65535", "srcPort");
+      return;
+    }
+    spec.src_port = static_cast<uint16_t>(v);
+  }
+
+  json_object* jdp = nullptr;
+  int64_t dp_val = 0;
+  if (!json_object_object_get_ex(params, "dstPort", &jdp) ||
+      !parse_strict_i64(jdp, &dp_val) || dp_val < 1 || dp_val > 65535) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "dstPort must be an integer in 1..65535", "dstPort");
+    return;
+  }
+  spec.dst_port = static_cast<uint16_t>(dp_val);
+
+  if (!cfg_.policy.is_udp_port_allowed(spec.dst_port)) {
+    enqueue_error(
+        conn, MT_VARLINK_MANAGER_INTERFACE ".AccessDenied",
+        "UDP port " + std::to_string(spec.dst_port) + " is not permitted by policy");
+    return;
+  }
+
+  /* Cross-session per-UID max_flows quota aggregation (ISSUE-18). */
+  const uint32_t f_limit = cfg_.policy.max_flows_for_uid(conn.peer.principal.uid);
+  if (count_uid_flow_leases(conn.peer.principal.uid) >= f_limit) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".AccessDenied",
+                  "per-UID max_flows quota exceeded");
+    return;
+  }
+
+  const QueueLease& ql = qit->second;
+  /* ISSUE-52 / RES-Q-03: reject duplicate canonical FlowSpec on same interface. */
+  if (has_duplicate_flow(ql.if_name, spec)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".ResourceBusy",
+                  "flow tuple is already active on interface '" + ql.if_name + "'");
+    return;
+  }
+
+  uint32_t rule_loc = 0;
+  std::string berr;
+  if (!netdev_->add_flow(ql.if_name, ql.ifindex, ql.queue_id, spec, &rule_loc, &berr)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError", berr);
+    return;
+  }
+
+  FlowLease fl;
+  fl.lease_id = next_id("flw");
+  fl.queue_lease_id = ql.lease_id;
+  fl.if_name = ql.if_name;
+  fl.ifindex = ql.ifindex;
+  fl.queue_id = ql.queue_id;
+  fl.rule_location = rule_loc;
+  fl.spec = spec;
+  fl.state = LeaseState::Allocated;
+  fl.session_id = conn.session_id;
+  fl.pid = conn.peer.principal.pid;
+  fl.start_time_ticks = conn.peer.principal.start_time_ticks;
+  fl.uid = conn.peer.principal.uid;
+  fl.client_name = conn.client_name;
+
+  const std::string lid = fl.lease_id;
+  auto [it, inserted] = flow_leases_.emplace(lid, std::move(fl));
+  std::string jerr;
+  if (!inserted || !persist_journal(&jerr)) {
+    /* ISSUE-32 / RES-Q-07: roll back NIC flow rule on journal save failure. */
+    if (inserted) flow_leases_.erase(it);
+    std::string derr;
+    (void)netdev_->delete_flow(ql.if_name, ql.ifindex, rule_loc, &derr);
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError",
+                  "failed to persist flow lease to journal: " + jerr);
+    return;
+  }
+
+  json_object* rep = json_object_new_object();
+  json_add_str(rep, "leaseId", lid);
+  json_object_object_add(rep, "ruleLocation",
+                         json_object_new_int64(static_cast<int64_t>(rule_loc)));
+  enqueue_reply(conn, rep);
+}
+
+void MtlManagerServer::rpc_add_udp_filter(Connection& conn, struct json_object* params) {
+  static const std::set<std::string> kKeys = {"queueLease", "destinationPort"};
+  std::string bad;
+  if (!check_allowed_keys(params, kKeys, &bad)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "unexpected parameter", bad);
+    return;
+  }
+  if (conn.session_id.empty()) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".SessionNotFound",
+                  "open a session before AddUdpFilter");
+    return;
+  }
+
+  json_object* jql = nullptr;
+  std::string qlid;
+  if (!params || !json_object_object_get_ex(params, "queueLease", &jql) ||
+      !parse_strict_str(jql, &qlid) || qlid.empty()) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "queueLease must be a non-empty string", "queueLease");
+    return;
+  }
+
+  auto qit = queue_leases_.find(qlid);
+  if (qit == queue_leases_.end() || qit->second.state != LeaseState::Allocated ||
+      qit->second.session_id != conn.session_id) {
+    /* RES-Q-04: zero existence oracle. */
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotOwned",
+                  "queue lease is not owned by active session");
+    return;
+  }
+
+  json_object* jdp = nullptr;
+  int64_t dp_val = 0;
+  if (!json_object_object_get_ex(params, "destinationPort", &jdp) ||
+      !parse_strict_i64(jdp, &dp_val) || dp_val < 1 || dp_val > 65535) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "destinationPort must be an integer in 1..65535", "destinationPort");
+    return;
+  }
+  const uint16_t dst_port = static_cast<uint16_t>(dp_val);
+
+  if (!cfg_.policy.is_udp_port_allowed(dst_port)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".AccessDenied",
+                  "UDP port " + std::to_string(dst_port) + " is not permitted by policy");
+    return;
+  }
+
+  const QueueLease& ql = qit->second;
+  if (has_udp_filter(ql.if_name, ql.queue_id, dst_port)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".ResourceBusy",
+                  "UDP filter already installed on this queue and port");
+    return;
+  }
+
+  std::string berr;
+  if (!netdev_->add_udp_filter(ql.if_name, ql.ifindex, ql.queue_id, dst_port, &berr)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError", berr);
+    return;
+  }
+
+  UdpFilterLease ul;
+  ul.lease_id = next_id("udp");
+  ul.queue_lease_id = ql.lease_id;
+  ul.if_name = ql.if_name;
+  ul.ifindex = ql.ifindex;
+  ul.queue_id = ql.queue_id;
+  ul.dst_port = dst_port;
+  ul.state = LeaseState::Allocated;
+  ul.session_id = conn.session_id;
+  ul.pid = conn.peer.principal.pid;
+  ul.start_time_ticks = conn.peer.principal.start_time_ticks;
+  ul.uid = conn.peer.principal.uid;
+  ul.client_name = conn.client_name;
+
+  const std::string lid = ul.lease_id;
+  auto [it, inserted] = udp_filter_leases_.emplace(lid, std::move(ul));
+  std::string jerr;
+  if (!inserted || !persist_journal(&jerr)) {
+    /* ISSUE-32 / RES-Q-07: roll back udp4_dp_filter BPF map on journal save failure. */
+    if (inserted) udp_filter_leases_.erase(it);
+    std::string derr;
+    (void)netdev_->delete_udp_filter(ql.if_name, ql.ifindex, ql.queue_id, dst_port,
+                                     &derr);
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError",
+                  "failed to persist UDP filter lease to journal: " + jerr);
+    return;
+  }
+
+  json_object* rep = json_object_new_object();
+  json_add_str(rep, "leaseId", lid);
+  enqueue_reply(conn, rep);
+}
+
 void MtlManagerServer::rpc_release_lease(Connection& conn, struct json_object* params) {
   static const std::set<std::string> kKeys = {"leaseId"};
   std::string bad;
@@ -2029,20 +3057,65 @@ void MtlManagerServer::rpc_release_lease(Connection& conn, struct json_object* p
 
   /* SEC-AC-09: return identical LeaseNotOwned for nonexistent or unowned lease IDs so
    * there is zero existence oracle. */
-  auto it = leases_.find(lid);
-  if (it == leases_.end() || it->second.state != LeaseState::Allocated ||
-      it->second.session_id != conn.session_id) {
+  if (auto xit = xsk_leases_.find(lid); xit != xsk_leases_.end()) {
+    if (xit->second.state != LeaseState::Allocated ||
+        xit->second.session_id != conn.session_id) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotOwned",
+                    "lease is not owned by active session");
+      return;
+    }
+    std::string berr;
+    (void)netdev_->delete_xsk_map(xit->second.if_name, xit->second.ifindex,
+                                  xit->second.queue_id, &berr);
+    xsk_leases_.erase(xit);
+  } else if (auto fit = flow_leases_.find(lid); fit != flow_leases_.end()) {
+    if (fit->second.state != LeaseState::Allocated ||
+        fit->second.session_id != conn.session_id) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotOwned",
+                    "lease is not owned by active session");
+      return;
+    }
+    std::string berr;
+    (void)netdev_->delete_flow(fit->second.if_name, fit->second.ifindex,
+                               fit->second.rule_location, &berr);
+    flow_leases_.erase(fit);
+  } else if (auto uit = udp_filter_leases_.find(lid); uit != udp_filter_leases_.end()) {
+    if (uit->second.state != LeaseState::Allocated ||
+        uit->second.session_id != conn.session_id) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotOwned",
+                    "lease is not owned by active session");
+      return;
+    }
+    std::string berr;
+    (void)netdev_->delete_udp_filter(uit->second.if_name, uit->second.ifindex,
+                                     uit->second.queue_id, uit->second.dst_port, &berr);
+    udp_filter_leases_.erase(uit);
+  } else if (auto qit = queue_leases_.find(lid); qit != queue_leases_.end()) {
+    if (qit->second.state != LeaseState::Allocated ||
+        qit->second.session_id != conn.session_id) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotOwned",
+                    "lease is not owned by active session");
+      return;
+    }
+    release_queue_cascade(lid);
+  } else if (auto it = leases_.find(lid); it != leases_.end()) {
+    if (it->second.state != LeaseState::Allocated ||
+        it->second.session_id != conn.session_id) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotOwned",
+                    "lease is not owned by active session");
+      return;
+    }
+    if (it->second.pidfd.valid()) {
+      del_epoll(it->second.pidfd.get());
+      pidfd_to_lease_.erase(it->second.pidfd.get());
+    }
+    shm_.release_cpu(it->second.cpu_id, it->second.pid);
+    leases_.erase(it);
+  } else {
     enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotOwned",
                   "lease is not owned by active session");
     return;
   }
-
-  if (it->second.pidfd.valid()) {
-    del_epoll(it->second.pidfd.get());
-    pidfd_to_lease_.erase(it->second.pidfd.get());
-  }
-  shm_.release_cpu(it->second.cpu_id, it->second.pid);
-  leases_.erase(it);
 
   std::string jerr;
   (void)persist_journal(&jerr);
@@ -2092,8 +3165,138 @@ void MtlManagerServer::rpc_get_status(Connection& conn, struct json_object* para
     json_object_object_add(lo, "uid", json_object_new_int64(l.uid));
     json_object_array_add(leases_arr, lo);
   }
-  json_object_object_add(rep, "quarantinedCount", json_object_new_int64(qcnt));
   json_object_object_add(rep, "leases", leases_arr);
+
+  json_object* queues_arr = json_object_new_array();
+  for (const auto& [lid, q] : queue_leases_) {
+    if (q.state == LeaseState::Quarantined) ++qcnt;
+    json_object* qo = json_object_new_object();
+    json_add_str(qo, "leaseId", q.lease_id);
+    json_add_str(qo, "ifName", q.if_name);
+    json_object_object_add(qo, "ifindex",
+                           json_object_new_int64(static_cast<int64_t>(q.ifindex)));
+    json_object_object_add(qo, "queueId",
+                           json_object_new_int64(static_cast<int64_t>(q.queue_id)));
+    json_add_str(qo, "state", lease_state_to_string(q.state));
+    json_add_str(qo, "sessionId", q.session_id);
+    json_add_str(qo, "clientName", q.client_name);
+    json_object_object_add(qo, "pid", json_object_new_int64(q.pid));
+    json_object_object_add(qo, "uid", json_object_new_int64(q.uid));
+    json_object_array_add(queues_arr, qo);
+  }
+  json_object_object_add(rep, "queues", queues_arr);
+  json_object_object_add(rep, "quarantinedCount", json_object_new_int64(qcnt));
+
+  json_object* flows_arr = json_object_new_array();
+  for (const auto& [lid, f] : flow_leases_) {
+    json_object* fo = json_object_new_object();
+    json_add_str(fo, "leaseId", f.lease_id);
+    json_add_str(fo, "queueLeaseId", f.queue_lease_id);
+    json_add_str(fo, "ifName", f.if_name);
+    json_object_object_add(fo, "queueId",
+                           json_object_new_int64(static_cast<int64_t>(f.queue_id)));
+    json_object_object_add(fo, "ruleLocation",
+                           json_object_new_int64(static_cast<int64_t>(f.rule_location)));
+    json_add_str(fo, "protocol", f.spec.protocol);
+    json_add_str(fo, "srcIp",
+                 (f.spec.src_ip_be != 0) ? format_ipv4(f.spec.src_ip_be) : std::string());
+    json_add_str(fo, "dstIp", format_ipv4(f.spec.dst_ip_be));
+    json_object_object_add(fo, "srcPort", json_object_new_int64(f.spec.src_port));
+    json_object_object_add(fo, "dstPort", json_object_new_int64(f.spec.dst_port));
+    json_add_str(fo, "state", lease_state_to_string(f.state));
+    json_add_str(fo, "sessionId", f.session_id);
+    json_object_object_add(fo, "pid", json_object_new_int64(f.pid));
+    json_object_object_add(fo, "uid", json_object_new_int64(f.uid));
+    json_object_array_add(flows_arr, fo);
+  }
+  json_object_object_add(rep, "flows", flows_arr);
+
+  json_object* udps_arr = json_object_new_array();
+  for (const auto& [lid, u] : udp_filter_leases_) {
+    json_object* uo = json_object_new_object();
+    json_add_str(uo, "leaseId", u.lease_id);
+    json_add_str(uo, "queueLeaseId", u.queue_lease_id);
+    json_add_str(uo, "ifName", u.if_name);
+    json_object_object_add(uo, "queueId",
+                           json_object_new_int64(static_cast<int64_t>(u.queue_id)));
+    json_object_object_add(uo, "destinationPort", json_object_new_int64(u.dst_port));
+    json_add_str(uo, "state", lease_state_to_string(u.state));
+    json_add_str(uo, "sessionId", u.session_id);
+    json_object_object_add(uo, "pid", json_object_new_int64(u.pid));
+    json_object_object_add(uo, "uid", json_object_new_int64(u.uid));
+    json_object_array_add(udps_arr, uo);
+  }
+  json_object_object_add(rep, "udpFilters", udps_arr);
+
+  json_object* xsks_arr = json_object_new_array();
+  for (const auto& [lid, x] : xsk_leases_) {
+    json_object* xo = json_object_new_object();
+    json_add_str(xo, "leaseId", x.lease_id);
+    json_add_str(xo, "queueLeaseId", x.queue_lease_id);
+    json_add_str(xo, "ifName", x.if_name);
+    json_object_object_add(xo, "queueId",
+                           json_object_new_int64(static_cast<int64_t>(x.queue_id)));
+    json_add_str(xo, "state", lease_state_to_string(x.state));
+    json_add_str(xo, "sessionId", x.session_id);
+    json_object_object_add(xo, "pid", json_object_new_int64(x.pid));
+    json_object_object_add(xo, "uid", json_object_new_int64(x.uid));
+    json_object_array_add(xsks_arr, xo);
+  }
+  json_object_object_add(rep, "xskAttachments", xsks_arr);
+
+  json_object* xdps_arr = json_object_new_array();
+  for (const auto& [ifn, xa] : xdp_attachments_) {
+    json_object* xo = json_object_new_object();
+    json_add_str(xo, "ifName", xa.if_name);
+    json_object_object_add(xo, "ifindex",
+                           json_object_new_int64(static_cast<int64_t>(xa.ifindex)));
+    json_add_str(xo, "mode", xdp_attach_mode_to_string(xa.mode));
+    json_object_array_add(xdps_arr, xo);
+  }
+  json_object_object_add(rep, "xdpAttachments", xdps_arr);
+
+  json_object* backend_arr = json_object_new_array();
+  for (const auto& snap : netdev_->snapshot_state()) {
+    json_object* bo = json_object_new_object();
+    json_add_str(bo, "ifName", snap.if_name);
+    json_object_object_add(bo, "ifindex",
+                           json_object_new_int64(static_cast<int64_t>(snap.ifindex)));
+    json_object_object_add(bo, "maxQueues",
+                           json_object_new_int64(static_cast<int64_t>(snap.max_queues)));
+    json_add_str(bo, "xdpMode", xdp_attach_mode_to_string(snap.xdp_mode));
+
+    json_object* bx = json_object_new_array();
+    for (uint32_t qid : snap.xsk_queues)
+      json_object_array_add(bx, json_object_new_int64(static_cast<int64_t>(qid)));
+    json_object_object_add(bo, "xskQueues", bx);
+
+    json_object* bu = json_object_new_array();
+    for (const auto& [qid, dp] : snap.udp_filters) {
+      json_object* uo = json_object_new_object();
+      json_object_object_add(uo, "queueId",
+                             json_object_new_int64(static_cast<int64_t>(qid)));
+      json_object_object_add(uo, "dstPort", json_object_new_int64(dp));
+      json_object_array_add(bu, uo);
+    }
+    json_object_object_add(bo, "udpFilters", bu);
+
+    json_object* bf = json_object_new_array();
+    for (const auto& r : snap.flow_rules) {
+      json_object* ro = json_object_new_object();
+      json_object_object_add(ro, "location",
+                             json_object_new_int64(static_cast<int64_t>(r.location)));
+      json_object_object_add(ro, "queueId",
+                             json_object_new_int64(static_cast<int64_t>(r.queue_id)));
+      json_object_object_add(ro, "mtlOwned",
+                             json_object_new_boolean(r.mtl_owned ? 1 : 0));
+      json_object_object_add(ro, "dstPort", json_object_new_int64(r.spec.dst_port));
+      json_object_array_add(bf, ro);
+    }
+    json_object_object_add(bo, "flowRules", bf);
+
+    json_object_array_add(backend_arr, bo);
+  }
+  json_object_object_add(rep, "backendInterfaces", backend_arr);
 
   /* Support up to 4 MiB GetStatus replies without disconnecting caller (ISSUE-31). */
   enqueue_reply(conn, rep, /*allow_large=*/true);
@@ -2116,26 +3319,49 @@ void MtlManagerServer::rpc_revoke_lease(Connection& conn, struct json_object* pa
     return;
   }
 
-  auto it = leases_.find(lid);
-  if (it == leases_.end()) {
+  if (auto it = leases_.find(lid); it != leases_.end()) {
+    CpuLease& l = it->second;
+    if (!l.pidfd.valid() || !PeerCredExtractor::is_pidfd_alive(l.pidfd.get())) {
+      if (l.pidfd.valid()) {
+        del_epoll(l.pidfd.get());
+        pidfd_to_lease_.erase(l.pidfd.get());
+      }
+      shm_.release_cpu(l.cpu_id, l.pid);
+      leases_.erase(it);
+    } else {
+      l.state = LeaseState::Quarantined;
+      l.session_id.clear();
+    }
+  } else if (auto qit = queue_leases_.find(lid); qit != queue_leases_.end()) {
+    QueueLease& ql = qit->second;
+    if (!ql.pidfd.valid() || !PeerCredExtractor::is_pidfd_alive(ql.pidfd.get())) {
+      release_queue_cascade(lid);
+    } else {
+      strip_queue_children(lid);
+      ql.state = LeaseState::Quarantined;
+      ql.session_id.clear();
+    }
+  } else if (auto xit = xsk_leases_.find(lid); xit != xsk_leases_.end()) {
+    std::string berr;
+    (void)netdev_->delete_xsk_map(xit->second.if_name, xit->second.ifindex,
+                                  xit->second.queue_id, &berr);
+    xsk_leases_.erase(xit);
+  } else if (auto fit = flow_leases_.find(lid); fit != flow_leases_.end()) {
+    std::string berr;
+    (void)netdev_->delete_flow(fit->second.if_name, fit->second.ifindex,
+                               fit->second.rule_location, &berr);
+    flow_leases_.erase(fit);
+  } else if (auto uit = udp_filter_leases_.find(lid); uit != udp_filter_leases_.end()) {
+    std::string berr;
+    (void)netdev_->delete_udp_filter(uit->second.if_name, uit->second.ifindex,
+                                     uit->second.queue_id, uit->second.dst_port, &berr);
+    udp_filter_leases_.erase(uit);
+  } else {
     enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotFound",
                   "lease not found: " + lid);
     return;
   }
 
-  CpuLease& l = it->second;
-  if (!l.pidfd.valid() || !PeerCredExtractor::is_pidfd_alive(l.pidfd.get())) {
-    if (l.pidfd.valid()) {
-      del_epoll(l.pidfd.get());
-      pidfd_to_lease_.erase(l.pidfd.get());
-    }
-    shm_.release_cpu(l.cpu_id, l.pid);
-    leases_.erase(it);
-  } else {
-    /* Live owner -> QUARANTINED; CPU and shm slot remain held until pidfd exits. */
-    l.state = LeaseState::Quarantined;
-    l.session_id.clear();
-  }
   std::string jerr;
   (void)persist_journal(&jerr);
   enqueue_reply(conn, json_object_new_object());
@@ -2166,17 +3392,35 @@ void MtlManagerServer::rpc_revoke_session(Connection& conn, struct json_object* 
     }
   }
 
-  std::vector<std::string> matching_leases;
+  std::vector<std::string> matching_cpus;
   for (const auto& [lid, l] : leases_) {
-    if (l.session_id == sid) matching_leases.push_back(lid);
+    if (l.session_id == sid) matching_cpus.push_back(lid);
   }
-  if (target_cid == 0 && matching_leases.empty()) {
+  std::vector<std::string> matching_queues;
+  for (const auto& [lid, q] : queue_leases_) {
+    if (q.session_id == sid) matching_queues.push_back(lid);
+  }
+  if (target_cid == 0 && matching_cpus.empty() && matching_queues.empty()) {
     enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".SessionNotFound",
                   "session not found: " + sid);
     return;
   }
 
-  for (const std::string& lid : matching_leases) {
+  for (const std::string& qlid : matching_queues) {
+    auto qit = queue_leases_.find(qlid);
+    if (qit == queue_leases_.end()) continue;
+    QueueLease& ql = qit->second;
+    if (!ql.pidfd.valid() || !PeerCredExtractor::is_pidfd_alive(ql.pidfd.get())) {
+      release_queue_cascade(qlid);
+    } else {
+      /* Hold queue in QUARANTINED while live, immediately removing XSK/Flow/UdpFilter. */
+      strip_queue_children(qlid);
+      ql.state = LeaseState::Quarantined;
+      ql.session_id.clear();
+    }
+  }
+
+  for (const std::string& lid : matching_cpus) {
     auto it = leases_.find(lid);
     if (it == leases_.end()) continue;
     CpuLease& l = it->second;
@@ -2224,25 +3468,32 @@ void MtlManagerServer::rpc_kill_quarantined_owner(Connection& conn,
     return;
   }
 
-  auto it = leases_.find(lid);
-  if (it == leases_.end()) {
+  int target_pidfd = -1;
+  LeaseState target_state = LeaseState::Allocated;
+  if (auto it = leases_.find(lid); it != leases_.end()) {
+    target_state = it->second.state;
+    target_pidfd = it->second.pidfd.get();
+  } else if (auto qit = queue_leases_.find(lid); qit != queue_leases_.end()) {
+    target_state = qit->second.state;
+    target_pidfd = qit->second.pidfd.get();
+  } else {
     enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".LeaseNotFound",
                   "lease not found: " + lid);
     return;
   }
-  if (it->second.state != LeaseState::Quarantined) {
+
+  if (target_state != LeaseState::Quarantined) {
     enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
                   "lease is not in QUARANTINED state", "leaseId");
     return;
   }
 
   std::string kerr;
-  if (!PeerCredExtractor::send_sigkill_pidfd(it->second.pidfd.get(), &kerr)) {
+  if (!PeerCredExtractor::send_sigkill_pidfd(target_pidfd, &kerr)) {
     enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InternalError", kerr);
     return;
   }
-  /* Do NOT free CPU yet; epoll pidfd readiness frees it when the process actually exits.
-   */
+  /* Do NOT free CPU/queue yet; epoll pidfd readiness frees it when the process exits. */
   enqueue_reply(conn, json_object_new_object());
 }
 

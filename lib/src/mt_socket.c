@@ -4,6 +4,7 @@
 
 #include "mt_socket.h"
 
+#include "dev/mt_af_xdp.h"
 #include "mt_instance.h"
 #include "mt_log.h"
 #include "mt_util.h"
@@ -351,8 +352,8 @@ int mt_socket_get_mac(struct mtl_main_impl* impl, const char* if_name,
 }
 
 int mt_socket_add_flow(struct mtl_main_impl* impl, enum mtl_port port, uint16_t queue_id,
-                       struct mt_rxq_flow* flow) {
-  const char* if_name = mt_kernel_if_name(impl, port);
+                       struct mt_rxq_flow* flow, char flow_lease_out[40],
+                       int* rule_loc_out) {
   bool has_ip_flow = true;
 
   if (!mt_is_manager_connected(impl)) {
@@ -390,35 +391,25 @@ int mt_socket_add_flow(struct mtl_main_impl* impl, enum mtl_port port, uint16_t 
     }
   }
 
-  if (mt_pmd_is_dpdk_af_xdp(impl, port)) {
-    /* workaround now */
-    queue_id += MT_DPDK_AF_XDP_START_QUEUE;
-    int ret =
-        mt_instance_update_udp_dp_filter(impl, if_nametoindex(if_name), dport, true);
-    if (ret < 0) {
-      err("%s(%d), udp_dp_filter fail %d\n", __func__, port, ret);
-      return ret;
-    }
+  const char* queue_lease = mt_xdp_get_queue_lease_id(impl, port, queue_id);
+  if (!queue_lease) {
+    err("%s(%d), no queue lease found for queue %u\n", __func__, port, queue_id);
+    return -EINVAL;
   }
-  return mt_instance_add_flow(impl, if_nametoindex(if_name), queue_id,
-                              0x02 /*UDP_V4_FLOW*/, sip, dip, 0, dport);
+
+  return mt_instance_add_flow(impl, queue_lease, sip, dip, 0, dport, flow_lease_out,
+                              rule_loc_out);
 }
 
-int mt_socket_remove_flow(struct mtl_main_impl* impl, enum mtl_port port, int flow_id,
-                          uint16_t dst_port) {
-  const char* if_name = mt_kernel_if_name(impl, port);
-
+int mt_socket_remove_flow(struct mtl_main_impl* impl, enum mtl_port port,
+                          const char* flow_lease_id) {
   if (!mt_is_manager_connected(impl)) {
     err("%s(%d), manager not connected\n", __func__, port);
     return -EIO;
   }
+  if (!flow_lease_id || flow_lease_id[0] == '\0') return 0;
 
-  if (mt_pmd_is_dpdk_af_xdp(impl, port)) {
-    /* workaround now */
-    mt_instance_update_udp_dp_filter(impl, if_nametoindex(if_name), dst_port, false);
-  }
-
-  return mt_instance_del_flow(impl, if_nametoindex(if_name), flow_id);
+  return mt_instance_release_lease(impl, flow_lease_id);
 }
 
 int mt_socket_fd_join_multicast(struct mtl_main_impl* impl, enum mtl_port port,
@@ -509,20 +500,22 @@ int mt_socket_get_mac(struct mtl_main_impl* impl, const char* if_name,
 }
 
 int mt_socket_add_flow(struct mtl_main_impl* impl, enum mtl_port port, uint16_t queue_id,
-                       struct mt_rxq_flow* flow) {
+                       struct mt_rxq_flow* flow, char flow_lease_out[40],
+                       int* rule_loc_out) {
   MTL_MAY_UNUSED(impl);
   MTL_MAY_UNUSED(port);
   MTL_MAY_UNUSED(queue_id);
   MTL_MAY_UNUSED(flow);
+  MTL_MAY_UNUSED(flow_lease_out);
+  MTL_MAY_UNUSED(rule_loc_out);
   return -ENOTSUP;
 }
 
-int mt_socket_remove_flow(struct mtl_main_impl* impl, enum mtl_port port, int flow_id,
-                          uint16_t dst_port) {
+int mt_socket_remove_flow(struct mtl_main_impl* impl, enum mtl_port port,
+                          const char* flow_lease_id) {
   MTL_MAY_UNUSED(impl);
   MTL_MAY_UNUSED(port);
-  MTL_MAY_UNUSED(flow_id);
-  MTL_MAY_UNUSED(dst_port);
+  MTL_MAY_UNUSED(flow_lease_id);
   return -ENOTSUP;
 }
 

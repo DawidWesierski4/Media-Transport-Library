@@ -20,6 +20,7 @@
 
 #include "mt_varlink.h"
 #include "mtlm2_journal.hpp"
+#include "mtlm2_netdev.hpp"
 #include "mtlm2_peer.hpp"
 #include "mtlm2_shm.hpp"
 
@@ -43,7 +44,11 @@ struct PolicyConfig {
   static bool load_file(const std::string& path, PolicyConfig* out, std::string* err_out);
 
   bool is_cpu_allowed(uint32_t cpu_id) const;
+  bool is_interface_allowed(const std::string& if_name) const;
+  bool is_udp_port_allowed(uint16_t port) const;
   uint32_t max_cpus_for_uid(uid_t uid) const;
+  uint32_t max_queues_for_uid(uid_t uid) const;
+  uint32_t max_flows_for_uid(uid_t uid) const;
 };
 
 struct ServerConfig {
@@ -60,6 +65,8 @@ struct ServerConfig {
   ShmConfig shm{};
   bool teardown_on_exit = false;
   bool use_signalfd = true;
+  bool use_mock_netdev = false;
+  std::string xdp_prog_path;
   size_t max_connections = 256;
   size_t max_conns_per_uid = 64;
   int64_t open_session_timeout_ms = 5000;
@@ -76,7 +83,8 @@ const char* lease_state_to_string(LeaseState state) noexcept;
 
 class MtlManagerServer {
  public:
-  explicit MtlManagerServer(ServerConfig cfg);
+  explicit MtlManagerServer(ServerConfig cfg,
+                            std::unique_ptr<NetdevBackend> netdev = nullptr);
   ~MtlManagerServer();
 
   MtlManagerServer(const MtlManagerServer&) = delete;
@@ -92,6 +100,9 @@ class MtlManagerServer {
   }
   ShmMode shm_mode() const noexcept {
     return shm_.mode();
+  }
+  NetdevBackend& netdev() noexcept {
+    return *netdev_;
   }
 
  private:
@@ -145,6 +156,71 @@ class MtlManagerServer {
     UniqueFd pidfd;
   };
 
+  struct QueueLease {
+    std::string lease_id;
+    std::string if_name;
+    unsigned int ifindex = 0;
+    uint32_t queue_id = 0;
+    LeaseState state = LeaseState::Allocated;
+    std::string session_id;
+    pid_t pid = 0;
+    uint64_t start_time_ticks = 0;
+    uid_t uid = 0;
+    std::string client_name;
+    UniqueFd pidfd;
+  };
+
+  struct XskLease {
+    std::string lease_id;
+    std::string queue_lease_id;
+    std::string if_name;
+    unsigned int ifindex = 0;
+    uint32_t queue_id = 0;
+    LeaseState state = LeaseState::Allocated;
+    std::string session_id;
+    pid_t pid = 0;
+    uint64_t start_time_ticks = 0;
+    uid_t uid = 0;
+    std::string client_name;
+  };
+
+  struct FlowLease {
+    std::string lease_id;
+    std::string queue_lease_id;
+    std::string if_name;
+    unsigned int ifindex = 0;
+    uint32_t queue_id = 0;
+    uint32_t rule_location = 0;
+    FlowSpec spec;
+    LeaseState state = LeaseState::Allocated;
+    std::string session_id;
+    pid_t pid = 0;
+    uint64_t start_time_ticks = 0;
+    uid_t uid = 0;
+    std::string client_name;
+  };
+
+  struct UdpFilterLease {
+    std::string lease_id;
+    std::string queue_lease_id;
+    std::string if_name;
+    unsigned int ifindex = 0;
+    uint32_t queue_id = 0;
+    uint16_t dst_port = 0;
+    LeaseState state = LeaseState::Allocated;
+    std::string session_id;
+    pid_t pid = 0;
+    uint64_t start_time_ticks = 0;
+    uid_t uid = 0;
+    std::string client_name;
+  };
+
+  struct XdpAttachment {
+    std::string if_name;
+    unsigned int ifindex = 0;
+    XdpAttachMode mode = XdpAttachMode::None;
+  };
+
   bool open_listener(const std::string& path, mode_t mode, std::optional<gid_t> gid,
                      bool is_admin, bool allow_world, Listener* out,
                      std::string* err_out);
@@ -163,6 +239,7 @@ class MtlManagerServer {
   void handle_accept(const Listener& ls);
   void handle_conn_event(uint64_t conn_id, uint32_t events);
   void handle_pidfd_event(int pidfd);
+  void handle_queue_pidfd_event(int pidfd);
   void handle_conn_pidfd_event(int pidfd);
   void reap_dead_pidfds();
   void sweep_idle_pre_session_conns();
@@ -184,6 +261,11 @@ class MtlManagerServer {
   void rpc_claim_session(Connection& conn, struct json_object* params);
   void rpc_close_session(Connection& conn, struct json_object* params);
   void rpc_acquire_cpu(Connection& conn, struct json_object* params);
+  void rpc_acquire_queue(Connection& conn, struct json_object* params);
+  void rpc_attach_xsk(Connection& conn, struct json_object* params, const int* fds,
+                      size_t fd_count);
+  void rpc_add_flow(Connection& conn, struct json_object* params);
+  void rpc_add_udp_filter(Connection& conn, struct json_object* params);
   void rpc_release_lease(Connection& conn, struct json_object* params);
   void rpc_get_status(Connection& conn, struct json_object* params);
   void rpc_revoke_lease(Connection& conn, struct json_object* params);
@@ -191,14 +273,29 @@ class MtlManagerServer {
   void rpc_kill_quarantined_owner(Connection& conn, struct json_object* params);
 
   uint32_t count_uid_cpu_leases(uid_t uid) const;
+  uint32_t count_uid_queue_leases(uid_t uid) const;
+  uint32_t count_uid_flow_leases(uid_t uid) const;
   bool is_cpu_allocated(uint32_t cpu_id) const;
+  bool is_queue_allocated(const std::string& if_name, uint32_t queue_id) const;
+  bool has_active_queue_on_iface(const std::string& if_name) const;
+  bool has_duplicate_flow(const std::string& if_name, const FlowSpec& spec) const;
+  bool has_xsk_on_queue_lease(const std::string& queue_lease_id) const;
+  bool has_udp_filter(const std::string& if_name, uint32_t queue_id,
+                      uint16_t dst_port) const;
+
+  void strip_queue_children(const std::string& queue_lease_id);
+  void maybe_detach_xdp_if_unused(const std::string& if_name);
+  void release_queue_cascade(const std::string& queue_lease_id);
+
   std::string next_id(const char* prefix);
   void watch_lease_pidfd(CpuLease& lease);
+  void watch_queue_pidfd(QueueLease& lease);
 
   ServerConfig cfg_;
   PeerCredExtractor peer_extractor_;
   StateJournal journal_;
   LegacyShmBridge shm_;
+  std::unique_ptr<NetdevBackend> netdev_;
 
   UniqueFd host_lock_fd_;
   UniqueFd state_dir_lock_fd_;
@@ -215,6 +312,12 @@ class MtlManagerServer {
   std::map<int, uint64_t> conn_pidfd_to_id_;
   std::map<std::string, CpuLease> leases_;
   std::map<int, std::string> pidfd_to_lease_;
+  std::map<std::string, QueueLease> queue_leases_;
+  std::map<int, std::string> pidfd_to_queue_lease_;
+  std::map<std::string, XskLease> xsk_leases_;
+  std::map<std::string, FlowLease> flow_leases_;
+  std::map<std::string, UdpFilterLease> udp_filter_leases_;
+  std::map<std::string, XdpAttachment> xdp_attachments_;
 
   uint64_t next_conn_id_ = 1;
   uint64_t next_id_seq_ = 1;

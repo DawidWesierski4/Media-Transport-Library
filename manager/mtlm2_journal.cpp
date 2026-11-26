@@ -244,6 +244,122 @@ bool StateJournal::save(const JournalState& state, std::string* err_out) const {
   }
   json_object_object_add(root.get(), "cpu_leases", cpus);
 
+  auto add_str = [](json_object* obj, const char* k, const std::string& v) {
+    json_object_object_add(
+        obj, k, json_object_new_string_len(v.data(), static_cast<int>(v.size())));
+  };
+
+  json_object* queues = json_object_new_array();
+  for (const auto& q : state.queues) {
+    json_object* item = json_object_new_object();
+    add_str(item, "lease_id", q.lease_id);
+    add_str(item, "if_name", q.if_name);
+    json_object_object_add(item, "ifindex",
+                           json_object_new_int64(static_cast<int64_t>(q.ifindex)));
+    json_object_object_add(item, "queue_id",
+                           json_object_new_int64(static_cast<int64_t>(q.queue_id)));
+    json_object_object_add(item, "pid",
+                           json_object_new_int64(static_cast<int64_t>(q.pid)));
+    json_object_object_add(
+        item, "start_time_ticks",
+        json_object_new_int64(static_cast<int64_t>(q.start_time_ticks)));
+    json_object_object_add(item, "uid",
+                           json_object_new_int64(static_cast<int64_t>(q.uid)));
+    add_str(item, "client_name", q.client_name);
+    json_object_object_add(item, "quarantined",
+                           json_object_new_boolean(q.quarantined ? 1 : 0));
+    json_object_array_add(queues, item);
+  }
+  json_object_object_add(root.get(), "queues", queues);
+
+  json_object* flows = json_object_new_array();
+  for (const auto& f : state.flows) {
+    json_object* item = json_object_new_object();
+    add_str(item, "lease_id", f.lease_id);
+    add_str(item, "queue_lease_id", f.queue_lease_id);
+    add_str(item, "if_name", f.if_name);
+    json_object_object_add(item, "ifindex",
+                           json_object_new_int64(static_cast<int64_t>(f.ifindex)));
+    json_object_object_add(item, "queue_id",
+                           json_object_new_int64(static_cast<int64_t>(f.queue_id)));
+    json_object_object_add(item, "rule_location",
+                           json_object_new_int64(static_cast<int64_t>(f.rule_location)));
+    add_str(item, "protocol", f.protocol);
+    add_str(item, "src_ip", f.src_ip);
+    add_str(item, "dst_ip", f.dst_ip);
+    json_object_object_add(item, "src_port",
+                           json_object_new_int64(static_cast<int64_t>(f.src_port)));
+    json_object_object_add(item, "dst_port",
+                           json_object_new_int64(static_cast<int64_t>(f.dst_port)));
+    json_object_object_add(item, "pid",
+                           json_object_new_int64(static_cast<int64_t>(f.pid)));
+    json_object_object_add(
+        item, "start_time_ticks",
+        json_object_new_int64(static_cast<int64_t>(f.start_time_ticks)));
+    json_object_object_add(item, "uid",
+                           json_object_new_int64(static_cast<int64_t>(f.uid)));
+    add_str(item, "client_name", f.client_name);
+    json_object_array_add(flows, item);
+  }
+  json_object_object_add(root.get(), "flows", flows);
+
+  json_object* udps = json_object_new_array();
+  for (const auto& u : state.udp_filters) {
+    json_object* item = json_object_new_object();
+    add_str(item, "lease_id", u.lease_id);
+    add_str(item, "queue_lease_id", u.queue_lease_id);
+    add_str(item, "if_name", u.if_name);
+    json_object_object_add(item, "ifindex",
+                           json_object_new_int64(static_cast<int64_t>(u.ifindex)));
+    json_object_object_add(item, "queue_id",
+                           json_object_new_int64(static_cast<int64_t>(u.queue_id)));
+    json_object_object_add(item, "dst_port",
+                           json_object_new_int64(static_cast<int64_t>(u.dst_port)));
+    json_object_object_add(item, "pid",
+                           json_object_new_int64(static_cast<int64_t>(u.pid)));
+    json_object_object_add(
+        item, "start_time_ticks",
+        json_object_new_int64(static_cast<int64_t>(u.start_time_ticks)));
+    json_object_object_add(item, "uid",
+                           json_object_new_int64(static_cast<int64_t>(u.uid)));
+    add_str(item, "client_name", u.client_name);
+    json_object_array_add(udps, item);
+  }
+  json_object_object_add(root.get(), "udp_filters", udps);
+
+  json_object* xsks = json_object_new_array();
+  for (const auto& x : state.xsk_attachments) {
+    json_object* item = json_object_new_object();
+    add_str(item, "lease_id", x.lease_id);
+    add_str(item, "queue_lease_id", x.queue_lease_id);
+    add_str(item, "if_name", x.if_name);
+    json_object_object_add(item, "ifindex",
+                           json_object_new_int64(static_cast<int64_t>(x.ifindex)));
+    json_object_object_add(item, "queue_id",
+                           json_object_new_int64(static_cast<int64_t>(x.queue_id)));
+    json_object_object_add(item, "pid",
+                           json_object_new_int64(static_cast<int64_t>(x.pid)));
+    json_object_object_add(
+        item, "start_time_ticks",
+        json_object_new_int64(static_cast<int64_t>(x.start_time_ticks)));
+    json_object_object_add(item, "uid",
+                           json_object_new_int64(static_cast<int64_t>(x.uid)));
+    add_str(item, "client_name", x.client_name);
+    json_object_array_add(xsks, item);
+  }
+  json_object_object_add(root.get(), "xsk_attachments", xsks);
+
+  json_object* xdps = json_object_new_array();
+  for (const auto& xa : state.xdp_attachments) {
+    json_object* item = json_object_new_object();
+    add_str(item, "if_name", xa.if_name);
+    json_object_object_add(item, "ifindex",
+                           json_object_new_int64(static_cast<int64_t>(xa.ifindex)));
+    add_str(item, "mode", xa.mode);
+    json_object_array_add(xdps, item);
+  }
+  json_object_object_add(root.get(), "xdp_attachments", xdps);
+
   const char* json_str =
       json_object_to_json_string_ext(root.get(), JSON_C_TO_STRING_PLAIN);
   if (!json_str) {
@@ -493,6 +609,222 @@ bool StateJournal::load(JournalState* out_state, bool* out_not_found,
       e.pid = static_cast<pid_t>(pid_v);
       e.uid = static_cast<uid_t>(uid_v);
       state.cpu_leases.push_back(std::move(e));
+    }
+  }
+
+  json_object* jqueues = nullptr;
+  if (json_object_object_get_ex(root.get(), "queues", &jqueues) && jqueues) {
+    if (!json_object_is_type(jqueues, json_type_array)) {
+      quarantine();
+      if (err_out) *err_out = "journal queues is not an array";
+      return false;
+    }
+    size_t n = json_object_array_length(jqueues);
+    state.queues.reserve(n);
+    for (size_t i = 0; i < n; ++i) {
+      json_object* item = json_object_array_get_idx(jqueues, i);
+      if (!item || !json_object_is_type(item, json_type_object)) {
+        quarantine();
+        if (err_out) *err_out = "journal queues item is not an object";
+        return false;
+      }
+      JournalQueueLease e;
+      uint64_t ifi = 0, qid = 0, pid_v = 0, uid_v = 0;
+      if (!get_req_str(item, "lease_id", &e.lease_id) || e.lease_id.empty() ||
+          !get_req_str(item, "if_name", &e.if_name) || e.if_name.empty() ||
+          !get_req_u64(item, "ifindex", &ifi) ||
+          ifi > static_cast<uint64_t>(std::numeric_limits<unsigned int>::max()) ||
+          !get_req_u64(item, "queue_id", &qid) || qid == 0 ||
+          qid > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) ||
+          !get_req_u64(item, "pid", &pid_v) || pid_v == 0 ||
+          pid_v > static_cast<uint64_t>(std::numeric_limits<pid_t>::max()) ||
+          !get_req_u64(item, "start_time_ticks", &e.start_time_ticks) ||
+          !get_req_u64(item, "uid", &uid_v) ||
+          uid_v > static_cast<uint64_t>(std::numeric_limits<uid_t>::max()) ||
+          !get_req_str(item, "client_name", &e.client_name) ||
+          !get_opt_bool(item, "quarantined", &e.quarantined)) {
+        quarantine();
+        if (err_out) *err_out = "journal queues item has invalid fields";
+        return false;
+      }
+      e.ifindex = static_cast<unsigned int>(ifi);
+      e.queue_id = static_cast<uint32_t>(qid);
+      e.pid = static_cast<pid_t>(pid_v);
+      e.uid = static_cast<uid_t>(uid_v);
+      state.queues.push_back(std::move(e));
+    }
+  }
+
+  json_object* jflows = nullptr;
+  if (json_object_object_get_ex(root.get(), "flows", &jflows) && jflows) {
+    if (!json_object_is_type(jflows, json_type_array)) {
+      quarantine();
+      if (err_out) *err_out = "journal flows is not an array";
+      return false;
+    }
+    size_t n = json_object_array_length(jflows);
+    state.flows.reserve(n);
+    for (size_t i = 0; i < n; ++i) {
+      json_object* item = json_object_array_get_idx(jflows, i);
+      if (!item || !json_object_is_type(item, json_type_object)) {
+        quarantine();
+        if (err_out) *err_out = "journal flows item is not an object";
+        return false;
+      }
+      JournalFlowLease e;
+      uint64_t ifi = 0, qid = 0, loc = 0, sp = 0, dp = 0, pid_v = 0, uid_v = 0;
+      if (!get_req_str(item, "lease_id", &e.lease_id) || e.lease_id.empty() ||
+          !get_req_str(item, "queue_lease_id", &e.queue_lease_id) ||
+          e.queue_lease_id.empty() || !get_req_str(item, "if_name", &e.if_name) ||
+          e.if_name.empty() || !get_req_u64(item, "ifindex", &ifi) ||
+          ifi > static_cast<uint64_t>(std::numeric_limits<unsigned int>::max()) ||
+          !get_req_u64(item, "queue_id", &qid) ||
+          qid > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) ||
+          !get_req_u64(item, "rule_location", &loc) ||
+          loc > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) ||
+          !get_req_str(item, "protocol", &e.protocol) ||
+          !get_req_str(item, "src_ip", &e.src_ip) ||
+          !get_req_str(item, "dst_ip", &e.dst_ip) ||
+          !get_req_u64(item, "src_port", &sp) || sp > 65535u ||
+          !get_req_u64(item, "dst_port", &dp) || dp < 1u || dp > 65535u ||
+          !get_req_u64(item, "pid", &pid_v) || pid_v == 0 ||
+          pid_v > static_cast<uint64_t>(std::numeric_limits<pid_t>::max()) ||
+          !get_req_u64(item, "start_time_ticks", &e.start_time_ticks) ||
+          !get_req_u64(item, "uid", &uid_v) ||
+          uid_v > static_cast<uint64_t>(std::numeric_limits<uid_t>::max()) ||
+          !get_req_str(item, "client_name", &e.client_name)) {
+        quarantine();
+        if (err_out) *err_out = "journal flows item has invalid fields";
+        return false;
+      }
+      e.ifindex = static_cast<unsigned int>(ifi);
+      e.queue_id = static_cast<uint32_t>(qid);
+      e.rule_location = static_cast<uint32_t>(loc);
+      e.src_port = static_cast<uint16_t>(sp);
+      e.dst_port = static_cast<uint16_t>(dp);
+      e.pid = static_cast<pid_t>(pid_v);
+      e.uid = static_cast<uid_t>(uid_v);
+      state.flows.push_back(std::move(e));
+    }
+  }
+
+  json_object* judps = nullptr;
+  if (json_object_object_get_ex(root.get(), "udp_filters", &judps) && judps) {
+    if (!json_object_is_type(judps, json_type_array)) {
+      quarantine();
+      if (err_out) *err_out = "journal udp_filters is not an array";
+      return false;
+    }
+    size_t n = json_object_array_length(judps);
+    state.udp_filters.reserve(n);
+    for (size_t i = 0; i < n; ++i) {
+      json_object* item = json_object_array_get_idx(judps, i);
+      if (!item || !json_object_is_type(item, json_type_object)) {
+        quarantine();
+        if (err_out) *err_out = "journal udp_filters item is not an object";
+        return false;
+      }
+      JournalUdpFilterLease e;
+      uint64_t ifi = 0, qid = 0, dp = 0, pid_v = 0, uid_v = 0;
+      if (!get_req_str(item, "lease_id", &e.lease_id) || e.lease_id.empty() ||
+          !get_req_str(item, "queue_lease_id", &e.queue_lease_id) ||
+          e.queue_lease_id.empty() || !get_req_str(item, "if_name", &e.if_name) ||
+          e.if_name.empty() || !get_req_u64(item, "ifindex", &ifi) ||
+          ifi > static_cast<uint64_t>(std::numeric_limits<unsigned int>::max()) ||
+          !get_req_u64(item, "queue_id", &qid) ||
+          qid > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) ||
+          !get_req_u64(item, "dst_port", &dp) || dp < 1u || dp > 65535u ||
+          !get_req_u64(item, "pid", &pid_v) || pid_v == 0 ||
+          pid_v > static_cast<uint64_t>(std::numeric_limits<pid_t>::max()) ||
+          !get_req_u64(item, "start_time_ticks", &e.start_time_ticks) ||
+          !get_req_u64(item, "uid", &uid_v) ||
+          uid_v > static_cast<uint64_t>(std::numeric_limits<uid_t>::max()) ||
+          !get_req_str(item, "client_name", &e.client_name)) {
+        quarantine();
+        if (err_out) *err_out = "journal udp_filters item has invalid fields";
+        return false;
+      }
+      e.ifindex = static_cast<unsigned int>(ifi);
+      e.queue_id = static_cast<uint32_t>(qid);
+      e.dst_port = static_cast<uint16_t>(dp);
+      e.pid = static_cast<pid_t>(pid_v);
+      e.uid = static_cast<uid_t>(uid_v);
+      state.udp_filters.push_back(std::move(e));
+    }
+  }
+
+  json_object* jxsks = nullptr;
+  if (json_object_object_get_ex(root.get(), "xsk_attachments", &jxsks) && jxsks) {
+    if (!json_object_is_type(jxsks, json_type_array)) {
+      quarantine();
+      if (err_out) *err_out = "journal xsk_attachments is not an array";
+      return false;
+    }
+    size_t n = json_object_array_length(jxsks);
+    state.xsk_attachments.reserve(n);
+    for (size_t i = 0; i < n; ++i) {
+      json_object* item = json_object_array_get_idx(jxsks, i);
+      if (!item || !json_object_is_type(item, json_type_object)) {
+        quarantine();
+        if (err_out) *err_out = "journal xsk_attachments item is not an object";
+        return false;
+      }
+      JournalXskAttachment e;
+      uint64_t ifi = 0, qid = 0, pid_v = 0, uid_v = 0;
+      if (!get_req_str(item, "lease_id", &e.lease_id) || e.lease_id.empty() ||
+          !get_req_str(item, "queue_lease_id", &e.queue_lease_id) ||
+          e.queue_lease_id.empty() || !get_req_str(item, "if_name", &e.if_name) ||
+          e.if_name.empty() || !get_req_u64(item, "ifindex", &ifi) ||
+          ifi > static_cast<uint64_t>(std::numeric_limits<unsigned int>::max()) ||
+          !get_req_u64(item, "queue_id", &qid) ||
+          qid > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) ||
+          !get_req_u64(item, "pid", &pid_v) || pid_v == 0 ||
+          pid_v > static_cast<uint64_t>(std::numeric_limits<pid_t>::max()) ||
+          !get_req_u64(item, "start_time_ticks", &e.start_time_ticks) ||
+          !get_req_u64(item, "uid", &uid_v) ||
+          uid_v > static_cast<uint64_t>(std::numeric_limits<uid_t>::max()) ||
+          !get_req_str(item, "client_name", &e.client_name)) {
+        quarantine();
+        if (err_out) *err_out = "journal xsk_attachments item has invalid fields";
+        return false;
+      }
+      e.ifindex = static_cast<unsigned int>(ifi);
+      e.queue_id = static_cast<uint32_t>(qid);
+      e.pid = static_cast<pid_t>(pid_v);
+      e.uid = static_cast<uid_t>(uid_v);
+      state.xsk_attachments.push_back(std::move(e));
+    }
+  }
+
+  json_object* jxdps = nullptr;
+  if (json_object_object_get_ex(root.get(), "xdp_attachments", &jxdps) && jxdps) {
+    if (!json_object_is_type(jxdps, json_type_array)) {
+      quarantine();
+      if (err_out) *err_out = "journal xdp_attachments is not an array";
+      return false;
+    }
+    size_t n = json_object_array_length(jxdps);
+    state.xdp_attachments.reserve(n);
+    for (size_t i = 0; i < n; ++i) {
+      json_object* item = json_object_array_get_idx(jxdps, i);
+      if (!item || !json_object_is_type(item, json_type_object)) {
+        quarantine();
+        if (err_out) *err_out = "journal xdp_attachments item is not an object";
+        return false;
+      }
+      JournalXdpAttachment e;
+      uint64_t ifi = 0;
+      if (!get_req_str(item, "if_name", &e.if_name) || e.if_name.empty() ||
+          !get_req_u64(item, "ifindex", &ifi) ||
+          ifi > static_cast<uint64_t>(std::numeric_limits<unsigned int>::max()) ||
+          !get_req_str(item, "mode", &e.mode) ||
+          (e.mode != "native" && e.mode != "skb")) {
+        quarantine();
+        if (err_out) *err_out = "journal xdp_attachments item has invalid fields";
+        return false;
+      }
+      e.ifindex = static_cast<unsigned int>(ifi);
+      state.xdp_attachments.push_back(std::move(e));
     }
   }
 

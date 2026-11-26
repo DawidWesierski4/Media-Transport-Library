@@ -25,11 +25,77 @@ struct JournalCpuLease {
   bool quarantined = false;
 };
 
+struct JournalQueueLease {
+  std::string lease_id;
+  std::string if_name;
+  unsigned int ifindex = 0;
+  uint32_t queue_id = 0;
+  pid_t pid = 0;
+  uint64_t start_time_ticks = 0;
+  uid_t uid = 0;
+  std::string client_name;
+  bool quarantined = false;
+};
+
+struct JournalFlowLease {
+  std::string lease_id;
+  std::string queue_lease_id;
+  std::string if_name;
+  unsigned int ifindex = 0;
+  uint32_t queue_id = 0;
+  uint32_t rule_location = 0;
+  std::string protocol = "udp4";
+  std::string src_ip;
+  std::string dst_ip;
+  uint16_t src_port = 0;
+  uint16_t dst_port = 0;
+  pid_t pid = 0;
+  uint64_t start_time_ticks = 0;
+  uid_t uid = 0;
+  std::string client_name;
+};
+
+struct JournalUdpFilterLease {
+  std::string lease_id;
+  std::string queue_lease_id;
+  std::string if_name;
+  unsigned int ifindex = 0;
+  uint32_t queue_id = 0;
+  uint16_t dst_port = 0;
+  pid_t pid = 0;
+  uint64_t start_time_ticks = 0;
+  uid_t uid = 0;
+  std::string client_name;
+};
+
+struct JournalXskAttachment {
+  std::string lease_id;
+  std::string queue_lease_id;
+  std::string if_name;
+  unsigned int ifindex = 0;
+  uint32_t queue_id = 0;
+  pid_t pid = 0;
+  uint64_t start_time_ticks = 0;
+  uid_t uid = 0;
+  std::string client_name;
+};
+
+struct JournalXdpAttachment {
+  std::string if_name;
+  unsigned int ifindex = 0;
+  std::string mode; /* "native" or "skb" */
+};
+
 struct JournalState {
   static constexpr int kSupportedSchemaVersion = 1;
   int schema_version = kSupportedSchemaVersion;
   std::string manager_id = "mtlm2d";
   std::vector<JournalCpuLease> cpu_leases;
+  std::vector<JournalQueueLease> queues;
+  std::vector<JournalFlowLease> flows;
+  std::vector<JournalUdpFilterLease> udp_filters;
+  std::vector<JournalXskAttachment> xsk_attachments;
+  std::vector<JournalXdpAttachment> xdp_attachments;
 };
 
 class StateJournal {

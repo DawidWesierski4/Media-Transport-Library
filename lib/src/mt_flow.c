@@ -243,13 +243,14 @@ static struct mt_rx_flow_rsp* rx_flow_create(struct mt_interface* inf, uint16_t 
   if (inf->drv_info.flags & MT_DRV_F_RX_NO_FLOW) return rsp;
 
   if (mt_drv_use_kernel_ctl(impl, port)) {
-    ret = mt_socket_add_flow(impl, port, q, flow);
+    int rule_loc = -1;
+    ret = mt_socket_add_flow(impl, port, q, flow, rsp->flow_lease_id, &rule_loc);
     if (ret < 0) {
       err("%s(%d), socket add flow fail for queue %d\n", __func__, port, q);
       mt_rte_free(rsp);
       return NULL;
     }
-    rsp->flow_id = ret;
+    rsp->flow_id = rule_loc;
   } else {
     struct rte_flow* r_flow;
 
@@ -275,8 +276,9 @@ static int rx_flow_free(struct mt_interface* inf, struct mt_rx_flow_rsp* rsp) {
   int ret;
   const int max_retry = 5;
 
-  if (rsp->flow_id > 0) {
-    mt_socket_remove_flow(inf->parent, port, rsp->flow_id, rsp->dst_port);
+  if (rsp->flow_lease_id[0] != '\0') {
+    mt_socket_remove_flow(inf->parent, port, rsp->flow_lease_id);
+    rsp->flow_lease_id[0] = '\0';
     rsp->flow_id = -1;
   }
   if (rsp->flow) {

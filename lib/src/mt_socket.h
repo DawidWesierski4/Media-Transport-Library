@@ -26,10 +26,11 @@ int mt_socket_get_mac(struct mtl_main_impl* impl, const char* if_name,
                       int timeout_ms);
 
 int mt_socket_add_flow(struct mtl_main_impl* impl, enum mtl_port port, uint16_t queue_id,
-                       struct mt_rxq_flow* flow);
+                       struct mt_rxq_flow* flow, char flow_lease_out[40],
+                       int* rule_loc_out);
 
-int mt_socket_remove_flow(struct mtl_main_impl* impl, enum mtl_port port, int flow_id,
-                          uint16_t dst_port);
+int mt_socket_remove_flow(struct mtl_main_impl* impl, enum mtl_port port,
+                          const char* flow_lease_id);
 
 int mt_socket_fd_join_multicast(struct mtl_main_impl* impl, enum mtl_port port,
                                 struct mt_rxq_flow* flow, int fd);

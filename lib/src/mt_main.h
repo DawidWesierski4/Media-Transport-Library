@@ -637,6 +637,7 @@ struct mt_rl_shaper {
 
 struct mt_rx_flow_rsp {
   int flow_id; /* flow id for socket based flow */
+  char flow_lease_id[40];
   struct rte_flow* flow;
   uint16_t queue_id;
   uint16_t dst_port;
@@ -1164,6 +1165,7 @@ struct mt_rx_xdp_entry {
   uint16_t queue_id;
   struct mt_xdp_queue* xq;
   struct mt_rx_flow_rsp* flow_rsp;
+  char udp_filter_lease_id[40];
   bool skip_udp_port_check;
   bool skip_all_check;
   int mcast_fd;

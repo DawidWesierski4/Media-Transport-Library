@@ -6,6 +6,7 @@
 
 #ifndef WINDOWSENV
 
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -273,11 +274,12 @@ fail:
 
 static int instance_call_locked(struct mtl_main_impl* impl, struct mt_instance_ctx* ctx,
                                 const char* method, struct json_object* params,
+                                const int* fds, size_t fd_count,
                                 struct json_object** out_reply, char* err_name,
                                 size_t err_name_sz, char* err_msg, size_t err_msg_sz) {
   int rc = -EPIPE;
   if (ctx->sock_fd >= 0) {
-    rc = mt_varlink_call(ctx->sock_fd, method, params, NULL, 0, ctx->rpc_timeout_ms,
+    rc = mt_varlink_call(ctx->sock_fd, method, params, fds, fd_count, ctx->rpc_timeout_ms,
                          out_reply, err_name, err_name_sz, err_msg, err_msg_sz);
   }
   if (!is_transport_disconnect(rc)) return rc;
@@ -287,7 +289,7 @@ static int instance_call_locked(struct mtl_main_impl* impl, struct mt_instance_c
   int rrc = instance_reconnect_and_claim_locked(impl, ctx);
   if (rrc < 0) return rrc;
 
-  return mt_varlink_call(ctx->sock_fd, method, params, NULL, 0, ctx->rpc_timeout_ms,
+  return mt_varlink_call(ctx->sock_fd, method, params, fds, fd_count, ctx->rpc_timeout_ms,
                          out_reply, err_name, err_name_sz, err_msg, err_msg_sz);
 }
 
@@ -378,12 +380,6 @@ int mt_instance_connect(struct mtl_init_params* p, struct mt_instance_ctx** out_
     close(fd);
     err("%s, MTL_PMD_DPDK_AF_XDP is not supported with MtlManager 2; migrate to "
         "MTL_PMD_NATIVE_AF_XDP or run without MtlManager 2\n",
-        __func__);
-    return -ENOTSUP;
-  }
-  if (has_native_af_xdp) {
-    close(fd);
-    err("%s, MTL_PMD_NATIVE_AF_XDP with MtlManager 2 is not yet enabled in PR 1a\n",
         __func__);
     return -ENOTSUP;
   }
@@ -497,9 +493,9 @@ int mt_instance_get_cpu(struct mtl_main_impl* impl, uint32_t phys_cpu,
   struct json_object* reply = NULL;
   char err_name[128];
   char err_msg[256];
-  int rc =
-      instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".AcquireCpu", params,
-                           &reply, err_name, sizeof(err_name), err_msg, sizeof(err_msg));
+  int rc = instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".AcquireCpu",
+                                params, NULL, 0, &reply, err_name, sizeof(err_name),
+                                err_msg, sizeof(err_msg));
   json_object_put(params);
   if (rc < 0) {
     pthread_mutex_unlock(&ctx->mutex);
@@ -542,8 +538,8 @@ int mt_instance_release_lease(struct mtl_main_impl* impl, const char* lease_id) 
   char err_name[128];
   char err_msg[256];
   int rc = instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".ReleaseLease",
-                                params, &reply, err_name, sizeof(err_name), err_msg,
-                                sizeof(err_msg));
+                                params, NULL, 0, &reply, err_name, sizeof(err_name),
+                                err_msg, sizeof(err_msg));
   json_object_put(params);
   if (reply) json_object_put(reply);
   if (rc == 0 || rc == -ENOENT) instance_untrack_lease_locked(ctx, lease_id);
@@ -556,55 +552,239 @@ int mt_instance_release_lease(struct mtl_main_impl* impl, const char* lease_id) 
   return rc;
 }
 
-int mt_instance_request_xsks_map_fd(struct mtl_main_impl* impl, unsigned int ifindex) {
-  MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  return -ENOTSUP;
+int mt_instance_get_queue(struct mtl_main_impl* impl, const char* if_name,
+                          uint16_t* out_queue_id, char out_lease[40]) {
+  if (!impl || !impl->instance || !if_name || if_name[0] == '\0' || !out_queue_id ||
+      !out_lease)
+    return -EINVAL;
+  out_lease[0] = '\0';
+  *out_queue_id = 0;
+
+  struct mt_instance_ctx* ctx = impl->instance;
+  struct json_object* params = json_object_new_object();
+  if (!params) return -ENOMEM;
+  json_object_object_add(params, "ifName", json_object_new_string(if_name));
+
+  pthread_mutex_lock(&ctx->mutex);
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".AcquireQueue",
+                                params, NULL, 0, &reply, err_name, sizeof(err_name),
+                                err_msg, sizeof(err_msg));
+  json_object_put(params);
+  if (rc < 0) {
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%s), AcquireQueue fail %d (%s: %s)\n", __func__, if_name, rc, err_name,
+        err_msg);
+    return rc;
+  }
+
+  struct json_object* rparams = NULL;
+  struct json_object* jlid = NULL;
+  struct json_object* jqid = NULL;
+  if (!json_object_object_get_ex(reply, "parameters", &rparams) || !rparams ||
+      !json_object_object_get_ex(rparams, "leaseId", &jlid) || !jlid ||
+      !json_object_is_type(jlid, json_type_string) ||
+      !json_object_object_get_ex(rparams, "queueId", &jqid) || !jqid ||
+      !json_object_is_type(jqid, json_type_int)) {
+    json_object_put(reply);
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%s), AcquireQueue reply missing leaseId or queueId\n", __func__, if_name);
+    return -EPROTO;
+  }
+
+  int64_t qv = json_object_get_int64(jqid);
+  if (qv <= 0 || qv > 65535) {
+    json_object_put(reply);
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%s), AcquireQueue returned invalid queueId %" PRId64 "\n", __func__, if_name,
+        qv);
+    return -EPROTO;
+  }
+
+  instance_copy_str(out_lease, MT_VARLINK_ID_STR_LEN, json_object_get_string(jlid));
+  *out_queue_id = (uint16_t)qv;
+  int trc = instance_track_lease_locked(ctx, out_lease);
+  json_object_put(reply);
+  pthread_mutex_unlock(&ctx->mutex);
+  return trc;
 }
 
-int mt_instance_update_udp_dp_filter(struct mtl_main_impl* impl, unsigned int ifindex,
-                                     uint16_t dst_port, bool add) {
-  MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  MTL_MAY_UNUSED(dst_port);
-  MTL_MAY_UNUSED(add);
-  return -ENOTSUP;
+int mt_instance_attach_xsk(struct mtl_main_impl* impl, const char* queue_lease,
+                           int xsk_fd, char out_lease[40]) {
+  if (!impl || !impl->instance || !queue_lease || queue_lease[0] == '\0' || xsk_fd < 0 ||
+      !out_lease)
+    return -EINVAL;
+  out_lease[0] = '\0';
+
+  if (fcntl(xsk_fd, F_GETFD) < 0) {
+    err("%s(%s), invalid xsk_fd %d (%s)\n", __func__, queue_lease, xsk_fd,
+        strerror(errno));
+    return -EBADF;
+  }
+
+  struct mt_instance_ctx* ctx = impl->instance;
+  struct json_object* params = json_object_new_object();
+  if (!params) return -ENOMEM;
+  json_object_object_add(params, "queueLease", json_object_new_string(queue_lease));
+
+  pthread_mutex_lock(&ctx->mutex);
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".AttachXsk",
+                                params, &xsk_fd, 1u, &reply, err_name, sizeof(err_name),
+                                err_msg, sizeof(err_msg));
+  json_object_put(params);
+  if (rc < 0) {
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%s), AttachXsk fail %d (%s: %s)\n", __func__, queue_lease, rc, err_name,
+        err_msg);
+    return rc;
+  }
+
+  struct json_object* rparams = NULL;
+  struct json_object* jlid = NULL;
+  if (!json_object_object_get_ex(reply, "parameters", &rparams) || !rparams ||
+      !json_object_object_get_ex(rparams, "leaseId", &jlid) || !jlid ||
+      !json_object_is_type(jlid, json_type_string)) {
+    json_object_put(reply);
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%s), AttachXsk reply missing leaseId\n", __func__, queue_lease);
+    return -EPROTO;
+  }
+
+  instance_copy_str(out_lease, MT_VARLINK_ID_STR_LEN, json_object_get_string(jlid));
+  int trc = instance_track_lease_locked(ctx, out_lease);
+  json_object_put(reply);
+  pthread_mutex_unlock(&ctx->mutex);
+  return trc;
 }
 
-int mt_instance_get_queue(struct mtl_main_impl* impl, unsigned int ifindex) {
-  MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  return -ENOTSUP;
+int mt_instance_add_flow(struct mtl_main_impl* impl, const char* queue_lease,
+                         uint32_t src_ip, uint32_t dst_ip, uint16_t src_port,
+                         uint16_t dst_port, char out_lease[40], int* out_rule_loc) {
+  if (!impl || !impl->instance || !queue_lease || queue_lease[0] == '\0' ||
+      dst_port == 0 || !out_lease)
+    return -EINVAL;
+  out_lease[0] = '\0';
+  if (out_rule_loc) *out_rule_loc = -1;
+
+  struct json_object* params = json_object_new_object();
+  if (!params) return -ENOMEM;
+  json_object_object_add(params, "queueLease", json_object_new_string(queue_lease));
+  json_object_object_add(params, "protocol", json_object_new_string("udp4"));
+
+  char ip_buf[INET_ADDRSTRLEN];
+  if (src_ip != 0) {
+    struct in_addr sa;
+    sa.s_addr = src_ip;
+    if (!inet_ntop(AF_INET, &sa, ip_buf, sizeof(ip_buf))) {
+      json_object_put(params);
+      return -EINVAL;
+    }
+    json_object_object_add(params, "srcIp", json_object_new_string(ip_buf));
+  }
+
+  {
+    struct in_addr da;
+    da.s_addr = dst_ip;
+    if (!inet_ntop(AF_INET, &da, ip_buf, sizeof(ip_buf))) {
+      json_object_put(params);
+      return -EINVAL;
+    }
+    json_object_object_add(params, "dstIp", json_object_new_string(ip_buf));
+  }
+
+  if (src_port != 0) {
+    json_object_object_add(params, "srcPort", json_object_new_int64((int64_t)src_port));
+  }
+  json_object_object_add(params, "dstPort", json_object_new_int64((int64_t)dst_port));
+
+  struct mt_instance_ctx* ctx = impl->instance;
+  pthread_mutex_lock(&ctx->mutex);
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".AddFlow",
+                                params, NULL, 0, &reply, err_name, sizeof(err_name),
+                                err_msg, sizeof(err_msg));
+  json_object_put(params);
+  if (rc < 0) {
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%s), AddFlow fail %d (%s: %s)\n", __func__, queue_lease, rc, err_name,
+        err_msg);
+    return rc;
+  }
+
+  struct json_object* rparams = NULL;
+  struct json_object* jlid = NULL;
+  struct json_object* jloc = NULL;
+  if (!json_object_object_get_ex(reply, "parameters", &rparams) || !rparams ||
+      !json_object_object_get_ex(rparams, "leaseId", &jlid) || !jlid ||
+      !json_object_is_type(jlid, json_type_string) ||
+      !json_object_object_get_ex(rparams, "ruleLocation", &jloc) || !jloc ||
+      !json_object_is_type(jloc, json_type_int)) {
+    json_object_put(reply);
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%s), AddFlow reply missing leaseId or ruleLocation\n", __func__, queue_lease);
+    return -EPROTO;
+  }
+
+  instance_copy_str(out_lease, MT_VARLINK_ID_STR_LEN, json_object_get_string(jlid));
+  if (out_rule_loc) *out_rule_loc = (int)json_object_get_int64(jloc);
+  int trc = instance_track_lease_locked(ctx, out_lease);
+  json_object_put(reply);
+  pthread_mutex_unlock(&ctx->mutex);
+  return trc;
 }
 
-int mt_instance_put_queue(struct mtl_main_impl* impl, unsigned int ifindex,
-                          uint16_t queue_id) {
-  MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  MTL_MAY_UNUSED(queue_id);
-  return -ENOTSUP;
-}
+int mt_instance_add_udp_filter(struct mtl_main_impl* impl, const char* queue_lease,
+                               uint16_t dst_port, char out_lease[40]) {
+  if (!impl || !impl->instance || !queue_lease || queue_lease[0] == '\0' ||
+      dst_port == 0 || !out_lease)
+    return -EINVAL;
+  out_lease[0] = '\0';
 
-int mt_instance_add_flow(struct mtl_main_impl* impl, unsigned int ifindex,
-                         uint16_t queue_id, uint32_t flow_type, uint32_t src_ip,
-                         uint32_t dst_ip, uint16_t src_port, uint16_t dst_port) {
-  MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  MTL_MAY_UNUSED(queue_id);
-  MTL_MAY_UNUSED(flow_type);
-  MTL_MAY_UNUSED(src_ip);
-  MTL_MAY_UNUSED(dst_ip);
-  MTL_MAY_UNUSED(src_port);
-  MTL_MAY_UNUSED(dst_port);
-  return -ENOTSUP;
-}
+  struct json_object* params = json_object_new_object();
+  if (!params) return -ENOMEM;
+  json_object_object_add(params, "queueLease", json_object_new_string(queue_lease));
+  json_object_object_add(params, "destinationPort",
+                         json_object_new_int64((int64_t)dst_port));
 
-int mt_instance_del_flow(struct mtl_main_impl* impl, unsigned int ifindex,
-                         uint32_t flow_id) {
-  MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  MTL_MAY_UNUSED(flow_id);
-  return -ENOTSUP;
+  struct mt_instance_ctx* ctx = impl->instance;
+  pthread_mutex_lock(&ctx->mutex);
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".AddUdpFilter",
+                                params, NULL, 0, &reply, err_name, sizeof(err_name),
+                                err_msg, sizeof(err_msg));
+  json_object_put(params);
+  if (rc < 0) {
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%s, port %u), AddUdpFilter fail %d (%s: %s)\n", __func__, queue_lease,
+        dst_port, rc, err_name, err_msg);
+    return rc;
+  }
+
+  struct json_object* rparams = NULL;
+  struct json_object* jlid = NULL;
+  if (!json_object_object_get_ex(reply, "parameters", &rparams) || !rparams ||
+      !json_object_object_get_ex(rparams, "leaseId", &jlid) || !jlid ||
+      !json_object_is_type(jlid, json_type_string)) {
+    json_object_put(reply);
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%s), AddUdpFilter reply missing leaseId\n", __func__, queue_lease);
+    return -EPROTO;
+  }
+
+  instance_copy_str(out_lease, MT_VARLINK_ID_STR_LEN, json_object_get_string(jlid));
+  int trc = instance_track_lease_locked(ctx, out_lease);
+  json_object_put(reply);
+  pthread_mutex_unlock(&ctx->mutex);
+  return trc;
 }
 
 bool mtl_is_manager_alive(void) {
@@ -663,54 +843,44 @@ int mt_instance_release_lease(struct mtl_main_impl* impl, const char* lease_id) 
   return -ENOTSUP;
 }
 
-int mt_instance_request_xsks_map_fd(struct mtl_main_impl* impl, unsigned int ifindex) {
+int mt_instance_get_queue(struct mtl_main_impl* impl, const char* if_name,
+                          uint16_t* out_queue_id, char out_lease[40]) {
   MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
+  MTL_MAY_UNUSED(if_name);
+  MTL_MAY_UNUSED(out_queue_id);
+  MTL_MAY_UNUSED(out_lease);
   return -ENOTSUP;
 }
 
-int mt_instance_update_udp_dp_filter(struct mtl_main_impl* impl, unsigned int ifindex,
-                                     uint16_t dst_port, bool add) {
+int mt_instance_attach_xsk(struct mtl_main_impl* impl, const char* queue_lease,
+                           int xsk_fd, char out_lease[40]) {
   MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  MTL_MAY_UNUSED(dst_port);
-  MTL_MAY_UNUSED(add);
+  MTL_MAY_UNUSED(queue_lease);
+  MTL_MAY_UNUSED(xsk_fd);
+  MTL_MAY_UNUSED(out_lease);
   return -ENOTSUP;
 }
 
-int mt_instance_get_queue(struct mtl_main_impl* impl, unsigned int ifindex) {
+int mt_instance_add_flow(struct mtl_main_impl* impl, const char* queue_lease,
+                         uint32_t src_ip, uint32_t dst_ip, uint16_t src_port,
+                         uint16_t dst_port, char out_lease[40], int* out_rule_loc) {
   MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  return -ENOTSUP;
-}
-
-int mt_instance_put_queue(struct mtl_main_impl* impl, unsigned int ifindex,
-                          uint16_t queue_id) {
-  MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  MTL_MAY_UNUSED(queue_id);
-  return -ENOTSUP;
-}
-
-int mt_instance_add_flow(struct mtl_main_impl* impl, unsigned int ifindex,
-                         uint16_t queue_id, uint32_t flow_type, uint32_t src_ip,
-                         uint32_t dst_ip, uint16_t src_port, uint16_t dst_port) {
-  MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  MTL_MAY_UNUSED(queue_id);
-  MTL_MAY_UNUSED(flow_type);
+  MTL_MAY_UNUSED(queue_lease);
   MTL_MAY_UNUSED(src_ip);
   MTL_MAY_UNUSED(dst_ip);
   MTL_MAY_UNUSED(src_port);
   MTL_MAY_UNUSED(dst_port);
+  MTL_MAY_UNUSED(out_lease);
+  MTL_MAY_UNUSED(out_rule_loc);
   return -ENOTSUP;
 }
 
-int mt_instance_del_flow(struct mtl_main_impl* impl, unsigned int ifindex,
-                         uint32_t flow_id) {
+int mt_instance_add_udp_filter(struct mtl_main_impl* impl, const char* queue_lease,
+                               uint16_t dst_port, char out_lease[40]) {
   MTL_MAY_UNUSED(impl);
-  MTL_MAY_UNUSED(ifindex);
-  MTL_MAY_UNUSED(flow_id);
+  MTL_MAY_UNUSED(queue_lease);
+  MTL_MAY_UNUSED(dst_port);
+  MTL_MAY_UNUSED(out_lease);
   return -ENOTSUP;
 }
 

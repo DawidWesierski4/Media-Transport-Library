@@ -1,10 +1,15 @@
 import logging
 import os
+import time
 
 from mfd_connect.exceptions import ConnectionCalledProcessError
 from mtl_engine.const import MTL_MANAGER_EXE
 
 logger = logging.getLogger(__name__)
+
+MANAGER2_SOCK_PATH = "/run/imtl/manager2.sock"
+MANAGER_READY_TIMEOUT_S = 5.0
+MANAGER_STOP_WAIT_S = 2.0
 
 
 class MtlManager:
@@ -30,9 +35,26 @@ class MtlManager:
         self.cmd = f"sudo {exe}"
         self.mtl_manager_process = None
 
+    def _is_socket_ready(self, connection):
+        probe_cmd = (
+            'python3 -c "'
+            "import socket, sys; "
+            f"s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM); "
+            "s.settimeout(0.5); "
+            f"s.connect('{MANAGER2_SOCK_PATH}'); "
+            's.sendall(b\'{\\"method\\":\\"org.varlink.service.GetInfo\\",\\"parameters\\":{}}\\x00\'); '
+            "data = s.recv(4096); "
+            "s.close(); "
+            "sys.exit(0 if b'MtlManager 2' in data else 1)"
+            '"'
+        )
+        res = connection.execute_command(probe_cmd, expected_return_codes=None)
+        return res.return_code == 0
+
     def start(self):
         """
-        Starts the MtlManager process on the remote host using sudo.
+        Starts the MtlManager process on the remote host using sudo and waits
+        for /run/imtl/manager2.sock readiness via Varlink GetInfo.
         Returns True if started successfully, False otherwise.
         """
         if not self.mtl_manager_process or not self.mtl_manager_process.running:
@@ -43,14 +65,27 @@ class MtlManager:
                     self.cmd, stderr_to_stdout=True
                 )
 
-                if not self.mtl_manager_process.running:
-                    err = self.mtl_manager_process.stderr_text
-                    logger.error(f"MtlManager failed to start. Error output:\n{err}")
-                    return False
-                logger.info(
-                    f"MtlManager started with PID {self.mtl_manager_process.pid}."
+                deadline = time.monotonic() + MANAGER_READY_TIMEOUT_S
+                while time.monotonic() < deadline:
+                    if not self.mtl_manager_process.running:
+                        err = self.mtl_manager_process.stderr_text
+                        logger.error(
+                            f"MtlManager failed to start. Error output:\n{err}"
+                        )
+                        return False
+                    if self._is_socket_ready(connection):
+                        logger.info(
+                            f"MtlManager started with PID {self.mtl_manager_process.pid} "
+                            f"and ready on {MANAGER2_SOCK_PATH}."
+                        )
+                        return True
+                    time.sleep(0.1)
+
+                logger.error(
+                    f"MtlManager did not become ready on {MANAGER2_SOCK_PATH} "
+                    f"within {MANAGER_READY_TIMEOUT_S} s."
                 )
-                return True
+                return False
             except ConnectionCalledProcessError as e:
                 logger.error(f"Failed to start MtlManager: {e}")
                 return False
@@ -61,30 +96,32 @@ class MtlManager:
     def stop(self):
         """
         Stops the MtlManager process on the remote host.
-        First attempts to gracefully stop the process if it's tracked,
-        then falls back to pkill if needed.
+        Sends SIGTERM first for clean non-destructive shutdown, then falls back
+        to pkill if the process is still running.
         """
-        # Skip the slow ``process.stop()`` graceful path entirely. It calls
-        # the underlying mfd_connect process .wait() which can block on the
-        # default 60 s timeout when MtlManager doesn't exit on its own. The
-        # pkill path below is reliable and finishes in <100 ms; for an MtlManager
-        # that holds no NIC/VFIO state, SIGKILL is safe at session teardown.
-        if self.mtl_manager_process and self.mtl_manager_process.running:
-            try:
-                logger.info("Stopping MtlManager via direct kill (fast path)...")
-                self.mtl_manager_process.kill(wait=2)
-                logger.info("MtlManager stopped successfully.")
-                return
-            except Exception as e:
-                logger.warning(
-                    f"MtlManager direct kill failed ({e}); falling back to pkill"
-                )
-
-        # Fallback to pkill if the process object is not available or the above failed
         connection = self.host.connection
         try:
+            logger.info("Stopping MtlManager with SIGTERM...")
+            connection.execute_command(
+                "sudo pkill -TERM -x MtlManager", expected_return_codes=None
+            )
+            deadline = time.monotonic() + MANAGER_STOP_WAIT_S
+            while time.monotonic() < deadline:
+                chk = connection.execute_command(
+                    "pgrep -x MtlManager", expected_return_codes=None
+                )
+                if chk.return_code != 0:
+                    logger.info("MtlManager stopped cleanly via SIGTERM.")
+                    return
+                time.sleep(0.1)
+        except ConnectionCalledProcessError as e:
+            logger.warning(f"MtlManager SIGTERM failed ({e}), falling back to pkill")
+
+        try:
             logger.info("Stopping MtlManager using sudo pkill MtlManager (fallback)...")
-            connection.execute_command("sudo pkill MtlManager")
+            connection.execute_command(
+                "sudo pkill MtlManager", expected_return_codes=None
+            )
             logger.info("MtlManager stopped (via pkill).")
         except ConnectionCalledProcessError as e:
             logger.error(f"Failed to stop MtlManager via pkill: {e}")
