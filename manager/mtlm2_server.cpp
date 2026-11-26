@@ -52,6 +52,7 @@ constexpr uint64_t kTagConn = 5ULL << 56;
 constexpr uint64_t kTagLeasePidFd = 6ULL << 56;
 constexpr uint64_t kTagConnPidFd = 7ULL << 56;
 constexpr uint64_t kTagQueuePidFd = 8ULL << 56;
+constexpr uint64_t kTagHeartbeatTimerFd = 9ULL << 56;
 
 const char* kVarlinkServiceDesc = R"(interface org.varlink.service
 
@@ -74,16 +75,18 @@ error PermissionDenied ()
 
 const char* kMtlManagerDesc = R"(interface org.openvisualcloud.mtl.Manager
 
-method OpenSession(clientName: string) -> (sessionId: string)
-method ClaimSession(clientName: string, leaseIds: []string) -> (sessionId: string, claimed: []string, missing: []string)
+method OpenSession(clientName: string, heartbeatIntervalMs: ?int, heartbeatMaxMissed: ?int) -> (sessionId: string, heartbeatIntervalMs: int, heartbeatMaxMissed: int)
+method ClaimSession(clientName: string, leaseIds: []string, heartbeatIntervalMs: ?int, heartbeatMaxMissed: ?int) -> (sessionId: string, claimed: []string, missing: []string, heartbeatIntervalMs: int, heartbeatMaxMissed: int)
 method CloseSession() -> ()
+method Ping(sequence: int) -> (sequence: int, serverMonotonicUsec: int)
+method Heartbeat(sequence: int, clientState: ?string) -> (sequence: int, serverMonotonicUsec: int, status: string, nextDeadlineMs: int)
 method AcquireCpu(preferred: ?int, numaNode: ?int, allowFallback: ?bool) -> (leaseId: string, cpuId: int)
 method AcquireQueue(ifName: string, preferredQueue: ?int) -> (leaseId: string, ifName: string, ifindex: int, queueId: int)
 method AttachXsk(queueLease: string) -> (leaseId: string)
 method AddFlow(queueLease: string, protocol: ?string, srcIp: ?string, dstIp: string, srcPort: ?int, dstPort: int) -> (leaseId: string, ruleLocation: int)
 method AddUdpFilter(queueLease: string, destinationPort: int) -> (leaseId: string)
 method ReleaseLease(leaseId: string) -> ()
-method GetStatus() -> (shmMode: string, shmTamperWarnings: int, quarantinedCount: int, sessions: []object, leases: []object, queues: []object, flows: []object, udpFilters: []object, xskAttachments: []object, xdpAttachments: []object, backendInterfaces: []object)
+method GetStatus() -> (shmMode: string, shmTamperWarnings: int, heartbeatPolicy: string, heartbeatEvictionAction: string, heartbeatWarnings: int, heartbeatRevocations: int, managerStallEvents: int, quarantinedCount: int, sessions: []object, leases: []object, queues: []object, flows: []object, udpFilters: []object, xskAttachments: []object, xdpAttachments: []object, backendInterfaces: []object)
 method RevokeLease(leaseId: string) -> ()
 method RevokeSession(sessionId: string) -> ()
 method KillQuarantinedOwner(leaseId: string) -> ()
@@ -95,6 +98,7 @@ error UnsupportedFlowType (message: string)
 error LeaseNotFound (message: string)
 error LeaseNotOwned (message: string)
 error SessionNotFound (message: string)
+error RateLimited (message: string)
 error InternalError (message: string)
 )";
 
@@ -428,9 +432,9 @@ bool PolicyConfig::load_file(const std::string& path, PolicyConfig* out,
   }
   JsonPtr root(raw_root);
 
-  static const std::set<std::string> kTopKeys = {"allowed_cpus", "allowed_interfaces",
-                                                 "allowed_udp_ports", "default_quota",
-                                                 "uid_quotas"};
+  static const std::set<std::string> kTopKeys = {
+      "allowed_cpus",  "allowed_interfaces", "allowed_udp_ports",
+      "default_quota", "uid_quotas",         "heartbeat"};
   std::string bad_key;
   if (!check_allowed_keys(root.get(), kTopKeys, &bad_key)) {
     if (err_out) *err_out = "unknown key in policy file: " + bad_key;
@@ -558,6 +562,68 @@ bool PolicyConfig::load_file(const std::string& path, PolicyConfig* out,
     }
   }
 
+  json_object* jhb = nullptr;
+  if (json_object_object_get_ex(root.get(), "heartbeat", &jhb) && jhb) {
+    if (!json_object_is_type(jhb, json_type_object)) {
+      if (err_out) *err_out = "heartbeat must be an object";
+      return false;
+    }
+    static const std::set<std::string> kHbKeys = {
+        "expiry_policy",        "eviction_action", "default_interval_ms",
+        "default_missed_beats", "min_timeout_ms",  "max_timeout_ms",
+        "stall_grace_ms",
+    };
+    std::string hb_bad;
+    if (!check_allowed_keys(jhb, kHbKeys, &hb_bad)) {
+      if (err_out) *err_out = "unknown key in policy heartbeat: " + hb_bad;
+      return false;
+    }
+    cfg.has_heartbeat = true;
+
+    json_object* v = nullptr;
+    if (json_object_object_get_ex(jhb, "expiry_policy", &v) && v) {
+      std::string s;
+      if (!parse_strict_str(v, &s) ||
+          !parse_heartbeat_expiry_policy(s, &cfg.heartbeat.expiry_policy)) {
+        if (err_out) *err_out = "invalid heartbeat.expiry_policy";
+        return false;
+      }
+    }
+    if (json_object_object_get_ex(jhb, "eviction_action", &v) && v) {
+      std::string s;
+      if (!parse_strict_str(v, &s) ||
+          !parse_heartbeat_eviction_action(s, &cfg.heartbeat.eviction_action)) {
+        if (err_out) *err_out = "invalid heartbeat.eviction_action";
+        return false;
+      }
+    }
+    auto read_hb_i64 = [&](const char* key, int64_t lo, int64_t hi,
+                           int64_t* dst) -> bool {
+      json_object* jv = nullptr;
+      if (!json_object_object_get_ex(jhb, key, &jv) || !jv) return true;
+      int64_t num = 0;
+      if (!parse_strict_i64(jv, &num) || num < lo || num > hi) {
+        if (err_out) *err_out = std::string("invalid heartbeat.") + key;
+        return false;
+      }
+      *dst = num;
+      return true;
+    };
+    if (!read_hb_i64("default_interval_ms", 10, 3600000,
+                     &cfg.heartbeat.default_interval_ms) ||
+        !read_hb_i64("default_missed_beats", 1, 1000,
+                     &cfg.heartbeat.default_missed_beats) ||
+        !read_hb_i64("min_timeout_ms", 10, 3600000, &cfg.heartbeat.min_timeout_ms) ||
+        !read_hb_i64("max_timeout_ms", 10, 86400000, &cfg.heartbeat.max_timeout_ms) ||
+        !read_hb_i64("stall_grace_ms", 10, 3600000, &cfg.heartbeat.stall_grace_ms)) {
+      return false;
+    }
+    if (cfg.heartbeat.min_timeout_ms > cfg.heartbeat.max_timeout_ms) {
+      if (err_out) *err_out = "heartbeat.min_timeout_ms exceeds max_timeout_ms";
+      return false;
+    }
+  }
+
   *out = std::move(cfg);
   return true;
 }
@@ -610,7 +676,9 @@ MtlManagerServer::MtlManagerServer(ServerConfig cfg,
       netdev_(std::move(netdev)) {
   if (!netdev_) {
     if (cfg_.use_mock_netdev) {
-      netdev_ = std::make_unique<MockNetdevBackend>();
+      auto mock = std::make_unique<MockNetdevBackend>();
+      mock->attach_xdp_delay_ms = cfg_.mock_attach_xdp_delay_ms;
+      netdev_ = std::move(mock);
     } else {
       netdev_ = std::make_unique<LinuxNetdevBackend>(cfg_.xdp_prog_path);
     }
@@ -1264,6 +1332,14 @@ bool MtlManagerServer::start(std::string* err_out) {
     return false;
   }
 
+  /* Single CLOCK_MONOTONIC timerfd embedded directly into epoll_fd_ (R2-5). */
+  if (!hb_timers_.init(err_out) ||
+      !add_epoll(hb_timers_.fd(), EPOLLIN, kTagHeartbeatTimerFd)) {
+    if (err_out && err_out->empty()) *err_out = "heartbeat timerfd epoll setup failed";
+    shutdown();
+    return false;
+  }
+
   if (cfg_.use_signalfd) {
     sigset_t mask;
     sigemptyset(&mask);
@@ -1341,12 +1417,35 @@ int MtlManagerServer::run() {
         if (rem_ms < wait_ms) wait_ms = rem_ms;
       }
     }
+    if (!hb_timers_.empty()) {
+      int64_t stall_probe_ms = std::max<int64_t>(10, hb_timers_.stall_threshold_ms() / 2);
+      if (stall_probe_ms < wait_ms) wait_ms = static_cast<int>(stall_probe_ms);
+    }
 
+    const int64_t before_wait_ns = mt_varlink_mono_ns();
     int n = ::epoll_wait(epoll_fd_.get(), events, 64, wait_ms);
     if (n < 0) {
       if (errno == EINTR) continue;
       break;
     }
+
+    const int64_t after_wait_ns = mt_varlink_mono_ns();
+    bool stalled_this_tick = false;
+    if (!hb_timers_.empty()) {
+      const int64_t threshold_ns = hb_timers_.stall_threshold_ms() * 1000000LL;
+      const int64_t wait_budget_ns =
+          static_cast<int64_t>(wait_ms) * 1000000LL + threshold_ns;
+      const int64_t armed_ns = hb_timers_.armed_deadline_ns();
+      const bool wait_stalled = (after_wait_ns - before_wait_ns) >= wait_budget_ns;
+      const bool timer_overrun =
+          (armed_ns > 0 && (after_wait_ns - armed_ns) >= threshold_ns);
+      if (wait_stalled || timer_overrun) {
+        handle_manager_stall(after_wait_ns);
+        stalled_this_tick = true;
+      }
+    }
+
+    bool hb_timer_fired = false;
     for (int i = 0; i < n; ++i) {
       const uint64_t tag = events[i].data.u64;
       const uint64_t kind = tag & kTagMask;
@@ -1365,6 +1464,8 @@ int MtlManagerServer::run() {
         uint64_t v = 0;
         while (::read(wake_fd_.get(), &v, sizeof(v)) > 0) {
         }
+      } else if (kind == kTagHeartbeatTimerFd) {
+        hb_timer_fired = true;
       } else if (kind == kTagClientListen) {
         handle_accept(client_listener_);
       } else if (kind == kTagAdminListen) {
@@ -1378,6 +1479,21 @@ int MtlManagerServer::run() {
       } else if (kind == kTagConn) {
         handle_conn_event(payload, events[i].events);
       }
+    }
+
+    /* Dispatch-duration stall guard runs BEFORE heartbeat timer expiration (HB-02). */
+    const int64_t dispatch_end_ns = mt_varlink_mono_ns();
+    if (!stalled_this_tick && !hb_timers_.empty()) {
+      const int64_t threshold_ns = hb_timers_.stall_threshold_ms() * 1000000LL;
+      if ((dispatch_end_ns - after_wait_ns) >= threshold_ns) {
+        handle_manager_stall(dispatch_end_ns);
+        stalled_this_tick = true;
+      }
+    }
+
+    if (hb_timer_fired) {
+      (void)hb_timers_.drain_timerfd();
+      process_heartbeat_timers(dispatch_end_ns);
     }
 
     sweep_idle_pre_session_conns();
@@ -1583,6 +1699,10 @@ void MtlManagerServer::shutdown() {
     shm_.shutdown(/*preserve_live_entries=*/true);
   }
 
+  if (hb_timers_.valid()) {
+    del_epoll(hb_timers_.fd());
+    hb_timers_.close();
+  }
   if (signal_fd_.valid()) {
     del_epoll(signal_fd_.get());
     signal_fd_.reset();
@@ -1687,6 +1807,7 @@ void MtlManagerServer::destroy_conn(uint64_t conn_id) {
     del_epoll(conn->peer.pidfd_owner.get());
     conn_pidfd_to_id_.erase(conn->peer.pidfd_owner.get());
   }
+  stop_session_heartbeat(*conn);
 
   if (!conn->session_id.empty()) {
     bool changed = false;
@@ -1940,6 +2061,13 @@ void MtlManagerServer::dispatch_frame(Connection& conn, const mt_varlink_frame_t
   }
 
   std::string m(method);
+  /* ISSUE-20 / ISSUE-82: run heartbeat flood check BEFORE FD, session, or parameter
+   * validation so rapid invalid/pre-session/FD-carrying Heartbeats are rate-limited. */
+  if (!conn.is_admin && m == MT_VARLINK_MANAGER_INTERFACE ".Heartbeat") {
+    rpc_heartbeat(conn, params, frame.fd_count);
+    return;
+  }
+
   const bool allows_fd =
       (!conn.is_admin && m == MT_VARLINK_MANAGER_INTERFACE ".AttachXsk");
   if (!allows_fd && frame.fd_count > 0u) {
@@ -1989,6 +2117,8 @@ void MtlManagerServer::dispatch_frame(Connection& conn, const mt_varlink_frame_t
     rpc_claim_session(conn, params);
   } else if (m == MT_VARLINK_MANAGER_INTERFACE ".CloseSession") {
     rpc_close_session(conn, params);
+  } else if (m == MT_VARLINK_MANAGER_INTERFACE ".Ping") {
+    rpc_ping(conn, params);
   } else if (m == MT_VARLINK_MANAGER_INTERFACE ".AcquireCpu") {
     rpc_acquire_cpu(conn, params);
   } else if (m == MT_VARLINK_MANAGER_INTERFACE ".AcquireQueue") {
@@ -2068,8 +2198,164 @@ std::string MtlManagerServer::next_id(const char* prefix) {
   return std::string(buf);
 }
 
+void MtlManagerServer::start_session_heartbeat(Connection& conn,
+                                               std::optional<int64_t> req_interval_ms,
+                                               std::optional<int64_t> req_max_missed) {
+  int64_t eff_interval_ms = cfg_.heartbeat.default_interval_ms;
+  int64_t eff_max_missed = cfg_.heartbeat.default_missed_beats;
+  cfg_.heartbeat.resolve_session_params(req_interval_ms, req_max_missed, &eff_interval_ms,
+                                        &eff_max_missed);
+
+  const int64_t now_ns = mt_varlink_mono_ns();
+  conn.hb = HeartbeatSessionState{};
+  conn.hb.active = true;
+  conn.hb.interval_ms = eff_interval_ms;
+  conn.hb.max_missed = eff_max_missed;
+  conn.hb.last_beat_ns = now_ns;
+  conn.hb.next_deadline_ns = now_ns + eff_interval_ms * 1000000LL;
+  conn.hb.missed_beats = 0;
+  conn.hb.health = HeartbeatHealth::Healthy;
+  conn.hb.warned_episode = false;
+
+  hb_timers_.schedule(conn.id, conn.hb.next_deadline_ns, conn.hb.total_timeout_ms());
+  hb_timers_.arm_timerfd(now_ns);
+}
+
+void MtlManagerServer::stop_session_heartbeat(Connection& conn) {
+  if (!conn.hb.active) return;
+  conn.hb.active = false;
+  hb_timers_.remove(conn.id);
+  hb_timers_.arm_timerfd(mt_varlink_mono_ns());
+}
+
+void MtlManagerServer::handle_manager_stall(int64_t now_ns) {
+  ++manager_stall_events_;
+  const int64_t grace_ms = std::max<int64_t>(1, cfg_.heartbeat.stall_grace_ms);
+  const int64_t grace_ns = grace_ms * 1000000LL;
+  std::cerr << "mtlm2d: WARNING: event loop stall detected; extending active heartbeat "
+               "deadlines by "
+            << grace_ms << " ms (stall_events=" << manager_stall_events_ << ")\n";
+
+  for (auto& [cid, c] : connections_) {
+    if (!c || c->session_id.empty() || !c->hb.active) continue;
+    int64_t extended_ns = std::max(c->hb.next_deadline_ns, now_ns + grace_ns);
+    c->hb.next_deadline_ns = extended_ns;
+    hb_timers_.schedule(cid, extended_ns, c->hb.total_timeout_ms());
+  }
+  hb_timers_.arm_timerfd(now_ns);
+}
+
+void MtlManagerServer::revoke_session_leases_quarantine(const std::string& sid) {
+  if (sid.empty()) return;
+
+  std::vector<std::string> matching_queues;
+  for (const auto& [lid, q] : queue_leases_) {
+    if (q.session_id == sid) matching_queues.push_back(lid);
+  }
+  for (const std::string& qlid : matching_queues) {
+    auto qit = queue_leases_.find(qlid);
+    if (qit == queue_leases_.end()) continue;
+    QueueLease& ql = qit->second;
+    if (!ql.pidfd.valid() || !PeerCredExtractor::is_pidfd_alive(ql.pidfd.get())) {
+      release_queue_cascade(qlid);
+    } else {
+      /* Finding 2 / HB-03: strip steering children, hold live queue in QUARANTINED. */
+      strip_queue_children(qlid);
+      ql.state = LeaseState::Quarantined;
+      ql.session_id.clear();
+    }
+  }
+
+  std::vector<std::string> matching_cpus;
+  for (const auto& [lid, l] : leases_) {
+    if (l.session_id == sid) matching_cpus.push_back(lid);
+  }
+  for (const std::string& lid : matching_cpus) {
+    auto it = leases_.find(lid);
+    if (it == leases_.end()) continue;
+    CpuLease& l = it->second;
+    if (!l.pidfd.valid() || !PeerCredExtractor::is_pidfd_alive(l.pidfd.get())) {
+      if (l.pidfd.valid()) {
+        del_epoll(l.pidfd.get());
+        pidfd_to_lease_.erase(l.pidfd.get());
+      }
+      shm_.release_cpu(l.cpu_id, l.pid);
+      leases_.erase(it);
+    } else {
+      /* Finding 2 / HB-03: hold live CPU in QUARANTINED until pidfd signals exit. */
+      l.state = LeaseState::Quarantined;
+      l.session_id.clear();
+    }
+  }
+
+  std::string jerr;
+  (void)persist_journal(&jerr);
+}
+
+void MtlManagerServer::process_heartbeat_timers(int64_t now_ns) {
+  std::vector<uint64_t> due = hb_timers_.pop_due(now_ns);
+  std::vector<uint64_t> to_revoke;
+
+  for (uint64_t cid : due) {
+    auto it = connections_.find(cid);
+    if (it == connections_.end() || !it->second) continue;
+    Connection& conn = *it->second;
+    if (!conn.hb.active || conn.session_id.empty()) continue;
+
+    if (now_ns < conn.hb.next_deadline_ns) {
+      hb_timers_.schedule(cid, conn.hb.next_deadline_ns, conn.hb.total_timeout_ms());
+      continue;
+    }
+
+    const int64_t interval_ns = std::max<int64_t>(1, conn.hb.interval_ms) * 1000000LL;
+    const int64_t overdue_ns = now_ns - conn.hb.next_deadline_ns;
+    const int64_t newly_missed = 1 + (overdue_ns / interval_ns);
+    conn.hb.missed_beats += newly_missed;
+    conn.hb.next_deadline_ns += newly_missed * interval_ns;
+
+    if (conn.hb.missed_beats < conn.hb.max_missed) {
+      conn.hb.health = HeartbeatHealth::Degraded;
+      hb_timers_.schedule(cid, conn.hb.next_deadline_ns, conn.hb.total_timeout_ms());
+    } else if (cfg_.heartbeat.should_revoke_on_expiry()) {
+      to_revoke.push_back(cid);
+    } else {
+      /* Safe default (Finding 3, HB-01): warn only, preserve process and leases. */
+      conn.hb.health = HeartbeatHealth::Warned;
+      if (!conn.hb.warned_episode) {
+        conn.hb.warned_episode = true;
+        ++heartbeat_warnings_;
+        std::cerr
+            << "mtlm2d: WARNING: heartbeat missed threshold reached (policy=warn_only"
+            << " sessionId=" << conn.session_id << " pid=" << conn.peer.principal.pid
+            << " clientName=" << conn.client_name
+            << " missedBeats=" << conn.hb.missed_beats << ")\n";
+      }
+      hb_timers_.schedule(cid, conn.hb.next_deadline_ns, conn.hb.total_timeout_ms());
+    }
+  }
+
+  for (uint64_t cid : to_revoke) {
+    auto it = connections_.find(cid);
+    if (it == connections_.end() || !it->second) continue;
+    Connection& conn = *it->second;
+    ++heartbeat_revocations_;
+    std::cerr << "mtlm2d: WARNING: opt-in heartbeat revocation triggered (policy=revoke"
+              << " sessionId=" << conn.session_id << " pid=" << conn.peer.principal.pid
+              << " clientName=" << conn.client_name
+              << " missedBeats=" << conn.hb.missed_beats << ")\n";
+    const std::string sid = conn.session_id;
+    stop_session_heartbeat(conn);
+    revoke_session_leases_quarantine(sid);
+    conn.session_id.clear();
+    destroy_conn(cid);
+  }
+
+  hb_timers_.arm_timerfd(mt_varlink_mono_ns());
+}
+
 void MtlManagerServer::rpc_open_session(Connection& conn, struct json_object* params) {
-  static const std::set<std::string> kKeys = {"clientName"};
+  static const std::set<std::string> kKeys = {"clientName", "heartbeatIntervalMs",
+                                              "heartbeatMaxMissed"};
   std::string bad;
   if (!check_allowed_keys(params, kKeys, &bad)) {
     enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
@@ -2090,15 +2376,50 @@ void MtlManagerServer::rpc_open_session(Connection& conn, struct json_object* pa
     return;
   }
 
+  std::optional<int64_t> req_interval;
+  json_object* jint = nullptr;
+  if (json_object_object_get_ex(params, "heartbeatIntervalMs", &jint) && jint &&
+      !json_object_is_type(jint, json_type_null)) {
+    int64_t v = 0;
+    if (!parse_strict_i64(jint, &v) || v <= 0 || v > 3600000) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "heartbeatIntervalMs must be a positive integer",
+                    "heartbeatIntervalMs");
+      return;
+    }
+    req_interval = v;
+  }
+
+  std::optional<int64_t> req_missed;
+  json_object* jmis = nullptr;
+  if (json_object_object_get_ex(params, "heartbeatMaxMissed", &jmis) && jmis &&
+      !json_object_is_type(jmis, json_type_null)) {
+    int64_t v = 0;
+    if (!parse_strict_i64(jmis, &v) || v <= 0 || v > 1000) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "heartbeatMaxMissed must be an integer in 1..1000",
+                    "heartbeatMaxMissed");
+      return;
+    }
+    req_missed = v;
+  }
+
   conn.session_id = next_id("ses");
   conn.client_name = PeerCredExtractor::sanitize_label(raw_name);
+  start_session_heartbeat(conn, req_interval, req_missed);
+
   json_object* rep = json_object_new_object();
   json_add_str(rep, "sessionId", conn.session_id);
+  json_object_object_add(rep, "heartbeatIntervalMs",
+                         json_object_new_int64(conn.hb.interval_ms));
+  json_object_object_add(rep, "heartbeatMaxMissed",
+                         json_object_new_int64(conn.hb.max_missed));
   enqueue_reply(conn, rep);
 }
 
 void MtlManagerServer::rpc_claim_session(Connection& conn, struct json_object* params) {
-  static const std::set<std::string> kKeys = {"clientName", "leaseIds"};
+  static const std::set<std::string> kKeys = {
+      "clientName", "leaseIds", "heartbeatIntervalMs", "heartbeatMaxMissed"};
   std::string bad;
   if (!check_allowed_keys(params, kKeys, &bad)) {
     enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
@@ -2124,6 +2445,34 @@ void MtlManagerServer::rpc_claim_session(Connection& conn, struct json_object* p
     enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
                   "leaseIds must be an array of strings", "leaseIds");
     return;
+  }
+
+  std::optional<int64_t> req_interval;
+  json_object* jint = nullptr;
+  if (json_object_object_get_ex(params, "heartbeatIntervalMs", &jint) && jint &&
+      !json_object_is_type(jint, json_type_null)) {
+    int64_t v = 0;
+    if (!parse_strict_i64(jint, &v) || v <= 0 || v > 3600000) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "heartbeatIntervalMs must be a positive integer",
+                    "heartbeatIntervalMs");
+      return;
+    }
+    req_interval = v;
+  }
+
+  std::optional<int64_t> req_missed;
+  json_object* jmis = nullptr;
+  if (json_object_object_get_ex(params, "heartbeatMaxMissed", &jmis) && jmis &&
+      !json_object_is_type(jmis, json_type_null)) {
+    int64_t v = 0;
+    if (!parse_strict_i64(jmis, &v) || v <= 0 || v > 1000) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "heartbeatMaxMissed must be an integer in 1..1000",
+                    "heartbeatMaxMissed");
+      return;
+    }
+    req_missed = v;
   }
 
   const size_t n = json_object_array_length(jids);
@@ -2183,6 +2532,7 @@ void MtlManagerServer::rpc_claim_session(Connection& conn, struct json_object* p
 
   conn.session_id = next_id("ses");
   conn.client_name = PeerCredExtractor::sanitize_label(raw_name);
+  start_session_heartbeat(conn, req_interval, req_missed);
 
   json_object* claimed = json_object_new_array();
   for (const std::string& lid : claimed_ids) {
@@ -2223,6 +2573,10 @@ void MtlManagerServer::rpc_claim_session(Connection& conn, struct json_object* p
   json_add_str(rep, "sessionId", conn.session_id);
   json_object_object_add(rep, "claimed", claimed);
   json_object_object_add(rep, "missing", missing);
+  json_object_object_add(rep, "heartbeatIntervalMs",
+                         json_object_new_int64(conn.hb.interval_ms));
+  json_object_object_add(rep, "heartbeatMaxMissed",
+                         json_object_new_int64(conn.hb.max_missed));
   enqueue_reply(conn, rep);
 }
 
@@ -2239,6 +2593,8 @@ void MtlManagerServer::rpc_close_session(Connection& conn, struct json_object* p
                   "no active session on connection");
     return;
   }
+
+  stop_session_heartbeat(conn);
 
   /* Strict reverse cascade: XSK -> Flow -> UdpFilter -> Queue -> XDP -> Cpu. */
   std::vector<std::string> q_release;
@@ -2270,6 +2626,146 @@ void MtlManagerServer::rpc_close_session(Connection& conn, struct json_object* p
   std::string jerr;
   (void)persist_journal(&jerr);
   enqueue_reply(conn, json_object_new_object());
+}
+
+void MtlManagerServer::rpc_ping(Connection& conn, struct json_object* params) {
+  static const std::set<std::string> kKeys = {"sequence"};
+  std::string bad;
+  if (!check_allowed_keys(params, kKeys, &bad)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "unexpected parameter", bad);
+    return;
+  }
+  json_object* jseq = nullptr;
+  int64_t seq = 0;
+  if (!params || !json_object_object_get_ex(params, "sequence", &jseq) ||
+      !parse_strict_i64(jseq, &seq) || seq < 0) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "sequence must be a non-negative integer", "sequence");
+    return;
+  }
+
+  const int64_t mono_us = mt_varlink_mono_ns() / 1000LL;
+  json_object* rep = json_object_new_object();
+  json_object_object_add(rep, "sequence", json_object_new_int64(seq));
+  json_object_object_add(rep, "serverMonotonicUsec", json_object_new_int64(mono_us));
+  enqueue_reply(conn, rep);
+}
+
+void MtlManagerServer::rpc_heartbeat(Connection& conn, struct json_object* params,
+                                     size_t fd_count) {
+  const int64_t now_ns = mt_varlink_mono_ns();
+  const int64_t ref_interval_ms =
+      conn.hb.active ? conn.hb.interval_ms : cfg_.heartbeat.default_interval_ms;
+
+  /* ISSUE-20 / ISSUE-82: flood token-bucket and 20-strike check MUST run BEFORE
+   * FD, session, sequence, or clientState validation. */
+  const HeartbeatFloodTracker::Decision dec =
+      conn.hb_flood.check_and_consume(now_ns, ref_interval_ms);
+  if (dec == HeartbeatFloodTracker::Decision::RevokeAndDisconnect) {
+    ++heartbeat_revocations_;
+    std::cerr << "mtlm2d: WARNING: heartbeat flood 20-strike limit exceeded; "
+                 "disconnecting peer (pid="
+              << conn.peer.principal.pid
+              << " sessionId=" << (conn.session_id.empty() ? "none" : conn.session_id)
+              << ")\n";
+    if (!conn.session_id.empty()) {
+      const std::string sid = conn.session_id;
+      stop_session_heartbeat(conn);
+      revoke_session_leases_quarantine(sid);
+      conn.session_id.clear();
+    }
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".RateLimited",
+                  "heartbeat flood strike limit exceeded; disconnecting");
+    begin_conn_close(conn);
+    return;
+  }
+  if (dec == HeartbeatFloodTracker::Decision::RateLimited) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".RateLimited",
+                  "heartbeat rate limit exceeded");
+    return;
+  }
+
+  if (fd_count > 0u) {
+    enqueue_error(conn, "org.varlink.service.InvalidParameter",
+                  "unexpected file descriptors", "fds");
+    return;
+  }
+  if (conn.session_id.empty()) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".SessionNotFound",
+                  "open a session before Heartbeat");
+    return;
+  }
+
+  static const std::set<std::string> kKeys = {"sequence", "clientState"};
+  std::string bad;
+  if (!check_allowed_keys(params, kKeys, &bad)) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "unexpected parameter", bad);
+    return;
+  }
+
+  json_object* jseq = nullptr;
+  int64_t seq = 0;
+  if (!params || !json_object_object_get_ex(params, "sequence", &jseq) ||
+      !parse_strict_i64(jseq, &seq) || seq < 0) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "sequence must be a non-negative integer", "sequence");
+    return;
+  }
+  if (conn.hb.has_sequence && seq <= conn.hb.last_sequence) {
+    enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                  "sequence must be strictly monotonically increasing", "sequence");
+    return;
+  }
+
+  std::string client_state;
+  json_object* jst = nullptr;
+  if (json_object_object_get_ex(params, "clientState", &jst) && jst &&
+      !json_object_is_type(jst, json_type_null)) {
+    if (!parse_strict_str(jst, &client_state) || client_state.size() > 64u) {
+      enqueue_error(conn, MT_VARLINK_MANAGER_INTERFACE ".InvalidParameter",
+                    "clientState must be a string of at most 64 bytes", "clientState");
+      return;
+    }
+    client_state = PeerCredExtractor::sanitize_label(client_state);
+  }
+
+  const bool was_degraded_or_warned =
+      (conn.hb.health != HeartbeatHealth::Healthy || conn.hb.missed_beats > 0);
+
+  conn.hb_flood.reset_strikes();
+  conn.hb.has_sequence = true;
+  conn.hb.last_sequence = seq;
+  conn.hb.last_beat_ns = now_ns;
+  conn.hb.next_deadline_ns = now_ns + conn.hb.interval_ms * 1000000LL;
+  conn.hb.missed_beats = 0;
+  conn.hb.warned_episode = false;
+  conn.hb.client_state = client_state;
+
+  const char* reply_status = "ok";
+  if (was_degraded_or_warned) {
+    conn.hb.health = HeartbeatHealth::Healthy;
+    reply_status = "recovered";
+  } else if (client_state == "warned" || client_state == "degraded") {
+    conn.hb.health = HeartbeatHealth::Warned;
+    reply_status = "warned";
+  } else {
+    conn.hb.health = HeartbeatHealth::Healthy;
+    reply_status = "ok";
+  }
+
+  hb_timers_.schedule(conn.id, conn.hb.next_deadline_ns, conn.hb.total_timeout_ms());
+  hb_timers_.arm_timerfd(now_ns);
+
+  json_object* rep = json_object_new_object();
+  json_object_object_add(rep, "sequence", json_object_new_int64(seq));
+  json_object_object_add(rep, "serverMonotonicUsec",
+                         json_object_new_int64(now_ns / 1000LL));
+  json_add_str(rep, "status", reply_status);
+  json_object_object_add(rep, "nextDeadlineMs",
+                         json_object_new_int64(conn.hb.total_timeout_ms()));
+  enqueue_reply(conn, rep);
 }
 
 uint32_t MtlManagerServer::count_uid_cpu_leases(uid_t uid) const {
@@ -3133,11 +3629,26 @@ void MtlManagerServer::rpc_get_status(Connection& conn, struct json_object* para
 
   audit_shm_integrity();
 
+  const int64_t now_ns = mt_varlink_mono_ns();
+
   json_object* rep = json_object_new_object();
   json_add_str(rep, "shmMode", shm_.mode_string());
   json_object_object_add(
       rep, "shmTamperWarnings",
       json_object_new_int64(static_cast<int64_t>(shm_tamper_warnings_)));
+  json_add_str(rep, "heartbeatPolicy",
+               heartbeat_expiry_policy_to_string(cfg_.heartbeat.expiry_policy));
+  json_add_str(rep, "heartbeatEvictionAction",
+               heartbeat_eviction_action_to_string(cfg_.heartbeat.eviction_action));
+  json_object_object_add(
+      rep, "heartbeatWarnings",
+      json_object_new_int64(static_cast<int64_t>(heartbeat_warnings_)));
+  json_object_object_add(
+      rep, "heartbeatRevocations",
+      json_object_new_int64(static_cast<int64_t>(heartbeat_revocations_)));
+  json_object_object_add(
+      rep, "managerStallEvents",
+      json_object_new_int64(static_cast<int64_t>(manager_stall_events_)));
 
   json_object* sessions_arr = json_object_new_array();
   for (const auto& [cid, c] : connections_) {
@@ -3147,6 +3658,18 @@ void MtlManagerServer::rpc_get_status(Connection& conn, struct json_object* para
     json_add_str(so, "clientName", c->client_name);
     json_object_object_add(so, "pid", json_object_new_int64(c->peer.principal.pid));
     json_object_object_add(so, "uid", json_object_new_int64(c->peer.principal.uid));
+    json_add_str(so, "heartbeatState", heartbeat_health_to_string(c->hb.health));
+    json_object_object_add(so, "missedBeats", json_object_new_int64(c->hb.missed_beats));
+    const int64_t age_ms =
+        (now_ns >= c->hb.last_beat_ns) ? ((now_ns - c->hb.last_beat_ns) / 1000000LL) : 0;
+    json_object_object_add(so, "lastBeatAgeMs", json_object_new_int64(age_ms));
+    json_object_object_add(so, "heartbeatIntervalMs",
+                           json_object_new_int64(c->hb.interval_ms));
+    json_object_object_add(so, "heartbeatMaxMissed",
+                           json_object_new_int64(c->hb.max_missed));
+    if (!c->hb.client_state.empty()) {
+      json_add_str(so, "clientState", c->hb.client_state);
+    }
     json_object_array_add(sessions_arr, so);
   }
   json_object_object_add(rep, "sessions", sessions_arr);

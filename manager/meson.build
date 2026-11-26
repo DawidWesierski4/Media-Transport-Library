@@ -37,6 +37,7 @@ mtlm2_core_sources = files(
   'mtlm2_shm.cpp',
   'mtlm2_journal.cpp',
   'mtlm2_netdev.cpp',
+  'mtlm2_heartbeat.cpp',
   'mtlm2_server.cpp',
 )
 
@@ -112,4 +113,17 @@ if get_option('enable_tests')
     install : false,
   )
   test('mtlm2_pr1b', test_pr1b_exe, depends : [mtlm2_exe] + bpf_deps, timeout : 60)
+
+  test_pr2_hb_exe = executable('test_mtlm2_pr2_heartbeat',
+    mtlm2_core_sources + files('tests/test_mtlm2_pr2_heartbeat.cpp'),
+    include_directories : inc_dirs,
+    c_args : c_args,
+    cpp_args : cpp_args + xdp_cpp_args + [
+      '-DMTLM2_DAEMON_BIN="' + meson.current_build_dir() + '/MtlManager"',
+    ],
+    link_args : link_args,
+    dependencies : [jsonc_dep, threads_dep, gtest_dep] + xdp_deps,
+    install : false,
+  )
+  test('mtlm2_pr2_heartbeat', test_pr2_hb_exe, depends : [mtlm2_exe], timeout : 60)
 endif

@@ -15,6 +15,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #ifdef MTL_HAS_XDP_BACKEND
@@ -766,6 +767,13 @@ bool MockNetdevBackend::query_interface(const std::string& if_name, InterfaceInf
 bool MockNetdevBackend::attach_xdp(const std::string& if_name, unsigned int ifindex,
                                    XdpAttachMode* out_mode, std::string* err_out) {
   (void)ifindex;
+  if (attach_xdp_delay_ms > 0) {
+    struct timespec req{};
+    req.tv_sec = static_cast<time_t>(attach_xdp_delay_ms / 1000LL);
+    req.tv_nsec = static_cast<long>((attach_xdp_delay_ms % 1000LL) * 1000000LL);
+    while (::nanosleep(&req, &req) < 0 && errno == EINTR) {
+    }
+  }
   if (fail_attach_xdp) {
     if (err_out) *err_out = "injected attach_xdp failure";
     return false;

@@ -243,6 +243,16 @@ class FakeVarlinkServer {
               R"({"parameters":{"leaseId":"cpu-fake-1","cpuId":3,"futureHint":"numa0"}})");
         } else if (method == "org.openvisualcloud.mtl.Manager.ReleaseLease") {
           send_frame(cfd, R"({"parameters":{"extraAck":true}})");
+        } else if (method == "org.openvisualcloud.mtl.Manager.Ping") {
+          send_frame(
+              cfd,
+              R"({"parameters":{"sequence":7,"serverMonotonicUsec":1234567,"extraPing":true}})");
+        } else if (method == "org.openvisualcloud.mtl.Manager.Heartbeat") {
+          int hb = hb_seq_.fetch_add(1) + 1;
+          send_frame(
+              cfd,
+              std::string(R"({"parameters":{"sequence":)") + std::to_string(hb) +
+                  R"(,"serverMonotonicUsec":2345678,"status":"ok","nextDeadlineMs":30000,"extraHb":1}})");
         } else if (method == "org.openvisualcloud.mtl.Manager.CloseSession") {
           send_frame(cfd, R"({"parameters":{"extraBye":1}})");
         } else {
@@ -268,6 +278,7 @@ class FakeVarlinkServer {
   int listen_fd_ = -1;
   std::atomic<bool> stop_{false};
   std::atomic<int> accepted_{0};
+  std::atomic<int> hb_seq_{0};
   std::thread th_;
   mutable std::mutex mu_;
   std::vector<std::string> methods_;
@@ -419,4 +430,33 @@ TEST(MtInstanceConnectTest, D6_VerProto02And03_GetInfoLoggedOnceAndUnknownFields
     }
   }
   EXPECT_EQ(getinfo_log_hits, 1);
+}
+
+TEST(MtInstanceConnectTest, Pr2_PingAndHeartbeatThinClientRpc) {
+  ScopedTempDir tmp;
+  ASSERT_FALSE(tmp.path().empty());
+  const std::string fake_sock = tmp.path() + "/hb_manager2.sock";
+  FakeVarlinkServer srv(fake_sock);
+  ASSERT_TRUE(srv.start());
+
+  ScopedEnvVar env_v2("MTL_MANAGER_SOCK", fake_sock.c_str());
+  ScopedEnvVar env_root("MTL_REQUIRE_ROOT_MANAGER", nullptr);
+
+  ut_instance_ctx* ctx = nullptr;
+  ASSERT_EQ(ut_instance_connect(&ctx), 0);
+  ASSERT_NE(ctx, nullptr);
+
+  EXPECT_EQ(ut_instance_ping(ctx, 7), 0);
+  EXPECT_EQ(ut_instance_heartbeat(ctx, "running"), 0);
+  EXPECT_EQ(ut_instance_heartbeat(ctx, nullptr), 0);
+  EXPECT_EQ(ut_instance_ping(ctx, -1), -EINVAL);
+
+  ut_instance_destroy(ctx);
+  srv.stop();
+
+  const auto methods = srv.methods();
+  ASSERT_GE(methods.size(), 5u);
+  EXPECT_EQ(methods[2], "org.openvisualcloud.mtl.Manager.Ping");
+  EXPECT_EQ(methods[3], "org.openvisualcloud.mtl.Manager.Heartbeat");
+  EXPECT_EQ(methods[4], "org.openvisualcloud.mtl.Manager.Heartbeat");
 }

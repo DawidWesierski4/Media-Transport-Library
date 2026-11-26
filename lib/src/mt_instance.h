@@ -31,4 +31,7 @@ int mt_instance_add_flow(struct mtl_main_impl* impl, const char* queue_lease,
 int mt_instance_add_udp_filter(struct mtl_main_impl* impl, const char* queue_lease,
                                uint16_t dst_port, char out_lease[40]);
 
+int mt_instance_ping(struct mtl_main_impl* impl, int64_t seq);
+int mt_instance_heartbeat(struct mtl_main_impl* impl, const char* client_state);
+
 #endif

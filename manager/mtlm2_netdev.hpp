@@ -227,6 +227,7 @@ class MockNetdevBackend final : public NetdevBackend {
   bool fail_add_flow = false;
   bool fail_add_udp_filter = false;
   bool fail_update_xsk_map = false;
+  int64_t attach_xdp_delay_ms = 0;
 
  private:
   struct MockIface {

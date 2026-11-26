@@ -73,8 +73,22 @@ void print_usage(const char* prog) {
             << "  --teardown-on-exit        Release all leases and shm slots on normal "
                "stop (for tests)\n"
             << "  --xdp-prog <path>         Override mtl.xdp.o object path\n"
+            << "  --heartbeat-policy <warn_only|revoke>  Heartbeat expiry policy "
+               "(default: warn_only)\n"
+            << "  --heartbeat-eviction-action <none|revoke>  Heartbeat eviction action "
+               "(default: none)\n"
+            << "  --heartbeat-interval-ms <ms>  Default heartbeat interval in ms "
+               "(default: 5000)\n"
+            << "  --heartbeat-max-missed <n>    Default missed beats threshold "
+               "(default: 6)\n"
+            << "  --heartbeat-min-timeout-ms <ms>  Minimum allowed heartbeat timeout "
+               "(default: 5000)\n"
+            << "  --heartbeat-stall-grace-ms <ms>  Grace extension after event loop "
+               "stall (default: 5000)\n"
             << "  --test-mock-netdev        Use in-memory mock netdev/XDP backend (for "
                "tests)\n"
+            << "  --test-attach-xdp-delay-ms <ms>  Simulated attach_xdp delay in mock "
+               "netdev (for tests)\n"
             << "  -h, --help                Show this help\n";
 }
 
@@ -99,9 +113,37 @@ int main(int argc, char** argv) {
   bool custom_paths = false;
   bool host_lock_explicit = false;
 
+  std::optional<mtlm2::HeartbeatExpiryPolicy> cli_hb_policy;
+  std::optional<mtlm2::HeartbeatEvictionAction> cli_hb_eviction;
+  std::optional<int64_t> cli_hb_interval_ms;
+  std::optional<int64_t> cli_hb_max_missed;
+  std::optional<int64_t> cli_hb_min_timeout_ms;
+  std::optional<int64_t> cli_hb_stall_grace_ms;
+
+  auto parse_i64_range = [](const std::string& text, int64_t lo, int64_t hi,
+                            int64_t* out) -> bool {
+    if (text.empty()) return false;
+    char* end = nullptr;
+    errno = 0;
+    long long v = std::strtoll(text.c_str(), &end, 10);
+    if (errno != 0 || !end || *end != '\0' || v < lo || v > hi) return false;
+    *out = static_cast<int64_t>(v);
+    return true;
+  };
+
   for (int i = 1; i < argc; ++i) {
-    std::string arg = argv[i];
+    std::string raw_arg = argv[i];
+    std::string arg = raw_arg;
+    std::optional<std::string> eq_val;
+    if (raw_arg.rfind("--", 0) == 0) {
+      size_t eq = raw_arg.find('=');
+      if (eq != std::string::npos) {
+        arg = raw_arg.substr(0, eq);
+        eq_val = raw_arg.substr(eq + 1);
+      }
+    }
     auto need_val = [&](const char* opt) -> std::string {
+      if (eq_val.has_value()) return *eq_val;
       if (i + 1 >= argc) {
         std::cerr << "MtlManager: missing value for " << opt << "\n";
         std::exit(2);
@@ -163,8 +205,69 @@ int main(int argc, char** argv) {
       cfg.teardown_on_exit = true;
     } else if (arg == "--xdp-prog") {
       cfg.xdp_prog_path = need_val("--xdp-prog");
+    } else if (arg == "--heartbeat-policy") {
+      std::string pstr = need_val("--heartbeat-policy");
+      mtlm2::HeartbeatExpiryPolicy pol{};
+      if (!mtlm2::parse_heartbeat_expiry_policy(pstr, &pol)) {
+        std::cerr << "MtlManager: invalid --heartbeat-policy '" << pstr << "'\n";
+        return 2;
+      }
+      cli_hb_policy = pol;
+      if (!cli_hb_eviction.has_value()) {
+        cli_hb_eviction = (pol == mtlm2::HeartbeatExpiryPolicy::Revoke)
+                              ? mtlm2::HeartbeatEvictionAction::Revoke
+                              : mtlm2::HeartbeatEvictionAction::None;
+      }
+    } else if (arg == "--heartbeat-eviction-action") {
+      std::string estr = need_val("--heartbeat-eviction-action");
+      mtlm2::HeartbeatEvictionAction act{};
+      if (!mtlm2::parse_heartbeat_eviction_action(estr, &act)) {
+        std::cerr << "MtlManager: invalid --heartbeat-eviction-action '" << estr << "'\n";
+        return 2;
+      }
+      cli_hb_eviction = act;
+    } else if (arg == "--heartbeat-interval-ms") {
+      std::string vstr = need_val("--heartbeat-interval-ms");
+      int64_t v = 0;
+      if (!parse_i64_range(vstr, 10, 3600000, &v)) {
+        std::cerr << "MtlManager: invalid --heartbeat-interval-ms '" << vstr << "'\n";
+        return 2;
+      }
+      cli_hb_interval_ms = v;
+    } else if (arg == "--heartbeat-max-missed") {
+      std::string vstr = need_val("--heartbeat-max-missed");
+      int64_t v = 0;
+      if (!parse_i64_range(vstr, 1, 1000, &v)) {
+        std::cerr << "MtlManager: invalid --heartbeat-max-missed '" << vstr << "'\n";
+        return 2;
+      }
+      cli_hb_max_missed = v;
+    } else if (arg == "--heartbeat-min-timeout-ms") {
+      std::string vstr = need_val("--heartbeat-min-timeout-ms");
+      int64_t v = 0;
+      if (!parse_i64_range(vstr, 10, 3600000, &v)) {
+        std::cerr << "MtlManager: invalid --heartbeat-min-timeout-ms '" << vstr << "'\n";
+        return 2;
+      }
+      cli_hb_min_timeout_ms = v;
+    } else if (arg == "--heartbeat-stall-grace-ms") {
+      std::string vstr = need_val("--heartbeat-stall-grace-ms");
+      int64_t v = 0;
+      if (!parse_i64_range(vstr, 10, 3600000, &v)) {
+        std::cerr << "MtlManager: invalid --heartbeat-stall-grace-ms '" << vstr << "'\n";
+        return 2;
+      }
+      cli_hb_stall_grace_ms = v;
     } else if (arg == "--test-mock-netdev") {
       cfg.use_mock_netdev = true;
+    } else if (arg == "--test-attach-xdp-delay-ms") {
+      std::string vstr = need_val("--test-attach-xdp-delay-ms");
+      int64_t v = 0;
+      if (!parse_i64_range(vstr, 0, 60000, &v)) {
+        std::cerr << "MtlManager: invalid --test-attach-xdp-delay-ms '" << vstr << "'\n";
+        return 2;
+      }
+      cfg.mock_attach_xdp_delay_ms = v;
     } else {
       std::cerr << "MtlManager: unknown option '" << arg << "'\n";
       print_usage(argv[0]);
@@ -189,7 +292,19 @@ int main(int argc, char** argv) {
     }
     cfg.allow_world_client_socket = false;
     if (!mode_explicit) cfg.client_socket_mode = 0660;
+    if (cfg.policy.has_heartbeat) cfg.heartbeat = cfg.policy.heartbeat;
   }
+
+  if (cli_hb_policy.has_value()) cfg.heartbeat.expiry_policy = *cli_hb_policy;
+  if (cli_hb_eviction.has_value()) cfg.heartbeat.eviction_action = *cli_hb_eviction;
+  if (cli_hb_interval_ms.has_value())
+    cfg.heartbeat.default_interval_ms = *cli_hb_interval_ms;
+  if (cli_hb_max_missed.has_value())
+    cfg.heartbeat.default_missed_beats = *cli_hb_max_missed;
+  if (cli_hb_min_timeout_ms.has_value())
+    cfg.heartbeat.min_timeout_ms = *cli_hb_min_timeout_ms;
+  if (cli_hb_stall_grace_ms.has_value())
+    cfg.heartbeat.stall_grace_ms = *cli_hb_stall_grace_ms;
 
   mtlm2::MtlManagerServer server(std::move(cfg));
   std::string err;

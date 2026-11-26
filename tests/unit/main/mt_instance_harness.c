@@ -70,3 +70,11 @@ int ut_instance_get_cpu(ut_instance_ctx* ctx, uint32_t phys_cpu, char lease_id_o
 int ut_instance_release_lease(ut_instance_ctx* ctx, const char* lease_id) {
   return mt_instance_release_lease(&ctx->impl, lease_id);
 }
+
+int ut_instance_ping(ut_instance_ctx* ctx, int64_t seq) {
+  return mt_instance_ping(&ctx->impl, seq);
+}
+
+int ut_instance_heartbeat(ut_instance_ctx* ctx, const char* client_state) {
+  return mt_instance_heartbeat(&ctx->impl, client_state);
+}

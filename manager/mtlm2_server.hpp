@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "mt_varlink.h"
+#include "mtlm2_heartbeat.hpp"
 #include "mtlm2_journal.hpp"
 #include "mtlm2_netdev.hpp"
 #include "mtlm2_peer.hpp"
@@ -39,6 +40,8 @@ struct PolicyConfig {
   std::vector<std::pair<uint16_t, uint16_t>> allowed_udp_ports;
   std::map<uid_t, UidQuota> uid_quotas;
   UidQuota default_quota{};
+  HeartbeatConfig heartbeat{};
+  bool has_heartbeat = false;
 
   static PolicyConfig make_zero_arg_single_host();
   static bool load_file(const std::string& path, PolicyConfig* out, std::string* err_out);
@@ -62,10 +65,12 @@ struct ServerConfig {
   std::string state_dir = "/run/imtl/state";
   std::string proc_root = "/proc";
   PolicyConfig policy{};
+  HeartbeatConfig heartbeat{};
   ShmConfig shm{};
   bool teardown_on_exit = false;
   bool use_signalfd = true;
   bool use_mock_netdev = false;
+  int64_t mock_attach_xdp_delay_ms = 0;
   std::string xdp_prog_path;
   size_t max_connections = 256;
   size_t max_conns_per_uid = 64;
@@ -131,6 +136,8 @@ class MtlManagerServer {
     bool drop_immediately = false;
     int64_t connected_mono_ns = 0;
     uint32_t epoll_events = 0;
+    HeartbeatFloodTracker hb_flood;
+    HeartbeatSessionState hb;
 
     Connection() {
       mt_varlink_reader_init(&reader);
@@ -260,6 +267,8 @@ class MtlManagerServer {
   void rpc_open_session(Connection& conn, struct json_object* params);
   void rpc_claim_session(Connection& conn, struct json_object* params);
   void rpc_close_session(Connection& conn, struct json_object* params);
+  void rpc_ping(Connection& conn, struct json_object* params);
+  void rpc_heartbeat(Connection& conn, struct json_object* params, size_t fd_count);
   void rpc_acquire_cpu(Connection& conn, struct json_object* params);
   void rpc_acquire_queue(Connection& conn, struct json_object* params);
   void rpc_attach_xsk(Connection& conn, struct json_object* params, const int* fds,
@@ -286,6 +295,12 @@ class MtlManagerServer {
   void strip_queue_children(const std::string& queue_lease_id);
   void maybe_detach_xdp_if_unused(const std::string& if_name);
   void release_queue_cascade(const std::string& queue_lease_id);
+  void start_session_heartbeat(Connection& conn, std::optional<int64_t> req_interval_ms,
+                               std::optional<int64_t> req_max_missed);
+  void stop_session_heartbeat(Connection& conn);
+  void handle_manager_stall(int64_t now_ns);
+  void process_heartbeat_timers(int64_t now_ns);
+  void revoke_session_leases_quarantine(const std::string& sid);
 
   std::string next_id(const char* prefix);
   void watch_lease_pidfd(CpuLease& lease);
@@ -303,6 +318,7 @@ class MtlManagerServer {
   UniqueFd epoll_fd_;
   UniqueFd signal_fd_;
   UniqueFd wake_fd_;
+  HeartbeatTimerHeap hb_timers_;
   Listener client_listener_;
   Listener admin_listener_;
 
@@ -322,6 +338,9 @@ class MtlManagerServer {
   uint64_t next_conn_id_ = 1;
   uint64_t next_id_seq_ = 1;
   uint64_t shm_tamper_warnings_ = 0;
+  uint64_t heartbeat_warnings_ = 0;
+  uint64_t heartbeat_revocations_ = 0;
+  uint64_t manager_stall_events_ = 0;
   bool started_ = false;
   std::atomic<bool> stop_requested_{false};
 };

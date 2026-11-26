@@ -35,6 +35,7 @@ struct mt_instance_ctx {
   size_t lease_count;
   size_t lease_cap;
   int64_t rpc_timeout_ms;
+  int64_t hb_seq;
   bool abort_on_loss;
 };
 
@@ -787,6 +788,100 @@ int mt_instance_add_udp_filter(struct mtl_main_impl* impl, const char* queue_lea
   return trc;
 }
 
+int mt_instance_ping(struct mtl_main_impl* impl, int64_t seq) {
+  if (!impl || !impl->instance || seq < 0) return -EINVAL;
+
+  struct mt_instance_ctx* ctx = impl->instance;
+  struct json_object* params = json_object_new_object();
+  if (!params) return -ENOMEM;
+  json_object_object_add(params, "sequence", json_object_new_int64(seq));
+
+  pthread_mutex_lock(&ctx->mutex);
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".Ping", params,
+                                NULL, 0, &reply, err_name, sizeof(err_name), err_msg,
+                                sizeof(err_msg));
+  json_object_put(params);
+  if (rc < 0) {
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%" PRId64 "), Ping fail %d (%s: %s)\n", __func__, seq, rc, err_name, err_msg);
+    return rc;
+  }
+
+  struct json_object* rparams = NULL;
+  struct json_object* jseq = NULL;
+  struct json_object* jmono = NULL;
+  if (!json_object_object_get_ex(reply, "parameters", &rparams) || !rparams ||
+      !json_object_object_get_ex(rparams, "sequence", &jseq) || !jseq ||
+      !json_object_is_type(jseq, json_type_int) || json_object_get_int64(jseq) != seq ||
+      !json_object_object_get_ex(rparams, "serverMonotonicUsec", &jmono) || !jmono ||
+      !json_object_is_type(jmono, json_type_int)) {
+    json_object_put(reply);
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(%" PRId64 "), invalid Ping reply\n", __func__, seq);
+    return -EPROTO;
+  }
+
+  json_object_put(reply);
+  pthread_mutex_unlock(&ctx->mutex);
+  return 0;
+}
+
+int mt_instance_heartbeat(struct mtl_main_impl* impl, const char* client_state) {
+  if (!impl || !impl->instance) return -EINVAL;
+
+  struct mt_instance_ctx* ctx = impl->instance;
+  pthread_mutex_lock(&ctx->mutex);
+  int64_t seq = ++ctx->hb_seq;
+
+  struct json_object* params = json_object_new_object();
+  if (!params) {
+    pthread_mutex_unlock(&ctx->mutex);
+    return -ENOMEM;
+  }
+  json_object_object_add(params, "sequence", json_object_new_int64(seq));
+  if (client_state && client_state[0] != '\0') {
+    json_object_object_add(params, "clientState", json_object_new_string(client_state));
+  }
+
+  struct json_object* reply = NULL;
+  char err_name[128];
+  char err_msg[256];
+  int rc = instance_call_locked(impl, ctx, MT_VARLINK_MANAGER_INTERFACE ".Heartbeat",
+                                params, NULL, 0, &reply, err_name, sizeof(err_name),
+                                err_msg, sizeof(err_msg));
+  json_object_put(params);
+  if (rc < 0) {
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(seq %" PRId64 "), Heartbeat fail %d (%s: %s)\n", __func__, seq, rc, err_name,
+        err_msg);
+    return rc;
+  }
+
+  struct json_object* rparams = NULL;
+  struct json_object* jseq = NULL;
+  struct json_object* jstatus = NULL;
+  struct json_object* jdl = NULL;
+  if (!json_object_object_get_ex(reply, "parameters", &rparams) || !rparams ||
+      !json_object_object_get_ex(rparams, "sequence", &jseq) || !jseq ||
+      !json_object_is_type(jseq, json_type_int) || json_object_get_int64(jseq) != seq ||
+      !json_object_object_get_ex(rparams, "status", &jstatus) || !jstatus ||
+      !json_object_is_type(jstatus, json_type_string) ||
+      !json_object_object_get_ex(rparams, "nextDeadlineMs", &jdl) || !jdl ||
+      !json_object_is_type(jdl, json_type_int)) {
+    json_object_put(reply);
+    pthread_mutex_unlock(&ctx->mutex);
+    err("%s(seq %" PRId64 "), invalid Heartbeat reply\n", __func__, seq);
+    return -EPROTO;
+  }
+
+  json_object_put(reply);
+  pthread_mutex_unlock(&ctx->mutex);
+  return 0;
+}
+
 bool mtl_is_manager_alive(void) {
   const char* sock_path = instance_resolve_sock_path();
   int fd = mt_varlink_connect_unix(sock_path, MT_INSTANCE_ALIVE_TIMEOUT_MS);
@@ -881,6 +976,18 @@ int mt_instance_add_udp_filter(struct mtl_main_impl* impl, const char* queue_lea
   MTL_MAY_UNUSED(queue_lease);
   MTL_MAY_UNUSED(dst_port);
   MTL_MAY_UNUSED(out_lease);
+  return -ENOTSUP;
+}
+
+int mt_instance_ping(struct mtl_main_impl* impl, int64_t seq) {
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(seq);
+  return -ENOTSUP;
+}
+
+int mt_instance_heartbeat(struct mtl_main_impl* impl, const char* client_state) {
+  MTL_MAY_UNUSED(impl);
+  MTL_MAY_UNUSED(client_state);
   return -ENOTSUP;
 }
 
